@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "989336303690",
+    "project_id": "crepaway-mobile-app",
+    "storage_bucket": "crepaway-mobile-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:989336303690:android:6257499680b4414440ceb3",
+        "android_client_info": {
+          "package_name": "com.crepaway"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "989336303690-hsdfe06rbsp8fv3d2qjkjk50dt1b8rb4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.crepaway",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "989336303690-5dsedobl05pj96r71550h24g499imub2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdyjO5HsNltTAaHVa3fn2qMKElCDg4k0M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "989336303690-5dsedobl05pj96r71550h24g499imub2.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "989336303690-levcdlllov01udtsamb5oqajhq9plunh.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.crepaway.mobileapp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
