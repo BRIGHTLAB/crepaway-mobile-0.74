@@ -1,5 +1,5 @@
-import {TextStyle} from 'react-native';
-import {normalizeFont} from './utils/normalizeFonts';
+import { TextStyle } from 'react-native';
+import { normalizeFont } from './utils/normalizeFonts';
 
 export const COLORS = {
   primaryColor: '#DB0032',
@@ -111,8 +111,8 @@ export const REGEX = {
     valFailureMsg: 'Please enter an valid Email Address',
   },
   PASSWORD: {
-    regex: '^(?=.*\\d)(?=.*[A-Z])(?=.*[!@#\\$]).{6,20}$',
-    valFailureMsg: 'High Strength Password 6 to 20 Characters',
+    regex: '^(?=.*\\d)(?=.*[A-Z])(?=.*[!@#\\$]).{6,25}$',
+    valFailureMsg: 'High Strength Password 6 to 25 Characters',
   },
   EMAIL_USERNAME: {
     regex:

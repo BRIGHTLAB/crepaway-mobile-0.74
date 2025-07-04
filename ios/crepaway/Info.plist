@@ -22,6 +22,8 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>GMSApiKey</key>
+	<string>AIzaSyA0IxviANpXAl-sTNcYjH1zU5cjgXimKuk</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -31,28 +33,18 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>We need access to your camera to take photos for your profile and orders.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>We need your location to show maps.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need your location to show maps.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We need permission to save photos to your photo library.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need access to your photo library to select images for your profile and orders.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
-	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
-	<key>UIRequiredDeviceCapabilities</key>
-	<array>
-		<string>arm64</string>
-	</array>
-	<key>UIStatusBarHidden</key>
-	<true/>
-	<key>UISupportedInterfaceOrientations</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-		<string>UIInterfaceOrientationPortrait</string>
-	</array>
-	<key>UIViewControllerBasedStatusBarAppearance</key>
-	<false/>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Poppins-Black.ttf</string>
@@ -74,28 +66,28 @@
 		<string>Poppins-Thin.ttf</string>
 		<string>Poppins-ThinItalic.ttf</string>
 	</array>
-	<!-- google maps -->
-			<key>GMSApiKey</key>
-		<string>AIzaSyA0IxviANpXAl-sTNcYjH1zU5cjgXimKuk</string>
-		<key>NSLocationWhenInUseUsageDescription</key>
-		<string>We need your location to show maps.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-		<string>We need your location to show maps.</string>
-
-		<!-- camera -->
-		<key>NSCameraUsageDescription</key>
-		<string>We need access to your camera to take photos for your profile and orders.</string>
-		<key>NSPhotoLibraryUsageDescription</key>
-		<string>We need access to your photo library to select images for your profile and orders.</string>
-		<key>NSPhotoLibraryAddUsageDescription</key>
-		<string>We need permission to save photos to your photo library.</string>
-
-		<!-- push notifications -->
-		<key>UIBackgroundModes</key>
-		<array>
-			<string>remote-notification</string>
-			<string>background-fetch</string>
-		</array>
+<!--	<key>UIBackgroundModes</key>-->
+<!--	<array>-->
+<!--		<string>remote-notification</string>-->
+<!--		<string>background-fetch</string>-->
+<!--	</array>-->
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
 </dict>
 </plist>
-

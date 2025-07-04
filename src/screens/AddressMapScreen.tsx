@@ -67,7 +67,7 @@ const AddressMapScreen = () => {
     detailsSheetRef.current?.close();
     setTimeout(() => {
       citiesSheetRef.current?.expand();
-    }, 400);
+    }, 500);
   };
 
   const handleCityChange = (city: City | null) => {
@@ -75,7 +75,7 @@ const AddressMapScreen = () => {
     citiesSheetRef.current?.close();
     setTimeout(() => {
       detailsSheetRef.current?.expand();
-    }, 400);
+    }, 800);
   };
 
   useEffect(() => {
@@ -317,16 +317,27 @@ const AddressMapScreen = () => {
         ))}
       </MapView>
 
-      <Button
-        onPress={() => detailsSheetRef.current?.expand()}
-        disabled={!selectedZone}
-        icon={<Icon_Add
-          color={selectedZone ? COLORS.lightColor : COLORS.borderColor}
-        />}
-        iconPosition='left'
-      >
-        Add location
-      </Button>
+      <View
+        style={{
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginBottom: 20,
+        }}>
+        <Button
+          onPress={() => detailsSheetRef.current?.expand()}
+          disabled={!selectedZone}
+          icon={<Icon_Add
+            color={selectedZone ? COLORS.lightColor : COLORS.borderColor}
+          />}
+          style={{
+            width: '60%'
+          }}
+          iconPosition='left'
+        >
+          Add location
+        </Button>
+      </View>
+
 
       {/* Fixed Custom Marker in Center */}
       <View style={styles.markerFixed} pointerEvents="none">

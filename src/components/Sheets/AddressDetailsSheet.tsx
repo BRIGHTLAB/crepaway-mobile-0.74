@@ -85,7 +85,7 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
         trigger('cities_id');
         setTimeout(() => {
           inputRefs.street_address.current?.focus();
-        }, 100);
+        }, 1500);
       }
     }, [selectedCity]);
 
@@ -146,6 +146,7 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
       <DynamicSheet
         ref={ref}
         footerComponent={Footer}
+        maxDynamicContentSize={470}
       // keyboard handling props
       >
         <View style={styles.headerContainer}>
@@ -157,6 +158,7 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
           <BottomSheetScrollView
             contentContainerStyle={styles.formContainer}
             keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
             {inputs.map(inp => (
               <Controller

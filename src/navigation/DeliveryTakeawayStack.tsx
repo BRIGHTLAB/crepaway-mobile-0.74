@@ -295,9 +295,9 @@ const HomeStack = () => {
           headerTitle: 'Menu',
           headerLeft: () => <CustomHeader />,
           headerTitleAlign: 'center',
-          contentStyle: {
-            pointerEvents: 'none',
-          },
+          // contentStyle: {
+          //   pointerEvents: 'none',
+          // },
 
           headerRight: () => (
             <View
