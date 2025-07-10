@@ -6,16 +6,18 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import Icon_WishList from '../../../assets/SVG/Icon_Wishlist';
 import Icon_Wishlist_Filled from '../../../assets/SVG/Icon_Wishlist_Filled';
 import FastImage from 'react-native-fast-image';
-import {capitalizeFirstLetter} from '../../helpers';
-import {useNavigation} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {RootStackParamList} from '../../navigation/NavigationStack';
-import {useToggleFavoriteMutation} from '../../api/menuApi';
-import {COLORS} from '../../theme';
+import { capitalizeFirstLetter } from '../../helpers';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../navigation/NavigationStack';
+import { useToggleFavoriteMutation } from '../../api/menuApi';
+import { COLORS } from '../../theme';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store/store';
 
 interface IProps {
   id: number;
@@ -53,15 +55,15 @@ const ItemCard = ({
   const [favorite, setFavorite] = useState(false);
 
   const menu = 'mobile-app-delivery';
-  const branch = 'ashrafieh';
+  const branch = useSelector((state: RootState) => state.user.branchName) || '';
 
-  const [toggleFavorite, {isLoading: isTogglingFavorite}] =
+  const [toggleFavorite, { isLoading: isTogglingFavorite }] =
     useToggleFavoriteMutation();
 
   const handleWishList = async () => {
     try {
       setFavorite(prev => !prev);
-      await toggleFavorite({itemId: id, menu, branch});
+      await toggleFavorite({ itemId: id, menu, branch });
     } catch (error) {
       setFavorite(prev => !prev);
     }
@@ -119,9 +121,9 @@ const ItemCard = ({
               }}
               hitSlop={8}>
               {favorite ? (
-                <Icon_Wishlist_Filled style={{marginTop: 8}} />
+                <Icon_Wishlist_Filled style={{ marginTop: 8 }} />
               ) : (
-                <Icon_WishList style={{marginTop: 8}} />
+                <Icon_WishList style={{ marginTop: 8 }} />
               )}
             </Pressable>
           )}
@@ -155,7 +157,7 @@ const ItemCard = ({
                     padding: 8,
                   }}>
                   <FastImage
-                    style={{height: 16, width: 16}}
+                    style={{ height: 16, width: 16 }}
                     source={{
                       uri: el.icon_url,
                       priority: FastImage.priority.normal,

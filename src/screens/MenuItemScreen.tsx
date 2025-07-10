@@ -113,7 +113,8 @@ const MenuItemScreen = ({ }: IProps) => {
   const cartState = useSelector((state: RootState) => state.cart);
 
   const menu = 'mobile-app-delivery';
-  const branch = 'ashrafieh';
+  const branch = useSelector((state: RootState) => state.user.branchName) || ''
+
 
   const { bottom } = useSafeAreaInsets();
 

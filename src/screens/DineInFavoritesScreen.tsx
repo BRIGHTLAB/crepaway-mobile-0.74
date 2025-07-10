@@ -1,21 +1,25 @@
-import {FlatList, StyleSheet, Text, View} from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import OfferCard from '../components/Menu/OfferCard';
-import React, {useEffect, useState} from 'react';
-import {GET} from '../api';
+import React, { useEffect, useState } from 'react';
+import { GET } from '../api';
 import ItemCard from '../components/Menu/ItemCard';
 import MenuItemSkeleton from '../components/SkeletonLoader/MenuItemSkeleton';
-import {useGetFavoritesQuery} from '../api/favoriteApi';
-import {useNavigation} from '@react-navigation/native';
+import { useGetFavoritesQuery } from '../api/favoriteApi';
+import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store/store';
 
 const DineInFavoritesScreen = () => {
-  const {data: favoriteItems, isLoading} = useGetFavoritesQuery({
+
+  const branch = useSelector((state: RootState) => state.user.branchName) || ''
+  const { data: favoriteItems, isLoading } = useGetFavoritesQuery({
     menu: 'mobile-app-delivery',
-    branch: 'ashrafieh',
+    branch,
   });
 
   const navigation = useNavigation<any>();
 
-  const renderItem = ({item}: {item: Item}) => {
+  const renderItem = ({ item }: { item: Item }) => {
     // console.log('item', item);
     return (
       <View style={styles.cardContainer}>
@@ -28,9 +32,9 @@ const DineInFavoritesScreen = () => {
           symbol={item.symbol}
           tags={item.tags}
           isFavorite={item.is_favorite}
-          style={{width: '100%'}}
+          style={{ width: '100%' }}
           onItemPress={() => {
-            navigation.navigate('MenuItem', {itemId: item.id});
+            navigation.navigate('MenuItem', { itemId: item.id });
           }}
         />
       </View>
@@ -48,7 +52,7 @@ const DineInFavoritesScreen = () => {
           keyExtractor={item => item.id?.toString()}
           numColumns={2}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{gap: 16}}
+          contentContainerStyle={{ gap: 16 }}
           columnWrapperStyle={{
             gap: 16,
           }}

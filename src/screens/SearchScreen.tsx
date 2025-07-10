@@ -20,6 +20,8 @@ import { COLORS, SCREEN_PADDING } from '../theme';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/NavigationStack';
 import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store/store';
 
 const SearchScreen = () => {
   const [searchValue, setSearchValue] = useState('');
@@ -31,10 +33,13 @@ const SearchScreen = () => {
   const { data: searchHistory, isLoading: isLoadingHistory } =
     useGetSearchHistoryQuery();
 
+  const branch = useSelector((state: RootState) => state.user.branchName) || ''
+
+
   const { data: searchResults, isLoading } = useGetSearchResultsQuery(
     {
       menu: 'mobile-app-delivery',
-      branch: 'ashrafieh',
+      branch,
       searchValue: searchDebounceValue,
     },
     // {

@@ -1,34 +1,38 @@
-import {FlatList, StyleSheet, Text, View} from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import OfferCard from '../components/Menu/OfferCard';
-import React, {useEffect, useState} from 'react';
-import {GET} from '../api';
+import React, { useEffect, useState } from 'react';
+import { GET } from '../api';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
-import {useGetOffersQuery} from '../api/offersApi';
-import {useNavigation} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {DineInOrderStackParamList} from '../navigation/DineInOrderStack';
+import { useGetOffersQuery } from '../api/offersApi';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { DineInOrderStackParamList } from '../navigation/DineInOrderStack';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store/store';
 
 type NavigationProp = NativeStackNavigationProp<DineInOrderStackParamList>;
 
 const DineInOffersScreen = () => {
-  const {data, isLoading, error} = useGetOffersQuery({
+  const branch = useSelector((state: RootState) => state.user.branchName) || ''
+
+  const { data, isLoading, error } = useGetOffersQuery({
     menu: 'mobile-app-delivery',
-    branch: 'ashrafieh',
+    branch,
   });
 
   const navigation = useNavigation<NavigationProp>();
 
-  const renderItem = ({item}: {item: Offer}) => {
+  const renderItem = ({ item }: { item: Offer }) => {
     return (
       <View style={styles.cardContainer}>
         <OfferCard
           id={item.id}
           image_url={item.image_url}
-          style={{width: '100%'}}
+          style={{ width: '100%' }}
           onItemPress={(id: number) => {
             navigation.navigate('OffersStack', {
               screen: 'OfferDetails',
-              params: {itemId: id ?? 0},
+              params: { itemId: id ?? 0 },
             });
           }}
         />
@@ -63,11 +67,11 @@ const DineInOffersScreen = () => {
           renderItem={renderItem}
           keyExtractor={item => item.id?.toString()}
           numColumns={1}
-          contentContainerStyle={{gap: 2}}
-          // columnWrapperStyle={{
-          //   gap: 16,
-          // }}
-          // ItemSeparatorComponent={() => <View style={{width: 16}} />}
+          contentContainerStyle={{ gap: 2 }}
+        // columnWrapperStyle={{
+        //   gap: 16,
+        // }}
+        // ItemSeparatorComponent={() => <View style={{width: 16}} />}
         />
       )}
     </View>

@@ -9,11 +9,16 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/NavigationStack';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SCREEN_PADDING } from '../theme';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store/store';
 
 const FavoritesScreen = () => {
+
+  const branch = useSelector((state: RootState) => state.user.branchName) || ''
+
   const { data: favoriteItems, isLoading } = useGetFavoritesQuery({
     menu: 'mobile-app-delivery',
-    branch: 'ashrafieh',
+    branch,
   });
 
   const navigation =

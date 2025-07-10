@@ -111,7 +111,7 @@ const DineInMenuItemScreen = ({ }: IProps) => {
   const userState = useSelector((state: RootState) => state.user);
 
   const menu = 'mobile-app-delivery';
-  const branch = 'ashrafieh';
+  const branch = userState.branchName || '';
 
   const {
     data: itemData,

@@ -41,7 +41,7 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
     }, [isFavorite]);
 
     const menu = 'mobile-app-delivery';
-    const branch = 'ashrafieh';
+    const branch = useSelector((state: RootState) => state.user.branchName) || ''
 
     const [toggleFavorite, { isLoading: isTogglingFavorite }] =
       useToggleFavoriteMutation();

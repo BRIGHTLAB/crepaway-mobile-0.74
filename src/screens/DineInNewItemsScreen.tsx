@@ -1,25 +1,29 @@
-import {FlatList, StyleSheet, Text, View} from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import OfferCard from '../components/Menu/OfferCard';
-import React, {useEffect, useState} from 'react';
-import {GET} from '../api';
+import React, { useEffect, useState } from 'react';
+import { GET } from '../api';
 import ItemCard from '../components/Menu/ItemCard';
 import MenuItemSkeleton from '../components/SkeletonLoader/MenuItemSkeleton';
-import {useNewItemsQuery} from '../api/newItemsApi';
-import {useNavigation} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {DineInOrderStackParamList} from '../navigation/DineInOrderStack';
+import { useNewItemsQuery } from '../api/newItemsApi';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { DineInOrderStackParamList } from '../navigation/DineInOrderStack';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store/store';
 
 type NavigationProp = NativeStackNavigationProp<DineInOrderStackParamList>;
 
 const NewItemsScreen = () => {
-  const {data: newItems, isLoading} = useNewItemsQuery({
+  const branch = useSelector((state: RootState) => state.user.branchName) || ''
+
+  const { data: newItems, isLoading } = useNewItemsQuery({
     menu: 'mobile-app-delivery',
-    branch: 'ashrafieh',
+    branch,
   });
 
   const navigation = useNavigation<NavigationProp>();
 
-  const renderItem = ({item}: {item: Item}) => (
+  const renderItem = ({ item }: { item: Item }) => (
     <View style={styles.cardContainer}>
       <ItemCard
         id={item?.id}
@@ -30,9 +34,9 @@ const NewItemsScreen = () => {
         symbol={item.symbol}
         tags={item.tags}
         isFavorite={item.is_favorite}
-        style={{width: '100%'}}
+        style={{ width: '100%' }}
         onItemPress={id => {
-          navigation.navigate('MenuItem', {itemId: id});
+          navigation.navigate('MenuItem', { itemId: id });
         }}
       />
     </View>
@@ -49,7 +53,7 @@ const NewItemsScreen = () => {
           renderItem={renderItem}
           keyExtractor={item => item.id?.toString()}
           numColumns={2}
-          contentContainerStyle={{gap: 16}}
+          contentContainerStyle={{ gap: 16 }}
           columnWrapperStyle={{
             gap: 16,
           }}
