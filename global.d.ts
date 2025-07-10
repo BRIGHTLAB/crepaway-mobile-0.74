@@ -235,3 +235,9 @@ type Checkout = {
     discount_value?: number;
   };
 };
+
+type WaiterInstruction = {
+  id: number;
+  name: string;
+  description: string;
+};

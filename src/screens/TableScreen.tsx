@@ -7,6 +7,7 @@ import {
   Animated,
   Dimensions,
   Easing,
+  ActivityIndicator,
 } from 'react-native';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { TouchableOpacity } from '@gorhom/bottom-sheet';
@@ -21,9 +22,7 @@ import FastImage from 'react-native-fast-image';
 import BottomSheet from '@gorhom/bottom-sheet';
 import TableUsersList from '../components/DineIn/TableUsersList';
 import OrderedItemsList from '../components/DineIn/OrderedItemsList';
-import WaiterInstructionsSheet, {
-  InstructionType,
-} from '../components/Sheets/DineIn/WaiterInstructionsSheet';
+import WaiterInstructionsSheet from '../components/Sheets/DineIn/WaiterInstructionsSheet';
 import WelcomePopup from '../components/DineIn/WelcomePopup';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { DineInStackParamList } from '../navigation/DineInStack';
@@ -50,6 +49,8 @@ import KingActionsSheet, {
   Action,
 } from '../components/Sheets/DineIn/KingActionsSheet';
 import { user } from '../api/userApi';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import BannedPopup from '../components/DineIn/BannedPopup';
 
 export type OrderedItem = {
   id: number;
@@ -104,6 +105,7 @@ export type TableUser = {
   isOnline: boolean;
   isKing: boolean;
   isPending: boolean;
+  isBanned?: boolean;
 };
 
 export type TableUsers = Record<string, TableUser>;
@@ -117,13 +119,12 @@ export type TableWaiter = {
 
 export type TableWaiters = Record<string, TableWaiter>;
 
-const waiterInstructions = [
-  { id: 1, text: 'Need more napkins' },
-  { id: 2, text: 'Request water refill' },
-  { id: 3, text: 'Ask for the check' },
-  { id: 4, text: 'Need assistance with menu' },
-  { id: 5, text: 'Request another set of utensils' },
-];
+type TableUpdateMessage = {
+  users: TableUsers,
+  waiters: TableWaiters,
+  items: OrderedItems,
+  isLocked: boolean,
+}
 
 type TableScreenNavigationProp = NativeStackNavigationProp<
   DineInStackParamList,
@@ -135,6 +136,60 @@ const kingActions: Action[] = [
   { id: 2, key: 'make-table-admin', text: 'Make table admin' },
   // Add more actions as needed
 ];
+
+// Pending Screen Component
+const PendingScreen = ({ onLeaveTable }: { onLeaveTable: () => void }) => {
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 0.8,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulse.start();
+
+    return () => pulse.stop();
+  }, []);
+
+  return (
+    <View style={styles.pendingContainer}>
+      <View style={styles.pendingContent}>
+        <Animated.View
+          style={[
+            styles.pendingIconContainer,
+            { transform: [{ scale: pulseAnim }] }
+          ]}
+        >
+          <ActivityIndicator size="large" color={COLORS.primaryColor} />
+        </Animated.View>
+
+        <Text style={styles.pendingTitle}>Waiting for Approval</Text>
+        <Text style={styles.pendingSubtitle}>
+          You've requested to join this table.{'\n'}
+          Please wait for the table admin to approve your request.
+        </Text>
+
+        <View style={styles.pendingButtonContainer}>
+          <Button
+            onPress={onLeaveTable}
+          >
+            Cancel Request
+          </Button>
+        </View>
+      </View>
+    </View>
+  );
+};
 
 const TableScreen = () => {
   const dispatch = useDispatch();
@@ -157,10 +212,16 @@ const TableScreen = () => {
   const [tableUsers, setTableUsers] = useState<TableUsers>({});
   const [tableWaiters, setTableWaiters] = useState<TableWaiters>({});
   const [isTableLocked, setIsTableLocked] = useState(false);
+  const [showBannedPopup, setShowBannedPopup] = useState(false);
 
-  const handleInstructionSelect = (instruction: InstructionType) => {
+  const { top, bottom } = useSafeAreaInsets();
+
+  // by default the user is pending (even if his joining was accepted before)
+  const [isUserPending, setIsUserPending] = useState(true);
+
+  const handleInstructionSelect = (instruction: WaiterInstruction) => {
     // In a real app, this would send the instruction to the backend
-    console.log(`Sending instruction: ${instruction.text}`);
+    console.log(`Sending instruction: ${instruction.name}`);
     waiterSheetRef.current?.close();
   };
 
@@ -261,16 +322,11 @@ const TableScreen = () => {
           console.log('new Tablesession', response.session_table);
           return;
         } else {
-          dispatch(
-            setOrderType({
-              menuType: null,
-              orderTypeAlias: null,
-            }),
-          );
-          dispatch(setSessionTableId(null));
+          setShowBannedPopup(true);
           console.log('cant join the table:', response);
         }
       },
+
     );
   };
 
@@ -312,111 +368,138 @@ const TableScreen = () => {
     // join Table
     joinTable();
 
+
+    // listen for kicking this user
+    socketInstance.on('userKicked', (message) => {
+      setShowBannedPopup(true)
+    })
+
     // listen for updates
-    socketInstance.on('tableUpdate', message1 => {
-      // console.log('tableUpdate ', message);
-      const message = {
-        "waiters": {},
-        "users": {
-          "28": {
-            "id": 28,
-            "name": "Serge Massaad",
-            "image_url": "https://d3u6vq5nc7ocvb.cloudfront.net/users/users_utYt0QhGbx.jpg",
-            "socketId": "xgwv3QNT62KMvV2dAAAZ",
-            "isOnline": true,
-            "isKing": true,
-            "isPending": false
-          },
-          "31": {
-            "id": 31,
-            "name": "BL Test Phase 1",
-            "image_url": "http://picsum.photos/500",
-            "socketId": "dIiBwfGFs17o0WJTAAAC",
-            "isOnline": true,
-            "isKing": false,
-            "isPending": true
-          }
-        },
-        "activity": [],
-        "items": {
-          "ec47018b-b616-463e-bb5e-58b9d6445ef9": {
-            "id": 1857,
-            "name": "CAJUN CHICKEN TAQUITOS",
-            "image_url": "https://d3vfh4cqgoixck.cloudfront.net/items/items_GeqIplzwK9.webp",
-            "price": 5.25,
-            "symbol": "$",
-            "quantity": 1,
-            "special_instruction": "",
-            "modifier_groups": [],
-            "epoch": 1750420919984,
-            "status": "pending",
-            "deleted": 1,
-            "added_by": {
-              "id": 28,
-              "name": "Serge Massaad",
-              "image_url": "https://d3u6vq5nc7ocvb.cloudfront.net/users/users_utYt0QhGbx.jpg",
-              "type": "user"
-            },
-            "uuid": "ec47018b-b616-463e-bb5e-58b9d6445ef9",
-            "disabled": false,
-          },
-          "dd577b21-e04a-4a2b-b883-f294551aa01a": {
-            "id": 1857,
-            "name": "CAJUN CHICKEN TAQUITOS",
-            "image_url": "https://d3vfh4cqgoixck.cloudfront.net/items/items_GeqIplzwK9.webp",
-            "price": 5.25,
-            "symbol": "$",
-            "quantity": 1,
-            "special_instruction": "",
-            "modifier_groups": [
-              {
-                "id": 777,
-                "name": "Remove Ingredients",
-                "modifier_groups_id": 83,
-                "modifier_items": [
-                  {
-                    "id": 3192,
-                    "name": "Cheese Spices",
-                    "price": null,
-                    "quantity": 1,
-                    "plu": "20168",
-                    "modifier_items_id": 149
-                  }
-                ]
-              },
-              {
-                "id": 778,
-                "name": "Choose Dip",
-                "modifier_groups_id": 86,
-                "modifier_items": [
-                  {
-                    "id": 3193,
-                    "name": "Cajun Dip",
-                    "price": null,
-                    "quantity": 2,
-                    "plu": "3977",
-                    "modifier_items_id": 128
-                  }
-                ]
-              }
-            ],
-            "epoch": 1750422688096,
-            "status": "pending",
-            "deleted": 0,
-            "added_by": {
-              "id": 28,
-              "name": "Serge Massaad",
-              "image_url": "https://d3u6vq5nc7ocvb.cloudfront.net/users/users_utYt0QhGbx.jpg",
-              "type": "user"
-            },
-            "disabled": false,
-          }
-        },
-        "session_table": "1750420670573",
-        "isLocked": false
-      }
+    socketInstance.on('tableUpdate', (message: TableUpdateMessage) => {
+      console.log('tableUpdate ', message);
+      // const message = {
+      //   "waiters": {
+      //     "28": {
+      //       "id": 28,
+      //       "name": "Serge Massaad",
+      //       "image_url": "https://d3u6vq5nc7ocvb.cloudfront.net/users/users_utYt0QhGbx.jpg",
+      //       "socketId": "xgwv3QNT62KMvV2dAAAZ",
+      //       "isOnline": true,
+      //       "isKing": true,
+      //       "isPending": false
+      //     }
+      //   },
+      //   "users": {
+      //     "28": {
+      //       "id": 28,
+      //       "name": "Serge Massaad",
+      //       "image_url": "https://d3u6vq5nc7ocvb.cloudfront.net/users/users_utYt0QhGbx.jpg",
+      //       "socketId": "xgwv3QNT62KMvV2dAAAZ",
+      //       "isOnline": true,
+      //       "isKing": true,
+      //       "isPending": false
+      //     },
+      //     "31": {
+      //       "id": 31,
+      //       "name": "BL Test Phase 1",
+      //       "image_url": "http://picsum.photos/500",
+      //       "socketId": "dIiBwfGFs17o0WJTAAAC",
+      //       "isOnline": true,
+      //       "isKing": false,
+      //       "isPending": false
+      //     }
+      //   },
+      //   "activity": [],
+      //   "items": {
+      //     "ec47018b-b616-463e-bb5e-58b9d6445ef9": {
+      //       "id": 1857,
+      //       "name": "CAJUN CHICKEN TAQUITOS",
+      //       "image_url": "https://d3vfh4cqgoixck.cloudfront.net/items/items_GeqIplzwK9.webp",
+      //       "price": 5.25,
+      //       "symbol": "$",
+      //       "quantity": 1,
+      //       "special_instruction": "",
+      //       "modifier_groups": [],
+      //       "epoch": 1750420919984,
+      //       "status": "pending",
+      //       "deleted": 1,
+      //       "added_by": {
+      //         "id": 28,
+      //         "name": "Serge Massaad",
+      //         "image_url": "https://d3u6vq5nc7ocvb.cloudfront.net/users/users_utYt0QhGbx.jpg",
+      //         "type": "user"
+      //       },
+      //       "uuid": "ec47018b-b616-463e-bb5e-58b9d6445ef9",
+      //       "disabled": false,
+      //     },
+      //     "dd577b21-e04a-4a2b-b883-f294551aa01a": {
+      //       "id": 1857,
+      //       "name": "CAJUN CHICKEN TAQUITOS",
+      //       "image_url": "https://d3vfh4cqgoixck.cloudfront.net/items/items_GeqIplzwK9.webp",
+      //       "price": 5.25,
+      //       "symbol": "$",
+      //       "quantity": 1,
+      //       "special_instruction": "",
+      //       "modifier_groups": [
+      //         {
+      //           "id": 777,
+      //           "name": "Remove Ingredients",
+      //           "modifier_groups_id": 83,
+      //           "modifier_items": [
+      //             {
+      //               "id": 3192,
+      //               "name": "Cheese Spices",
+      //               "price": null,
+      //               "quantity": 1,
+      //               "plu": "20168",
+      //               "modifier_items_id": 149
+      //             }
+      //           ]
+      //         },
+      //         {
+      //           "id": 778,
+      //           "name": "Choose Dip",
+      //           "modifier_groups_id": 86,
+      //           "modifier_items": [
+      //             {
+      //               "id": 3193,
+      //               "name": "Cajun Dip",
+      //               "price": null,
+      //               "quantity": 2,
+      //               "plu": "3977",
+      //               "modifier_items_id": 128
+      //             }
+      //           ]
+      //         }
+      //       ],
+      //       "epoch": 1750422688096,
+      //       "status": "pending",
+      //       "deleted": 0,
+      //       "added_by": {
+      //         "id": 28,
+      //         "name": "Serge Massaad",
+      //         "image_url": "https://d3u6vq5nc7ocvb.cloudfront.net/users/users_utYt0QhGbx.jpg",
+      //         "type": "user"
+      //       },
+      //       "disabled": false,
+      //     }
+      //   },
+      //   "session_table": "1750420670573",
+      //   "isLocked": false
+      // }
+
       if (message.users) {
-        setTableUsers(message.users);
+        const usersArr = Object.values(message.users);
+
+        // Create a new users object without banned users
+        const filteredUsersObject = Object.fromEntries(
+          Object.entries(message.users).filter(([_, user]) => !user?.isBanned)
+        );
+
+        setTableUsers(filteredUsersObject);
+
+        // check if the current user is pending to show the pending screen before being accepted.
+        setIsUserPending(!!(userState.id && message.users?.[userState.id.toString()]?.isPending))
       }
       if (message.items) {
         setOrderedItems(message.items as Record<string, OrderedItem>);
@@ -454,11 +537,37 @@ const TableScreen = () => {
   };
 
   const handleKingActionSelect = (action: Action) => {
-    if (!selectedUserForKingActions) return;
+
+    if (!userState || !selectedUserForKingActions) return;
+
+    const socketInstance = SocketService.getInstance();
     switch (action.key) {
       case 'remove-from-table':
+        console.log('kicking user', selectedUserForKingActions.id)
+        socketInstance.emit(
+          'message',
+          {
+            type: 'kickUser',
+            data: {
+              tableName: userState.branchTable,
+              userToKick: {
+                id: selectedUserForKingActions.id,
+              },
+            },
+          },)
         break;
       case 'make-table-admin':
+        socketInstance.emit(
+          'message',
+          {
+            type: 'promoteUserToKing',
+            data: {
+              tableName: userState.branchTable,
+              user: {
+                id: selectedUserForKingActions.id,
+              },
+            },
+          },)
         break;
       default:
         break;
@@ -472,6 +581,7 @@ const TableScreen = () => {
   const renderWaiterItem = ({ item }: { item: TableWaiter }) => (
     <TouchableOpacity
       onPress={() => {
+        console.log('selectedWAiterId', tableWaiters?.[item.id]);
         setSelectedWaiterId(item.id);
         waiterSheetRef.current?.expand();
       }}
@@ -493,8 +603,39 @@ const TableScreen = () => {
 
   console.log(filteredOrderedItems);
 
+  // Show pending screen if user is pending
+  if (isUserPending) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.headerTitle}>Table Request</Text>
+          <TouchableOpacity onPress={handleLeaveTable}>
+            <Icon_Sign_Out color={COLORS.white} />
+          </TouchableOpacity>
+        </View>
+        <PendingScreen onLeaveTable={handleLeaveTable} />
+        <BannedPopup
+          visible={showBannedPopup}
+          onClose={() => {
+            setShowBannedPopup(false);
+            // Reset the order type and session after user acknowledges
+            dispatch(
+              setOrderType({
+                menuType: null,
+                orderTypeAlias: null,
+              }),
+            );
+            dispatch(setSessionTableId(null));
+          }}
+        />
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {
+      paddingTop: top
+    }]}>
       <View style={styles.headerContainer}>
         <FlatList
           data={Object.values(tableWaiters)}
@@ -537,9 +678,8 @@ const TableScreen = () => {
       {selectedWaiterId && tableWaiters?.[selectedWaiterId] && (
         <WaiterInstructionsSheet
           waiter={tableWaiters?.[selectedWaiterId]}
-          instructions={waiterInstructions}
           onSelectInstruction={handleInstructionSelect}
-          sheetRef={waiterSheetRef}
+          ref={waiterSheetRef}
         />
       )}
 
@@ -549,7 +689,7 @@ const TableScreen = () => {
           user={selectedUserForKingActions}
           actions={kingActions}
           onSelectAction={handleKingActionSelect}
-          sheetRef={kingActionsSheetRef}
+          ref={kingActionsSheetRef}
         />
       )}
 
@@ -559,6 +699,22 @@ const TableScreen = () => {
         onClose={() => setShowWelcomePopup(false)}
         onViewMenu={handleViewMenu}
         waiter={Object.values(tableWaiters)[0] || undefined}
+      />
+
+      {/* Banned Popup */}
+      <BannedPopup
+        visible={showBannedPopup}
+        onClose={() => {
+          setShowBannedPopup(false);
+          // Reset the order type and session after user acknowledges
+          dispatch(
+            setOrderType({
+              menuType: null,
+              orderTypeAlias: null,
+            }),
+          );
+          dispatch(setSessionTableId(null));
+        }}
       />
     </View>
   );
@@ -578,6 +734,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SCREEN_PADDING.horizontal,
     gap: 10,
+  },
+  headerTitle: {
+    ...TYPOGRAPHY.HEADLINE,
+    color: COLORS.white,
+    flex: 1,
+    textAlign: 'center',
   },
   waitersList: {},
   waiterSeparator: {
@@ -618,5 +780,44 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderTopWidth: 1,
     borderTopColor: `${COLORS.foregroundColor}20`,
+  },
+  // Pending Screen Styles
+  pendingContainer: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: SCREEN_PADDING.horizontal,
+  },
+  pendingContent: {
+    alignItems: 'center',
+    maxWidth: 300,
+  },
+  pendingIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: `${COLORS.primaryColor}10`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  pendingTitle: {
+    ...TYPOGRAPHY.SUB_HEADLINE,
+    color: COLORS.foregroundColor,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  pendingSubtitle: {
+    ...TYPOGRAPHY.BODY,
+    color: COLORS.foregroundColor,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  pendingButtonContainer: {
+    width: '100%',
   },
 });

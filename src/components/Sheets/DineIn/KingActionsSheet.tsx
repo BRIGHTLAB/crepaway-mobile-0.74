@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import FastImage from 'react-native-fast-image';
-import { COLORS, TYPOGRAPHY } from '../../../theme';
+import { COLORS, TYPOGRAPHY, SCREEN_PADDING } from '../../../theme';
 import Button from '../../UI/Button';
 import DynamicSheet from '../DynamicSheet';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetScrollView, BottomSheetView, BottomSheetFooter, BottomSheetFooterProps } from '@gorhom/bottom-sheet';
 import { TableUser } from '../../../screens/TableScreen';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 
 export type Action = {
   id: number;
@@ -18,14 +19,26 @@ type Props = {
   user: TableUser;
   actions: Action[];
   onSelectAction: (action: Action) => void;
-  sheetRef: React.RefObject<BottomSheet | null>;
 };
 
-const KingActionsSheet = ({ user, actions, onSelectAction, sheetRef }: Props) => {
-  const { bottom } = useSafeAreaInsets();
-  return (
-    <DynamicSheet ref={sheetRef}>
-      <BottomSheetView style={[styles.userSheetContainer, { paddingBottom: 10 + bottom }]}>
+const KingActionsSheet = forwardRef<BottomSheet, Props>(
+  ({ actions, onSelectAction, user }, ref) => {
+    const Footer = ({ animatedFooterPosition }: BottomSheetFooterProps) => (
+      <BottomSheetFooter
+        animatedFooterPosition={animatedFooterPosition}
+        style={{ paddingVertical: SCREEN_PADDING.vertical + 9 }}
+      >
+        <Button
+          variant="primary"
+          onPress={() => { (ref as React.RefObject<BottomSheetMethods>)?.current?.close() }}
+        >
+          Cancel
+        </Button>
+      </BottomSheetFooter>
+    );
+
+    return (
+      <DynamicSheet ref={ref} footerComponent={Footer}>
         <View style={styles.userProfile}>
           <FastImage
             style={styles.userSheetImage}
@@ -35,23 +48,31 @@ const KingActionsSheet = ({ user, actions, onSelectAction, sheetRef }: Props) =>
           />
           <Text style={styles.userSheetName}>{user.name}</Text>
         </View>
-        <View style={styles.actionsContainer}>
-          {actions.map(instruction => (
-            <TouchableOpacity
-              key={instruction.id}
-              style={styles.instructionItem}
-              onPress={() => onSelectAction(instruction)}>
-              <Text style={styles.instructionText}>{instruction.text}</Text>
-            </TouchableOpacity>
-          ))}
+        <View
+          style={{
+            paddingBottom: 150,
+          }}
+        >
+          <BottomSheetScrollView
+            contentContainerStyle={styles.actionsContainer}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {actions.map((action, index) => (
+              <View key={action.id + index} style={{ marginBottom: 8 }}>
+                <TouchableOpacity
+                  style={styles.instructionItem}
+                  onPress={() => onSelectAction(action)}>
+                  <Text style={styles.instructionText}>{action.text}</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </BottomSheetScrollView>
         </View>
-        <Button variant="primary" onPress={() => sheetRef.current?.close()}>
-          Cancel
-        </Button>
-      </BottomSheetView>
-    </DynamicSheet>
-  );
-};
+      </DynamicSheet>
+    );
+  }
+)
 
 export default KingActionsSheet;
 
@@ -81,8 +102,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   actionsContainer: {
-    gap: 12,
-    marginBottom: 20,
+    paddingTop: 18,
   },
   instructionItem: {
     padding: 16,

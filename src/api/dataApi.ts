@@ -1,4 +1,4 @@
-import {baseApi} from './baseApi';
+import { baseApi } from './baseApi';
 
 export interface Zone {
   id: number;
@@ -19,17 +19,20 @@ export const dataApi = baseApi.injectEndpoints({
     getCities: builder.query<City[], void>({
       query: () => `/cities`,
     }),
-    getAllergens: builder.query<Allergen[], {search: string}>({
-      query: ({search}) => `/allergens?search=${search}`,
+    getAllergens: builder.query<Allergen[], { search: string }>({
+      query: ({ search }) => `/allergens?search=${search}`,
       providesTags: ['allergens'],
     }),
     getZones: builder.query<Zone[], void>({
       query: () => `/zones`,
+    }),
+    getWaiterInstructions: builder.query<WaiterInstruction[], void>({
+      query: () => `/waiter_instructions`,
     }),
   }),
 
   overrideExisting: true,
 });
 
-export const {useGetCitiesQuery, useGetAllergensQuery, useGetZonesQuery} =
+export const { useGetCitiesQuery, useGetAllergensQuery, useGetZonesQuery, useGetWaiterInstructionsQuery } =
   dataApi;

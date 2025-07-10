@@ -7,7 +7,7 @@ import {
   Pressable,
   Dimensions,
 } from 'react-native';
-import React, {useEffect, useState, useRef, useCallback} from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import FastImage from 'react-native-fast-image';
 import Icon_Wishlist_Filled from '../../assets/SVG/Icon_Wishlist_Filled';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
@@ -17,7 +17,9 @@ import {
   useGetItemsQuery,
   useToggleFavoriteMutation,
 } from '../api/menuApi';
-import {COLORS, SCREEN_PADDING} from '../theme';
+import { COLORS, SCREEN_PADDING } from '../theme';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../store/store';
 
 // Fixed heights for more accurate calculations
 const ITEM_HEIGHT = 120; // Height of each menu item
@@ -31,7 +33,7 @@ interface MenuItemProps {
 }
 
 const MenuItem: React.FC<MenuItemProps> = React.memo(
-  ({item, onPress, isFavorite}) => {
+  ({ item, onPress, isFavorite }) => {
     const [favorite, setFavorite] = useState(isFavorite);
 
     useEffect(() => {
@@ -41,13 +43,13 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
     const menu = 'mobile-app-delivery';
     const branch = 'ashrafieh';
 
-    const [toggleFavorite, {isLoading: isTogglingFavorite}] =
+    const [toggleFavorite, { isLoading: isTogglingFavorite }] =
       useToggleFavoriteMutation();
 
     const handleWishList = async () => {
       try {
         setFavorite(prev => !prev);
-        await toggleFavorite({itemId: item.id, menu, branch});
+        await toggleFavorite({ itemId: item.id, menu, branch });
       } catch (error) {
         setFavorite(prev => !prev);
       }
@@ -87,16 +89,16 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
 
         {/* right  */}
         <Pressable
-          style={{alignSelf: 'flex-start'}}
+          style={{ alignSelf: 'flex-start' }}
           onPress={e => {
             e.stopPropagation();
             handleWishList();
           }}
           hitSlop={8}>
           {favorite ? (
-            <Icon_Wishlist_Filled style={{marginTop: 8}} />
+            <Icon_Wishlist_Filled style={{ marginTop: 8 }} />
           ) : (
-            <Icon_WishList style={{marginTop: 8}} />
+            <Icon_WishList style={{ marginTop: 8 }} />
           )}
         </Pressable>
       </TouchableOpacity>
@@ -135,11 +137,11 @@ const CategorySection = React.memo(
           <MenuItem
             key={`${item.id}-${idx}`}
             item={item}
-            onPress={() => navigation?.navigate('MenuItem', {itemId: item.id})}
+            onPress={() => navigation?.navigate('MenuItem', { itemId: item.id })}
             isFavorite={item?.is_favorite === 1}
           />
         ))}
-        <View style={{height: CATEGORY_FOOTER_HEIGHT}} />
+        <View style={{ height: CATEGORY_FOOTER_HEIGHT }} />
       </View>
     );
   },
@@ -160,7 +162,7 @@ interface IProps {
   };
 }
 
-const MenuItemsScreen = ({route, navigation}: IProps) => {
+const MenuItemsScreen = ({ route, navigation }: IProps) => {
   const [selectedCategoryIndex, setSelectedCategoryIndex] = useState<number>(0);
   const scrollViewRef = useRef<FlatList>(null);
   const flatListRef = useRef<FlatList>(null);
@@ -173,17 +175,18 @@ const MenuItemsScreen = ({route, navigation}: IProps) => {
   }>({});
   const [dataReady, setDataReady] = useState(false);
 
+  const userState = useSelector((state: RootState) => state.user);
   const selectedCategory = route?.params?.item;
 
-  const {data: categories = [], isLoading: isCategoriesLoading} =
+  const { data: categories = [], isLoading: isCategoriesLoading } =
     useGetCategoriesQuery({
       menu: 'mobile-app-delivery',
-      branch: 'ashrafieh',
+      branch: userState.branchName?.toLowerCase() || '',
     });
 
-  const {data: items, isLoading: isItemsLoading} = useGetItemsQuery({
+  const { data: items, isLoading: isItemsLoading } = useGetItemsQuery({
     menu: 'mobile-app-delivery',
-    branch: 'ashrafieh',
+    branch: userState.branchName?.toLowerCase() || '',
   });
 
   const groupedItems = categories.map(category => ({
@@ -196,8 +199,8 @@ const MenuItemsScreen = ({route, navigation}: IProps) => {
 
   const calculateItemLayout = useCallback(() => {
     let offset = 0;
-    const newOffsets: {[key: number]: number} = {};
-    const newHeights: {[key: number]: number} = {};
+    const newOffsets: { [key: number]: number } = {};
+    const newHeights: { [key: number]: number } = {};
 
     groupedItems.forEach(category => {
       const categoryHeight =
@@ -286,26 +289,26 @@ const MenuItemsScreen = ({route, navigation}: IProps) => {
     (
       data:
         | ArrayLike<{
-            alias: string;
-            description: string | null;
-            enabled: number;
-            id: number;
-            image_url: string;
-            is_paused: number;
-            items: Item[];
-            mini_image_url: string;
-            name: string;
-            notes: string | null;
-            order: number;
-            paused_from_date: string | null;
-            paused_to_date: string | null;
-          }>
+          alias: string;
+          description: string | null;
+          enabled: number;
+          id: number;
+          image_url: string;
+          is_paused: number;
+          items: Item[];
+          mini_image_url: string;
+          name: string;
+          notes: string | null;
+          order: number;
+          paused_from_date: string | null;
+          paused_to_date: string | null;
+        }>
         | null
         | undefined,
       index: number,
     ) => {
       if (!data) {
-        return {length: 0, offset: 0, index};
+        return { length: 0, offset: 0, index };
       }
 
       const category = data[index] as {
@@ -325,17 +328,17 @@ const MenuItemsScreen = ({route, navigation}: IProps) => {
       };
 
       if (!category) {
-        return {length: 0, offset: 0, index};
+        return { length: 0, offset: 0, index };
       }
 
       const height =
         categoryHeights[category.id] ||
         CATEGORY_HEADER_HEIGHT +
-          category.items.length * ITEM_HEIGHT +
-          CATEGORY_FOOTER_HEIGHT;
+        category.items.length * ITEM_HEIGHT +
+        CATEGORY_FOOTER_HEIGHT;
       const offset =
         categoryOffsets[category.id] ||
-        Array.from({length: index}, (_, i) => i).reduce(
+        Array.from({ length: index }, (_, i) => i).reduce(
           (sum: number, i: number) => {
             const cat = data[i] as {
               id: number;
@@ -353,8 +356,8 @@ const MenuItemsScreen = ({route, navigation}: IProps) => {
               sum +
               (categoryHeights[cat.id] ||
                 CATEGORY_HEADER_HEIGHT +
-                  cat.items.length * ITEM_HEIGHT +
-                  CATEGORY_FOOTER_HEIGHT)
+                cat.items.length * ITEM_HEIGHT +
+                CATEGORY_FOOTER_HEIGHT)
             );
           },
           0,
@@ -390,7 +393,7 @@ const MenuItemsScreen = ({route, navigation}: IProps) => {
   );
 
   const renderCategoryItem = useCallback(
-    ({item, index}: {item: Category; index: number}) => {
+    ({ item, index }: { item: Category; index: number }) => {
       return (
         <TouchableOpacity
           hitSlop={20}
@@ -492,9 +495,9 @@ const MenuItemsScreen = ({route, navigation}: IProps) => {
             renderItem={renderCategoryItem}
             showsHorizontalScrollIndicator={false}
             style={styles.categoryList}
-            ItemSeparatorComponent={() => <View style={{width: 16}} />}
-            ListFooterComponent={() => <View style={{width: 16}} />}
-            ListHeaderComponent={() => <View style={{width: 16}} />}
+            ItemSeparatorComponent={() => <View style={{ width: 16 }} />}
+            ListFooterComponent={() => <View style={{ width: 16 }} />}
+            ListHeaderComponent={() => <View style={{ width: 16 }} />}
             onScrollToIndexFailed={info => {
               const wait = new Promise(resolve => setTimeout(resolve, 50));
               wait.then(() => {
@@ -517,7 +520,7 @@ const MenuItemsScreen = ({route, navigation}: IProps) => {
             data={groupedItems}
             renderItem={renderCategorySection}
             keyExtractor={item => item.id.toString()}
-            style={{paddingHorizontal: SCREEN_PADDING.horizontal, marginTop: 8}}
+            style={{ paddingHorizontal: SCREEN_PADDING.horizontal, marginTop: 8 }}
             showsVerticalScrollIndicator={false}
             onScrollToIndexFailed={info => {
               const wait = new Promise(resolve => setTimeout(resolve, 50));

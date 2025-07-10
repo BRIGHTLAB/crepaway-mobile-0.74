@@ -1,64 +1,84 @@
-import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import React, { forwardRef } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import FastImage from 'react-native-fast-image';
-import { COLORS, TYPOGRAPHY } from '../../../theme';
+import { COLORS, TYPOGRAPHY, SCREEN_PADDING } from '../../../theme';
 import Button from '../../UI/Button';
 import DynamicSheet from '../DynamicSheet';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetScrollView, BottomSheetView, BottomSheetFooter, BottomSheetFooterProps } from '@gorhom/bottom-sheet';
 import { TableWaiter } from '../../../screens/TableScreen';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useGetWaiterInstructionsQuery } from '../../../api/dataApi';
+import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 
-export type InstructionType = {
-  id: number;
-  text: string;
-};
 
 type Props = {
   waiter: TableWaiter;
-  instructions: InstructionType[];
-  onSelectInstruction: (instruction: InstructionType) => void;
-  sheetRef: React.RefObject<BottomSheet | null>;
+  onSelectInstruction: (instruction: WaiterInstruction) => void;
 };
 
-const WaiterInstructionsSheet = ({
+const WaiterInstructionsSheet = forwardRef<BottomSheet, Props>(({
   waiter,
-  instructions,
   onSelectInstruction,
-  sheetRef,
-}: Props) => {
-  const { bottom } = useSafeAreaInsets();
+}, ref) => {
+  const { data: instructions, isLoading } = useGetWaiterInstructionsQuery();
+
+  const Footer = ({ animatedFooterPosition }: BottomSheetFooterProps) => (
+    <BottomSheetFooter
+      animatedFooterPosition={animatedFooterPosition}
+      style={{ paddingVertical: SCREEN_PADDING.vertical + 9 }}
+    >
+      <Button
+        variant="primary"
+        onPress={() => { (ref as React.RefObject<BottomSheetMethods>)?.current?.close() }}
+      >
+        Cancel
+      </Button>
+    </BottomSheetFooter>
+  );
+
   return (
-    <DynamicSheet ref={sheetRef}>
-      <BottomSheetView style={[styles.waiterSheetContainer, {
-        paddingBottom: bottom + 10
-      }]}>
-        <Text style={styles.waiterSheetTitle}>Request from Waiter</Text>
-        <View style={styles.waiterProfile}>
-          <FastImage
-            style={styles.waiterSheetImage}
-            source={{
-              uri: waiter.image_url || 'https://placehold.co/200x200/png',
+    <DynamicSheet ref={ref} footerComponent={Footer} snapPoints={['50%', '80%']}>
+      {isLoading ? (
+        <ActivityIndicator size={20} />
+      ) : (
+        <>
+          <Text style={styles.waiterSheetTitle}>Request from Waiter</Text>
+          <View style={styles.waiterProfile}>
+            <FastImage
+              style={styles.waiterSheetImage}
+              source={{
+                uri: waiter.image_url || 'https://placehold.co/200x200/png',
+              }}
+            />
+            <Text style={styles.waiterSheetName}>{waiter.name}</Text>
+          </View>
+          <View
+            style={{
+              paddingBottom: 200,
             }}
-          />
-          <Text style={styles.waiterSheetName}>{waiter.name}</Text>
-        </View>
-        <View style={styles.instructionsContainer}>
-          {instructions.map(instruction => (
-            <TouchableOpacity
-              key={instruction.id}
-              style={styles.instructionItem}
-              onPress={() => onSelectInstruction(instruction)}>
-              <Text style={styles.instructionText}>{instruction.text}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <Button variant="primary" onPress={() => sheetRef.current?.close()}>
-          Cancel
-        </Button>
-      </BottomSheetView>
+          >
+            <BottomSheetScrollView
+              contentContainerStyle={styles.instructionsContainer}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {instructions && [...instructions, ...instructions, ...instructions, ...instructions, ...instructions, ...instructions].map((instruction, index) => (
+                <View key={instruction.id + index} style={{ marginBottom: 8 }}>
+                  <TouchableOpacity
+                    style={styles.instructionItem}
+                    onPress={() => onSelectInstruction(instruction)}>
+                    <Text style={styles.instructionText}>{instruction.name}</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </BottomSheetScrollView>
+          </View>
+
+        </>
+      )}
     </DynamicSheet>
   );
-};
+});
 
 export default WaiterInstructionsSheet;
 
@@ -66,6 +86,7 @@ const styles = StyleSheet.create({
   waiterSheetContainer: {
     padding: 16,
     gap: 20,
+    paddingBottom: 150, // Add padding for footer
   },
   waiterSheetTitle: {
     ...TYPOGRAPHY.HEADLINE,
@@ -88,8 +109,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   instructionsContainer: {
-    gap: 12,
-    marginBottom: 20,
+    paddingTop: 18,
   },
   instructionItem: {
     padding: 16,

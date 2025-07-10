@@ -348,24 +348,24 @@ const ServiceSelectionScreen = () => {
           // );
 
 
-          Alert.alert(
-            'Dine In Experience',
-            `Coming soon!`,
-            [
-              {
-                text: 'Okay',
-                style: 'cancel',
-              },
-            ],
-          );
+          // Alert.alert(
+          //   'Dine In Experience',
+          //   `Coming soon!`,
+          //   [
+          //     {
+          //       text: 'Okay',
+          //       style: 'cancel',
+          //     },
+          //   ],
+          // );
 
           // uncomment the part below when we need to enable dine-in
-          // dispatch(
-          //   setOrderType({
-          //     menuType: 'dine-in',
-          //     orderTypeAlias: 'dine-in',
-          //   }),
-          // );
+          dispatch(
+            setOrderType({
+              menuType: 'dine-in',
+              orderTypeAlias: 'dine-in',
+            }),
+          );
           break;
       }
     },
