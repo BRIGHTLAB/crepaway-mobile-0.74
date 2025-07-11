@@ -1,13 +1,13 @@
-import {BackHandler, StyleSheet, Text, View} from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {parseQueryParams} from '../utils/parseQueryParams';
-import {Code} from 'react-native-vision-camera';
-import {useDispatch, useSelector} from 'react-redux';
-import {RootState} from '../store/store';
+import { BackHandler, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { parseQueryParams } from '../utils/parseQueryParams';
+import { Code } from 'react-native-vision-camera';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../store/store';
 import QrCodeCamera from '../components/QrCodeCamera';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {DineInStackParamList} from '../navigation/DineInStack';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { DineInStackParamList } from '../navigation/DineInStack';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import {
   setBranchTable,
   setOrderType,
@@ -53,7 +53,7 @@ const ScanTableScreen = () => {
     // if the user already was on a branch table
     if (userState.branchTable)
       setTimeout(() => {
-        navigation.navigate('Table');
+        navigation.navigate('Pending');
       }, 100);
     console.log('should be navigating', userState.branchTable);
   }, [userState.branchTable]);
@@ -70,7 +70,7 @@ const ScanTableScreen = () => {
       if (branchTable && !Array.isArray(branchTable)) {
         dispatch(setBranchTable(branchTable));
         setTimeout(() => {
-          navigation.navigate('Table');
+          navigation.navigate('Pending');
         }, 200);
         try {
           console.log('branchTable', branchTable);

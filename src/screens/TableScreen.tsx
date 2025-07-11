@@ -104,11 +104,11 @@ export type TableUser = {
   image_url: string | null;
   isOnline: boolean;
   isKing: boolean;
-  isPending: boolean;
-  isBanned?: boolean;
 };
 
 export type TableUsers = Record<string, TableUser>;
+
+export type TablePendingUsers = Record<string, TableUser>;
 
 export type TableWaiter = {
   id: number;
@@ -122,6 +122,7 @@ export type TableWaiters = Record<string, TableWaiter>;
 type TableUpdateMessage = {
   users: TableUsers,
   waiters: TableWaiters,
+  pendingUsers: TablePendingUsers,
   items: OrderedItems,
   isLocked: boolean,
 }
@@ -134,62 +135,8 @@ type TableScreenNavigationProp = NativeStackNavigationProp<
 const kingActions: Action[] = [
   { id: 1, key: 'remove-from-table', text: 'Remove from table' },
   { id: 2, key: 'make-table-admin', text: 'Make table admin' },
-  // Add more actions as needed
 ];
 
-// Pending Screen Component
-const PendingScreen = ({ onLeaveTable }: { onLeaveTable: () => void }) => {
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    const pulse = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 0.8,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    pulse.start();
-
-    return () => pulse.stop();
-  }, []);
-
-  return (
-    <View style={styles.pendingContainer}>
-      <View style={styles.pendingContent}>
-        <Animated.View
-          style={[
-            styles.pendingIconContainer,
-            { transform: [{ scale: pulseAnim }] }
-          ]}
-        >
-          <ActivityIndicator size="large" color={COLORS.primaryColor} />
-        </Animated.View>
-
-        <Text style={styles.pendingTitle}>Waiting for Approval</Text>
-        <Text style={styles.pendingSubtitle}>
-          You've requested to join this table.{'\n'}
-          Please wait for the table admin to approve your request.
-        </Text>
-
-        <View style={styles.pendingButtonContainer}>
-          <Button
-            onPress={onLeaveTable}
-          >
-            Cancel Request
-          </Button>
-        </View>
-      </View>
-    </View>
-  );
-};
 
 const TableScreen = () => {
   const dispatch = useDispatch();
@@ -214,16 +161,16 @@ const TableScreen = () => {
   const [isTableLocked, setIsTableLocked] = useState(false);
   const [showBannedPopup, setShowBannedPopup] = useState(false);
 
+  const [pendingUsers, setPendingUsers] = useState<TablePendingUsers>({});
+
   const { top, bottom } = useSafeAreaInsets();
 
-  // by default the user is pending (even if his joining was accepted before)
-  const [isUserPending, setIsUserPending] = useState(true);
 
   const handleInstructionSelect = (instruction: WaiterInstruction) => {
 
     const socketInstance = SocketService.getInstance();
 
-    // Emit leave table event
+    // Emit table instruction event
     socketInstance.emit(
       'message',
       {
@@ -312,44 +259,6 @@ const TableScreen = () => {
     );
   };
 
-  const joinTable = () => {
-    if (!userState) return;
-    const socketInstance = SocketService.getInstance();
-    console.log('sending table session', userState.tableSessionId);
-    console.log('sending table name', userState.branchTable);
-    socketInstance.emit(
-      'message',
-      {
-        type: 'UserJoinTable',
-        data: {
-          tableName: userState.branchTable,
-          user: {
-            id: userState.id,
-            name: userState.name,
-            image_url: userState.image_url,
-          },
-          session_table: userState.tableSessionId,
-        },
-      },
-      response => {
-        console.log('hello', response);
-        console.log('tableSessionId', userState.tableSessionId);
-        console.log('server Session', response.session_table);
-
-        if (response.success) {
-          setShowWelcomePopup(true);
-          dispatch(setSessionTableId(response.session_table));
-          console.log('new Tablesession', response.session_table);
-          return;
-        } else {
-          setShowBannedPopup(true);
-          console.log('cant join the table:', response);
-        }
-      },
-
-    );
-  };
-
   useEffect(() => {
     // Animate out when component unmounts
     return () => {
@@ -384,10 +293,6 @@ const TableScreen = () => {
     socketInstance.connect(DINEIN_SOCKET_URL, {
       authorization: `Bearer ${userState.jwt}` || '',
     });
-
-    // join Table
-    joinTable();
-
 
     // listen for kicking this user
     socketInstance.on('userKicked', (message) => {
@@ -510,17 +415,9 @@ const TableScreen = () => {
       // }
 
       if (message.users) {
-        const usersArr = Object.values(message.users);
 
-        // Create a new users object without banned users
-        const filteredUsersObject = Object.fromEntries(
-          Object.entries(message.users).filter(([_, user]) => !user?.isBanned)
-        );
+        setTableUsers(message.users);
 
-        setTableUsers(filteredUsersObject);
-
-        // check if the current user is pending to show the pending screen before being accepted.
-        setIsUserPending(!!(userState.id && message.users?.[userState.id.toString()]?.isPending))
       }
       if (message.items) {
         setOrderedItems(message.items as Record<string, OrderedItem>);
@@ -532,6 +429,10 @@ const TableScreen = () => {
 
       if (message.waiters) {
         setTableWaiters(message.waiters);
+      }
+
+      if (message.pendingUsers) {
+        setPendingUsers(message.pendingUsers);
       }
     });
 
@@ -621,38 +522,6 @@ const TableScreen = () => {
     Object.entries(orderedItems).filter(([_, item]) => item.deleted === 0),
   );
 
-  console.log(filteredOrderedItems);
-
-  // Show pending screen if user is pending
-  if (isUserPending) {
-    return (
-      <View style={[styles.container, {
-        paddingTop: top + 10,
-      }]}>
-        <View style={styles.headerContainer}>
-          <TouchableOpacity onPress={handleLeaveTable}>
-            <Icon_Sign_Out color={COLORS.white} />
-          </TouchableOpacity>
-        </View>
-        <PendingScreen onLeaveTable={handleLeaveTable} />
-        <BannedPopup
-          visible={showBannedPopup}
-          onClose={() => {
-            setShowBannedPopup(false);
-            // Reset the order type and session after user acknowledges
-            dispatch(
-              setOrderType({
-                menuType: null,
-                orderTypeAlias: null,
-              }),
-            );
-            dispatch(setSessionTableId(null));
-          }}
-        />
-      </View>
-    );
-  }
-
   return (
     <View style={[styles.container, {
       paddingTop: top
@@ -682,6 +551,7 @@ const TableScreen = () => {
         ]}>
         <View style={styles.usersListWrapper}>
           <TableUsersList
+            pendingUsers={pendingUsers}
             users={tableUsers}
             currentUser={
               currentUser.id ? tableUsers?.[currentUser.id] : undefined

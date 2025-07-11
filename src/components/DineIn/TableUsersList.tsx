@@ -12,9 +12,11 @@ import Animated, {
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../../theme';
 import { TableUsers, TableUser } from '../../screens/TableScreen';
 import DynamicPopup from '../UI/DynamicPopup';
+import { user } from '../../api/userApi';
 
 type Props = {
   users: TableUsers;
+  pendingUsers: TableUsers;
   currentUser?: TableUser;
   onUserPress?: (user: TableUser) => void;
   onApproveUser?: (user: TableUser) => void;
@@ -23,6 +25,7 @@ type Props = {
 
 const TableUsersList = ({
   users,
+  pendingUsers,
   currentUser,
   onUserPress,
   onApproveUser,
@@ -33,7 +36,7 @@ const TableUsersList = ({
   const [showApprovalPopup, setShowApprovalPopup] = useState(false);
 
   const handleUserPress = (user: TableUser) => {
-    if (user.isPending && !currentUser?.isPending) {
+    if (pendingUsers?.[user.id]) {
       setSelectedPendingUser(user);
       setShowApprovalPopup(true);
     } else if (isCurrentUserKing && !user.isKing && onUserPress) {
@@ -74,6 +77,7 @@ const TableUsersList = ({
         renderItem={({ item }) => (
           <UserItem
             user={item}
+            isUserPending={pendingUsers?.[item.id] !== undefined}
             isCurrentUserKing={isCurrentUserKing}
             onPress={() => handleUserPress(item)}
           />
@@ -114,21 +118,22 @@ const TableUsersList = ({
 };
 
 // Separate component for user item to handle individual animations
-const UserItem = ({ user, isCurrentUserKing, onPress }: {
+const UserItem = ({ isUserPending, user, isCurrentUserKing, onPress }: {
   user: TableUser;
   isCurrentUserKing?: boolean;
   onPress: () => void;
+  isUserPending: boolean
 }) => {
 
 
-  const isDisabled = (!isCurrentUserKing || user.isKing) && !user.isPending;
+  const isDisabled = (!isCurrentUserKing || user.isKing) && !isUserPending;
 
   return (
     <TouchableOpacity
       style={[
         styles.userContainer,
         // Add extra padding for pending users to accommodate animations
-        user.isPending && styles.pendingUserContainer
+        isUserPending && styles.pendingUserContainer
       ]}
       onPress={onPress}
       disabled={isDisabled}>
@@ -161,14 +166,14 @@ const UserItem = ({ user, isCurrentUserKing, onPress }: {
         )}
 
         {/* Ping animation for pending users */}
-        {user.isPending && (
+        {isUserPending && (
           <PingAnimation />
         )}
       </Animated.View>
 
       <Text style={[
         styles.userName,
-        user.isPending && styles.pendingUserName
+        isUserPending && styles.pendingUserName
       ]} numberOfLines={2}>
         {user.name}
       </Text>
