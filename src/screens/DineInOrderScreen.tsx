@@ -5,8 +5,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect} from 'react';
-import {useTranslation} from 'react-i18next';
+import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import Banner from '../components/Banner';
 import CategoryList from '../components/Menu/CategoryList';
 import OffersList from '../components/Menu/OffersList';
@@ -14,12 +14,13 @@ import ItemsList from '../components/Menu/ItemsList';
 import CartCounter from '../components/Menu/CartCounter';
 import NotificationsCounter from '../components/Notifications/NotificationsCounter';
 import Icon_BackArrow from '../../assets/SVG/Icon_BackArrow';
-import {useGetHomepageQuery} from '../api/homeApi';
-import {useSelector} from 'react-redux';
-import {RootState} from '../store/store';
-import {useNavigation} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {DineInOrderStackParamList} from '../navigation/DineInOrderStack';
+import { useGetHomepageQuery } from '../api/homeApi';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store/store';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { DineInOrderStackParamList } from '../navigation/DineInOrderStack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const bannerData = [
   {
@@ -40,11 +41,11 @@ type DineInOrderScreenNavigationProp =
   NativeStackNavigationProp<DineInOrderStackParamList>;
 
 const DineInOrderScreen = () => {
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const navigation = useNavigation<DineInOrderScreenNavigationProp>();
   const state = useSelector((state: RootState) => state.user);
 
-  const {data, isLoading, error} = useGetHomepageQuery({
+  const { data, isLoading, error } = useGetHomepageQuery({
     menu: 'mobile-app-delivery',
     branch: state.branchTable
       ? state.branchTable.split('.')?.[0]?.toLowerCase()
@@ -57,12 +58,16 @@ const DineInOrderScreen = () => {
   const favoriteItems = data?.favorite_items;
   const bestSellers = data?.best_sellers;
 
+  const { top } = useSafeAreaInsets();
+
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View>
           <Banner data={bannerData} />
-          <View style={styles.headerContainer}>
+          <View style={[styles.headerContainer, {
+            top
+          }]}>
             <View
               style={{
                 width: 70,
@@ -73,7 +78,7 @@ const DineInOrderScreen = () => {
               }}>
               <TouchableOpacity
                 onPress={() => navigation.goBack()}
-                style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Icon_BackArrow color={'#FFF'} />
                 <Text
                   style={{
@@ -153,15 +158,15 @@ const DineInOrderScreen = () => {
                 title="Best Sellers"
                 data={bestSellers ?? []}
                 onPress={() => navigation.navigate('BestSellers')}
-                onItemPress={() => {}}
-                // onItemPress={(id) => {navigation.navigate('MenuItem', {
-                //   itemId: id
-                // })} }
+                onItemPress={() => { }}
+              // onItemPress={(id) => {navigation.navigate('MenuItem', {
+              //   itemId: id
+              // })} }
               />
             }
           </View>
         </View>
-        <View style={{height: 16}} />
+        <View style={{ height: 16 }} />
       </ScrollView>
     </View>
   );

@@ -10,7 +10,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGetWaiterInstructionsQuery } from '../../../api/dataApi';
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 
-
 type Props = {
   waiter: TableWaiter;
   onSelectInstruction: (instruction: WaiterInstruction) => void;
@@ -62,7 +61,7 @@ const WaiterInstructionsSheet = forwardRef<BottomSheet, Props>(({
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
-              {instructions && [...instructions, ...instructions, ...instructions, ...instructions, ...instructions, ...instructions].map((instruction, index) => (
+              {instructions?.map((instruction, index) => (
                 <View key={instruction.id + index} style={{ marginBottom: 8 }}>
                   <TouchableOpacity
                     style={styles.instructionItem}

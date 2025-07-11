@@ -374,7 +374,7 @@ const CheckoutScreen = () => {
 
       <DynamicSheet ref={scheduleOrderRef}>
         <BottomSheetView style={[styles.scheduleSheetContainer, {
-          paddingBottom: bottom
+          paddingBottom: bottom + 20
         }]}>
           <Text style={styles.scheduleSheetTitle}>Schedule Your Order</Text>
           <View style={styles.scheduleInputsContainer}>

@@ -31,7 +31,7 @@ interface CartModifierGroup {
 interface ModifierItem {
   plu: string;
   id: number;
-  price: number;
+  price: number | null;
   quantity: number;
   modifier_items_id: number;
   // optional for now

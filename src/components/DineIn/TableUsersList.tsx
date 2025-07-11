@@ -80,6 +80,7 @@ const TableUsersList = ({
         )}
       />
 
+      {/* Approval Popup */}
       <DynamicPopup visible={showApprovalPopup} onClose={closePopup}>
         <View style={styles.approvalContent}>
           <View style={styles.userPreview}>

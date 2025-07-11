@@ -220,8 +220,28 @@ const TableScreen = () => {
   const [isUserPending, setIsUserPending] = useState(true);
 
   const handleInstructionSelect = (instruction: WaiterInstruction) => {
-    // In a real app, this would send the instruction to the backend
-    console.log(`Sending instruction: ${instruction.name}`);
+
+    const socketInstance = SocketService.getInstance();
+
+    // Emit leave table event
+    socketInstance.emit(
+      'message',
+      {
+        type: 'sendTableNotification',
+        data: {
+          tableName: userState.branchTable,
+          user: {
+            id: userState.id,
+            name: userState.name
+          },
+          notification: {
+            id: instruction.id,
+            type: 'order',
+            message: instruction.description
+          }
+        },
+      },)
+
     waiterSheetRef.current?.close();
   };
 
@@ -377,6 +397,7 @@ const TableScreen = () => {
     // listen for updates
     socketInstance.on('tableUpdate', (message: TableUpdateMessage) => {
       console.log('tableUpdate ', message);
+
       // const message = {
       //   "waiters": {
       //     "28": {
@@ -563,9 +584,8 @@ const TableScreen = () => {
             type: 'promoteUserToKing',
             data: {
               tableName: userState.branchTable,
-              user: {
-                id: selectedUserForKingActions.id,
-              },
+              user_id: selectedUserForKingActions.id,
+
             },
           },)
         break;
@@ -606,9 +626,10 @@ const TableScreen = () => {
   // Show pending screen if user is pending
   if (isUserPending) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, {
+        paddingTop: top + 10,
+      }]}>
         <View style={styles.headerContainer}>
-          <Text style={styles.headerTitle}>Table Request</Text>
           <TouchableOpacity onPress={handleLeaveTable}>
             <Icon_Sign_Out color={COLORS.white} />
           </TouchableOpacity>
@@ -684,14 +705,13 @@ const TableScreen = () => {
       )}
 
       {/* King Actions Popup */}
-      {selectedUserForKingActions && (
-        <KingActionsSheet
-          user={selectedUserForKingActions}
-          actions={kingActions}
-          onSelectAction={handleKingActionSelect}
-          ref={kingActionsSheetRef}
-        />
-      )}
+
+      <KingActionsSheet
+        user={selectedUserForKingActions}
+        actions={selectedUserForKingActions?.isKing ? kingActions.filter((action) => action.key !== 'make-table-admin') : kingActions}
+        onSelectAction={handleKingActionSelect}
+        ref={kingActionsSheetRef}
+      />
 
       {/* Welcome Popup */}
       <WelcomePopup
@@ -730,7 +750,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: 'row',
     height: 80,
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     paddingHorizontal: SCREEN_PADDING.horizontal,
     gap: 10,
@@ -780,6 +800,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderTopWidth: 1,
     borderTopColor: `${COLORS.foregroundColor}20`,
+    marginBottom: 10,
   },
   // Pending Screen Styles
   pendingContainer: {

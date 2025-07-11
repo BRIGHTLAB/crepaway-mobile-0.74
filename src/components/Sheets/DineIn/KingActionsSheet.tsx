@@ -16,13 +16,16 @@ export type Action = {
 };
 
 type Props = {
-  user: TableUser;
+  user: TableUser | null;
   actions: Action[];
   onSelectAction: (action: Action) => void;
 };
 
 const KingActionsSheet = forwardRef<BottomSheet, Props>(
   ({ actions, onSelectAction, user }, ref) => {
+
+    if (!user) return <></>
+
     const Footer = ({ animatedFooterPosition }: BottomSheetFooterProps) => (
       <BottomSheetFooter
         animatedFooterPosition={animatedFooterPosition}
@@ -38,7 +41,7 @@ const KingActionsSheet = forwardRef<BottomSheet, Props>(
     );
 
     return (
-      <DynamicSheet ref={ref} footerComponent={Footer}>
+      <DynamicSheet ref={ref} footerComponent={Footer} snapPoints={['50%']}>
         <View style={styles.userProfile}>
           <FastImage
             style={styles.userSheetImage}
@@ -50,7 +53,7 @@ const KingActionsSheet = forwardRef<BottomSheet, Props>(
         </View>
         <View
           style={{
-            paddingBottom: 150,
+            paddingBottom: 170,
           }}
         >
           <BottomSheetScrollView
@@ -59,13 +62,12 @@ const KingActionsSheet = forwardRef<BottomSheet, Props>(
             showsVerticalScrollIndicator={false}
           >
             {actions.map((action, index) => (
-              <View key={action.id + index} style={{ marginBottom: 8 }}>
-                <TouchableOpacity
-                  style={styles.instructionItem}
-                  onPress={() => onSelectAction(action)}>
-                  <Text style={styles.instructionText}>{action.text}</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                key={action.id + index}
+                style={styles.instructionItem}
+                onPress={() => onSelectAction(action)}>
+                <Text style={styles.instructionText}>{action.text}</Text>
+              </TouchableOpacity>
             ))}
           </BottomSheetScrollView>
         </View>
@@ -103,6 +105,7 @@ const styles = StyleSheet.create({
   },
   actionsContainer: {
     paddingTop: 18,
+    gap: 12,
   },
   instructionItem: {
     padding: 16,

@@ -253,7 +253,7 @@ const MenuItemScreen = ({ }: IProps) => {
         return (
           total +
           modifierGroup.modifier_items.reduce((groupTotal, modifierItem) => {
-            return groupTotal + modifierItem.price * modifierItem.quantity;
+            return groupTotal + (modifierItem.price || 0) * modifierItem.quantity;
           }, 0)
         );
       }

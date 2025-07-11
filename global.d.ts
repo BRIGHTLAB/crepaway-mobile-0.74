@@ -135,7 +135,7 @@ type Status = {
 interface SelectedModifierItem {
   plu: string;
   id: number;
-  price: number;
+  price: number | null;
   quantity: number;
   modifier_items_id: number;
   name: string;
@@ -240,4 +240,5 @@ type WaiterInstruction = {
   id: number;
   name: string;
   description: string;
+  type: string;
 };
