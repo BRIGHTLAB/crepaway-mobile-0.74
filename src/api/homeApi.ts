@@ -2,6 +2,7 @@ import { baseApi } from './baseApi';
 
 export interface HomepageResponse {
     categories: Category[];
+    featured_items: Item[];
     new_items: Item[];
     exclusive_offers: Offer[];
     favorite_items: Item[];

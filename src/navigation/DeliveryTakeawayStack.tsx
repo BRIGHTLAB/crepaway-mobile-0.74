@@ -1,48 +1,48 @@
-import { StyleSheet, Text, View } from 'react-native';
-import React, { useEffect } from 'react';
-import SearchScreen from '../screens/SearchScreen';
-import Icon_Nav_Search from '../../assets/SVG/Icon_Nav_Search';
-import OrdersScreen from '../screens/OrdersScreen';
-import Icon_Nav_Orders from '../../assets/SVG/Icon_Nav_Order';
-import HomeScreen from '../screens/HomeScreen';
-import Icon_Nav_Home from '../../assets/SVG/Icon_Nav_Home';
-import FavoritesScreen from '../screens/FavoritesScreen';
-import Icon_Nav_Fav from '../../assets/SVG/Icon_Nav_Fav';
-import ProfileScreen from '../screens/ProfileScreen';
-import Icon_Nav_Profile from '../../assets/SVG/Icon_Nav_Profile';
+import { TouchableOpacity } from '@gorhom/bottom-sheet';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useNavigation } from '@react-navigation/native';
 import {
   createNativeStackNavigator,
   NativeStackNavigationProp,
 } from '@react-navigation/native-stack';
-import OffersScreen from '../screens/OffersScreen';
+import React, { useEffect } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import Icon_Nav_Fav from '../../assets/SVG/Icon_Nav_Fav';
+import Icon_Nav_Home from '../../assets/SVG/Icon_Nav_Home';
+import Icon_Nav_Orders from '../../assets/SVG/Icon_Nav_Order';
+import Icon_Nav_Profile from '../../assets/SVG/Icon_Nav_Profile';
+import Icon_Nav_Search from '../../assets/SVG/Icon_Nav_Search';
+import { useGetCartQuery } from '../api/cartApi';
+import CustomHeader from '../components/Header';
+import CartCounter from '../components/Menu/CartCounter';
+import NotificationsCounter from '../components/Notifications/NotificationsCounter';
+import AddressMapScreen from '../screens/AddressMapScreen';
+import AllergiesScreen from '../screens/AllergiesScreen';
+import CartScreen from '../screens/CartScreen';
+import CheckoutScreen from '../screens/CheckoutScreen';
+import FAQScreen from '../screens/FAQScreen';
+import FavoritesScreen from '../screens/FavoritesScreen';
+import FeaturedItemsScreen from '../screens/FeaturedItemsScreen';
+import HomeScreen from '../screens/HomeScreen';
+import LegalScreen from '../screens/LegalScreen';
+import MenuItemScreen from '../screens/MenuItemScreen';
 import MenuItemsScreen from '../screens/MenuItemsScreen';
 import NewItemsScreen from '../screens/NewItemsScreen';
-import MenuItemScreen from '../screens/MenuItemScreen';
-import OfferDetailsScreen from '../screens/OfferDetailsScreen';
-import { TouchableOpacity } from '@gorhom/bottom-sheet';
-import CartScreen from '../screens/CartScreen';
-import CartCounter from '../components/Menu/CartCounter';
-import { StackActions, useNavigation } from '@react-navigation/native';
-import { RootStackParamList } from './NavigationStack';
-import CustomHeader from '../components/Header';
-import ProfileSettingsScreen from '../screens/ProfileSettingsScreen';
-import ProfileAddressesScreen from '../screens/ProfileAddressesScreen';
-import AddressMapScreen from '../screens/AddressMapScreen';
-import LegalScreen from '../screens/LegalScreen';
-import FAQScreen from '../screens/FAQScreen';
-import PaymentMethodsScreen from '../screens/PaymentMethodsScreen';
-import AllergiesScreen from '../screens/AllergiesScreen';
-import NotificationsCounter from '../components/Notifications/NotificationsCounter';
 import NotificationsScreen from '../screens/NotificationsScreen';
-import CheckoutScreen from '../screens/CheckoutScreen';
-import TrackOrderScreen from '../screens/TrackOrderScreen';
-import { useAppDispatch } from '../store/store';
-import { CartItem, setCartFromFetch } from '../store/slices/cartSlice';
-import { GET } from '../api';
+import OfferDetailsScreen from '../screens/OfferDetailsScreen';
+import OffersScreen from '../screens/OffersScreen';
 import OrderDetailsScreen from '../screens/OrderDetailsScreen';
-import { useGetCartQuery } from '../api/cartApi';
+import OrdersScreen from '../screens/OrdersScreen';
+import PaymentMethodsScreen from '../screens/PaymentMethodsScreen';
+import ProfileAddressesScreen from '../screens/ProfileAddressesScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+import ProfileSettingsScreen from '../screens/ProfileSettingsScreen';
+import SearchScreen from '../screens/SearchScreen';
+import TrackOrderScreen from '../screens/TrackOrderScreen';
+import { setCartFromFetch } from '../store/slices/cartSlice';
+import { useAppDispatch } from '../store/store';
 import { COLORS } from '../theme';
+import { RootStackParamList } from './NavigationStack';
 
 interface CustomBottomTabProps {
   state: {
@@ -130,6 +130,7 @@ export type DeliveryTakeawayStackParamList = {
   OfferDetails: { itemId: number };
   FavoriteItems: undefined;
   NewItems: undefined;
+  featuredItems: undefined;
   MenuItems: { item: Category };
   MenuItem: { itemId: number; itemUuid?: string };
   Cart: undefined;
@@ -262,6 +263,37 @@ const HomeStack = () => {
         component={NewItemsScreen}
         options={{
           headerTitle: 'New Items',
+          headerLeft: () => <CustomHeader />,
+          headerTitleAlign: 'center',
+          headerRight: () => (
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: 5,
+              }}>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('HomeStack', { screen: 'Cart' })
+                }>
+                <CartCounter />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('HomeStack', {
+                    screen: 'Notifications',
+                  })
+                }>
+                <NotificationsCounter />
+              </TouchableOpacity>
+            </View>
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="featuredItems"
+        component={FeaturedItemsScreen}
+        options={{
+          headerTitle: 'Featured Items',
           headerLeft: () => <CustomHeader />,
           headerTitleAlign: 'center',
           headerRight: () => (

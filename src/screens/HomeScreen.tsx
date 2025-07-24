@@ -1,3 +1,7 @@
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   BackHandler,
   ScrollView,
@@ -6,24 +10,19 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import Banner from '../components/Banner';
-import CategoryList from '../components/Menu/CategoryList';
-import OffersList from '../components/Menu/OffersList';
-import ItemsList from '../components/Menu/ItemsList';
-import { GET } from '../api';
-import CartCounter from '../components/Menu/CartCounter';
-import { RootState, useAppDispatch } from '../store/store';
-import NotificationsCounter from '../components/Notifications/NotificationsCounter';
-import Icon_BackArrow from '../../assets/SVG/Icon_BackArrow';
-import { setOrderType } from '../store/slices/userSlice';
-import { useGetHomepageQuery } from '../api/homeApi';
-import { useSelector } from 'react-redux';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
+import Icon_BackArrow from '../../assets/SVG/Icon_BackArrow';
+import { useGetHomepageQuery } from '../api/homeApi';
+import Banner from '../components/Banner';
+import CartCounter from '../components/Menu/CartCounter';
+import CategoryList from '../components/Menu/CategoryList';
+import ItemsList from '../components/Menu/ItemsList';
+import OffersList from '../components/Menu/OffersList';
+import NotificationsCounter from '../components/Notifications/NotificationsCounter';
+import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
+import { setOrderType } from '../store/slices/userSlice';
+import { RootState, useAppDispatch } from '../store/store';
 
 const bannerData = [
   {
@@ -80,6 +79,7 @@ const HomeScreen = () => {
 
   const categories = data?.categories;
   const newItems = data?.new_items;
+  const featuredItems = data?.featured_items;
   const exclusiveOffers = data?.exclusive_offers;
   const favoriteItems = data?.favorite_items;
   const bestSellers = data?.best_sellers;
@@ -159,6 +159,19 @@ const HomeScreen = () => {
               // onItemPress={(id) => {navigation.navigate('', {
               //   itemId: id
               // })} }
+              />
+            }
+            {
+              <ItemsList
+                isLoading={isLoading}
+                title="Feaftured Items"
+                data={featuredItems ?? []}
+                onPress={() => navigation.navigate('featuredItems')}
+                onItemPress={id =>
+                  navigation.navigate('MenuItem', {
+                    itemId: id,
+                  })
+                }
               />
             }
             {

@@ -261,10 +261,12 @@ const MenuItemScreen = ({ }: IProps) => {
     }, 0);
   };
 
-  // console.log(
-  //   'itemmmmmmmmmm moddd grouppp',
-  //   JSON.stringify(item?.modifier_groups),
-  // );
+
+
+  console.log(
+    'itemmmmmmmmmm moddd grouppp',
+    JSON.stringify(item?.modifier_groups),
+  );
 
   const headerHeight = useHeaderHeight();
   return (
