@@ -51,6 +51,7 @@ const HomeScreen = () => {
   const { bottom, top } = useSafeAreaInsets();
 
 
+
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
       'hardwareBackPress',
@@ -76,6 +77,9 @@ const HomeScreen = () => {
     menu: 'mobile-app-delivery',
     branch: state.branchName ? state.branchName?.toLowerCase() : '',
   });
+
+  console.log('data', data?.featured_items)
+
 
   const categories = data?.categories;
   const newItems = data?.new_items;
@@ -148,6 +152,19 @@ const HomeScreen = () => {
             {
               <ItemsList
                 isLoading={isLoading}
+                title="Featured Items"
+                data={featuredItems ?? []}
+                onPress={() => navigation.navigate('featuredItems')}
+                onItemPress={id =>
+                  navigation.navigate('MenuItem', {
+                    itemId: id,
+                  })
+                }
+              />
+            }
+            {
+              <ItemsList
+                isLoading={isLoading}
                 title="Fav Items"
                 data={favoriteItems ?? []}
                 onPress={() => navigation.navigate('FavoriteItems')}
@@ -161,19 +178,7 @@ const HomeScreen = () => {
               // })} }
               />
             }
-            {
-              <ItemsList
-                isLoading={isLoading}
-                title="Feaftured Items"
-                data={featuredItems ?? []}
-                onPress={() => navigation.navigate('featuredItems')}
-                onItemPress={id =>
-                  navigation.navigate('MenuItem', {
-                    itemId: id,
-                  })
-                }
-              />
-            }
+
             {
               <ItemsList
                 isLoading={isLoading}
