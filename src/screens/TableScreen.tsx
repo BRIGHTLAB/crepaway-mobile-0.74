@@ -1,56 +1,49 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  FlatList,
-  BackHandler,
-  Animated,
-  Dimensions,
-  Easing,
-  ActivityIndicator,
-} from 'react-native';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { TouchableOpacity } from '@gorhom/bottom-sheet';
-import {
-  COLORS,
-  DINEIN_SOCKET_URL,
-  DRIVER_SOCKET_URL,
-  SCREEN_PADDING,
-  TYPOGRAPHY,
-} from '../theme';
-import FastImage from 'react-native-fast-image';
-import BottomSheet from '@gorhom/bottom-sheet';
-import TableUsersList from '../components/DineIn/TableUsersList';
-import OrderedItemsList from '../components/DineIn/OrderedItemsList';
-import WaiterInstructionsSheet from '../components/Sheets/DineIn/WaiterInstructionsSheet';
-import WelcomePopup from '../components/DineIn/WelcomePopup';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { DineInStackParamList } from '../navigation/DineInStack';
+import BottomSheet, { TouchableOpacity } from '@gorhom/bottom-sheet';
 import {
   RouteProp,
   useFocusEffect,
   useNavigation,
-  useRoute,
+  useRoute
 } from '@react-navigation/native';
-import DynamicSheet from '../components/Sheets/DynamicSheet';
-import SocketService from '../utils/SocketService';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Animated,
+  BackHandler,
+  Dimensions,
+  Easing,
+  FlatList,
+  StyleSheet,
+  Text,
+  View
+} from 'react-native';
+import FastImage from 'react-native-fast-image';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
-import store, { RootState } from '../store/store';
+import Icon_Sign_Out from '../../assets/SVG/Icon_Sign_Out';
+import BannedPopup from '../components/DineIn/BannedPopup';
+import OrderedItemsList from '../components/DineIn/OrderedItemsList';
+import TableUsersList from '../components/DineIn/TableUsersList';
+import WelcomePopup from '../components/DineIn/WelcomePopup';
+import KingActionsSheet, {
+  Action,
+} from '../components/Sheets/DineIn/KingActionsSheet';
+import WaiterInstructionsSheet from '../components/Sheets/DineIn/WaiterInstructionsSheet';
+import Button from '../components/UI/Button';
+import { DineInStackParamList } from '../navigation/DineInStack';
 import {
   setBranchTable,
   setOrderType,
   setSessionTableId,
 } from '../store/slices/userSlice';
-import { RootStackParamList } from '../navigation/NavigationStack';
-import Icon_Alert from '../../assets/SVG/Icon_Alert';
-import Button from '../components/UI/Button';
-import Icon_Sign_Out from '../../assets/SVG/Icon_Sign_Out';
-import KingActionsSheet, {
-  Action,
-} from '../components/Sheets/DineIn/KingActionsSheet';
-import { user } from '../api/userApi';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import BannedPopup from '../components/DineIn/BannedPopup';
+import store, { RootState } from '../store/store';
+import {
+  COLORS,
+  DINEIN_SOCKET_URL,
+  SCREEN_PADDING,
+  TYPOGRAPHY
+} from '../theme';
+import SocketService from '../utils/SocketService';
 
 export type OrderedItem = {
   id: number;
@@ -108,7 +101,10 @@ export type TableUser = {
 
 export type TableUsers = Record<string, TableUser>;
 
-export type TablePendingUsers = Record<string, TableUser>;
+export type PendingJoinRequests = Record<string, {
+  timestamp: number;
+  user: TableUser
+}>;
 
 export type TableWaiter = {
   id: number;
@@ -122,7 +118,7 @@ export type TableWaiters = Record<string, TableWaiter>;
 type TableUpdateMessage = {
   users: TableUsers,
   waiters: TableWaiters,
-  pendingUsers: TablePendingUsers,
+  pendingJoinRequests: PendingJoinRequests,
   items: OrderedItems,
   isLocked: boolean,
 }
@@ -136,6 +132,13 @@ const kingActions: Action[] = [
   { id: 1, key: 'remove-from-table', text: 'Remove from table' },
   { id: 2, key: 'make-table-admin', text: 'Make table admin' },
 ];
+
+type TableScreenRouteProp = RouteProp<
+  DineInStackParamList,
+  'Table'
+>;
+
+
 
 
 const TableScreen = () => {
@@ -161,14 +164,34 @@ const TableScreen = () => {
   const [isTableLocked, setIsTableLocked] = useState(false);
   const [showBannedPopup, setShowBannedPopup] = useState(false);
 
-  const [pendingUsers, setPendingUsers] = useState<TablePendingUsers>({});
+  const [pendingJoinRequests, setPendingJoinRequests] = useState<PendingJoinRequests>({});
 
+  const socketInstance = SocketService.getInstance();
   const { top, bottom } = useSafeAreaInsets();
+
+  const route = useRoute<TableScreenRouteProp>();
+  const wasApproved = route.params?.wasApproved ?? false;
+
+
+
+  // when the user joins after first approval we request the data.
+  useEffect(() => {
+    if (!wasApproved) return;
+
+    socketInstance.emit(
+      'message',
+      {
+        type: 'triggerTableUpdate',
+        data: {
+          tableName: userState.branchTable,
+        },
+      },)
+
+  }, [wasApproved])
 
 
   const handleInstructionSelect = (instruction: WaiterInstruction) => {
 
-    const socketInstance = SocketService.getInstance();
 
     // Emit table instruction event
     socketInstance.emit(
@@ -284,6 +307,8 @@ const TableScreen = () => {
     }
   }, [showWelcomePopup]);
 
+
+
   useEffect(() => {
     // dynamicSheetRef.current?.expand();
 
@@ -303,116 +328,6 @@ const TableScreen = () => {
     socketInstance.on('tableUpdate', (message: TableUpdateMessage) => {
       console.log('tableUpdate ', message);
 
-      // const message = {
-      //   "waiters": {
-      //     "28": {
-      //       "id": 28,
-      //       "name": "Serge Massaad",
-      //       "image_url": "https://d3u6vq5nc7ocvb.cloudfront.net/users/users_utYt0QhGbx.jpg",
-      //       "socketId": "xgwv3QNT62KMvV2dAAAZ",
-      //       "isOnline": true,
-      //       "isKing": true,
-      //       "isPending": false
-      //     }
-      //   },
-      //   "users": {
-      //     "28": {
-      //       "id": 28,
-      //       "name": "Serge Massaad",
-      //       "image_url": "https://d3u6vq5nc7ocvb.cloudfront.net/users/users_utYt0QhGbx.jpg",
-      //       "socketId": "xgwv3QNT62KMvV2dAAAZ",
-      //       "isOnline": true,
-      //       "isKing": true,
-      //       "isPending": false
-      //     },
-      //     "31": {
-      //       "id": 31,
-      //       "name": "BL Test Phase 1",
-      //       "image_url": "http://picsum.photos/500",
-      //       "socketId": "dIiBwfGFs17o0WJTAAAC",
-      //       "isOnline": true,
-      //       "isKing": false,
-      //       "isPending": false
-      //     }
-      //   },
-      //   "activity": [],
-      //   "items": {
-      //     "ec47018b-b616-463e-bb5e-58b9d6445ef9": {
-      //       "id": 1857,
-      //       "name": "CAJUN CHICKEN TAQUITOS",
-      //       "image_url": "https://d3vfh4cqgoixck.cloudfront.net/items/items_GeqIplzwK9.webp",
-      //       "price": 5.25,
-      //       "symbol": "$",
-      //       "quantity": 1,
-      //       "special_instruction": "",
-      //       "modifier_groups": [],
-      //       "epoch": 1750420919984,
-      //       "status": "pending",
-      //       "deleted": 1,
-      //       "added_by": {
-      //         "id": 28,
-      //         "name": "Serge Massaad",
-      //         "image_url": "https://d3u6vq5nc7ocvb.cloudfront.net/users/users_utYt0QhGbx.jpg",
-      //         "type": "user"
-      //       },
-      //       "uuid": "ec47018b-b616-463e-bb5e-58b9d6445ef9",
-      //       "disabled": false,
-      //     },
-      //     "dd577b21-e04a-4a2b-b883-f294551aa01a": {
-      //       "id": 1857,
-      //       "name": "CAJUN CHICKEN TAQUITOS",
-      //       "image_url": "https://d3vfh4cqgoixck.cloudfront.net/items/items_GeqIplzwK9.webp",
-      //       "price": 5.25,
-      //       "symbol": "$",
-      //       "quantity": 1,
-      //       "special_instruction": "",
-      //       "modifier_groups": [
-      //         {
-      //           "id": 777,
-      //           "name": "Remove Ingredients",
-      //           "modifier_groups_id": 83,
-      //           "modifier_items": [
-      //             {
-      //               "id": 3192,
-      //               "name": "Cheese Spices",
-      //               "price": null,
-      //               "quantity": 1,
-      //               "plu": "20168",
-      //               "modifier_items_id": 149
-      //             }
-      //           ]
-      //         },
-      //         {
-      //           "id": 778,
-      //           "name": "Choose Dip",
-      //           "modifier_groups_id": 86,
-      //           "modifier_items": [
-      //             {
-      //               "id": 3193,
-      //               "name": "Cajun Dip",
-      //               "price": null,
-      //               "quantity": 2,
-      //               "plu": "3977",
-      //               "modifier_items_id": 128
-      //             }
-      //           ]
-      //         }
-      //       ],
-      //       "epoch": 1750422688096,
-      //       "status": "pending",
-      //       "deleted": 0,
-      //       "added_by": {
-      //         "id": 28,
-      //         "name": "Serge Massaad",
-      //         "image_url": "https://d3u6vq5nc7ocvb.cloudfront.net/users/users_utYt0QhGbx.jpg",
-      //         "type": "user"
-      //       },
-      //       "disabled": false,
-      //     }
-      //   },
-      //   "session_table": "1750420670573",
-      //   "isLocked": false
-      // }
 
       if (message.users) {
 
@@ -423,16 +338,14 @@ const TableScreen = () => {
         setOrderedItems(message.items as Record<string, OrderedItem>);
       }
 
-      if (message.isLocked) {
-        setIsTableLocked(message.isLocked)
-      }
+      setIsTableLocked(message.isLocked)
 
       if (message.waiters) {
         setTableWaiters(message.waiters);
       }
 
-      if (message.pendingUsers) {
-        setPendingUsers(message.pendingUsers);
+      if (message.pendingJoinRequests) {
+        setPendingJoinRequests(message.pendingJoinRequests);
       }
     });
 
@@ -522,6 +435,32 @@ const TableScreen = () => {
     Object.entries(orderedItems).filter(([_, item]) => item.deleted === 0),
   );
 
+  const handleApproveUser = (user: TableUser) => {
+    socketInstance.emit(
+      'message',
+      {
+        type: 'approveJoinRequest',
+        data: {
+          tableName: userState.branchTable,
+          user_id: user.id,
+          approved: true
+        },
+      },)
+  }
+
+  const handleRejectUser = (user: TableUser) => {
+    socketInstance.emit(
+      'message',
+      {
+        type: 'approveJoinRequest',
+        data: {
+          tableName: userState.branchTable,
+          user_id: user.id,
+          approved: false
+        },
+      },)
+  }
+
   return (
     <View style={[styles.container, {
       paddingTop: top
@@ -551,17 +490,23 @@ const TableScreen = () => {
         ]}>
         <View style={styles.usersListWrapper}>
           <TableUsersList
-            pendingUsers={pendingUsers}
+            pendingUsers={Object.fromEntries(
+              Object.entries(pendingJoinRequests).map(
+                ([key, { user }]) => [key, user]
+              )
+            )}
             users={tableUsers}
             currentUser={
               currentUser.id ? tableUsers?.[currentUser.id] : undefined
             } // current user to determine if the y re king
             onUserPress={handleUserPress}
+            onApproveUser={handleApproveUser}
+            onRejectUser={handleRejectUser}
           />
         </View>
         <OrderedItemsList items={filteredOrderedItems} users={tableUsers} isTableLocked={isTableLocked} />
         <View style={styles.orderButtonContainer}>
-          <Button onPress={handleOrderPress}>Order</Button>
+          <Button onPress={handleOrderPress} disabled={isTableLocked}>Order</Button>
         </View>
       </Animated.View>
 

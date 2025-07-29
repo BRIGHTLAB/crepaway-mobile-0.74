@@ -1,18 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
   Easing,
   cancelAnimation,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
 } from 'react-native-reanimated';
+import { TableUser, TableUsers } from '../../screens/TableScreen';
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../../theme';
-import { TableUsers, TableUser } from '../../screens/TableScreen';
 import DynamicPopup from '../UI/DynamicPopup';
-import { user } from '../../api/userApi';
 
 type Props = {
   users: TableUsers;
@@ -65,14 +64,15 @@ const TableUsersList = ({
     setSelectedPendingUser(null);
   };
 
+
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Table Users</Text>
       <FlatList
-        data={Object.values(users)}
+        data={[...Object.values(users), ...Object.values(pendingUsers)]}
         horizontal
         showsHorizontalScrollIndicator={false}
-        keyExtractor={item => item.id.toString()}
+        keyExtractor={(_, idx) => idx.toString()}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
           <UserItem

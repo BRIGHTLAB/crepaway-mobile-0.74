@@ -1,21 +1,21 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
-import IntroScreen from '../screens/IntroScreen';
-import ScanTableScreen from '../screens/ScanTableScreen';
-import TableScreen from '../screens/TableScreen';
-import DineInOrderStack from './DineInOrderStack';
-import CustomHeader from '../components/Header';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { useDispatch } from 'react-redux';
-import { setOrderType } from '../store/slices/userSlice';
 import Icon_BackArrow from '../../assets/SVG/Icon_BackArrow';
 import DineInPendingScreen from '../screens/DineInPendingScreen';
+import ScanTableScreen from '../screens/ScanTableScreen';
+import TableScreen from '../screens/TableScreen';
+import { setOrderType } from '../store/slices/userSlice';
+import DineInOrderStack from './DineInOrderStack';
 
 const Stack = createNativeStackNavigator();
 export type DineInStackParamList = {
   ScanTable: undefined;
   Pending: undefined;
-  Table: undefined;
+  Table: {
+    wasApproved: boolean
+  } | undefined;
   OrderStack:
   | {
     screen?: string;

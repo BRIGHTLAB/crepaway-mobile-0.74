@@ -155,10 +155,11 @@ const HomeScreen = () => {
                 title="Featured Items"
                 data={featuredItems ?? []}
                 onPress={() => navigation.navigate('featuredItems')}
-                onItemPress={id =>
+                onItemPress={id => {
                   navigation.navigate('MenuItem', {
                     itemId: id,
                   })
+                }
                 }
               />
             }

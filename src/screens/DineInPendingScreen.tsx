@@ -1,56 +1,39 @@
-import {
-    StyleSheet,
-    Text,
-    View,
-    FlatList,
-    BackHandler,
-    Animated,
-    Dimensions,
-    Easing,
-    ActivityIndicator,
-} from 'react-native';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { TouchableOpacity } from '@gorhom/bottom-sheet';
 import {
-    COLORS,
-    DINEIN_SOCKET_URL,
-    DRIVER_SOCKET_URL,
-    SCREEN_PADDING,
-    TYPOGRAPHY,
-} from '../theme';
-import FastImage from 'react-native-fast-image';
-import BottomSheet from '@gorhom/bottom-sheet';
-import TableUsersList from '../components/DineIn/TableUsersList';
-import OrderedItemsList from '../components/DineIn/OrderedItemsList';
-import WaiterInstructionsSheet from '../components/Sheets/DineIn/WaiterInstructionsSheet';
-import WelcomePopup from '../components/DineIn/WelcomePopup';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { DineInStackParamList } from '../navigation/DineInStack';
-import {
-    RouteProp,
     useFocusEffect,
-    useNavigation,
-    useRoute,
+    useNavigation
 } from '@react-navigation/native';
-import DynamicSheet from '../components/Sheets/DynamicSheet';
-import SocketService from '../utils/SocketService';
-import { useDispatch, useSelector } from 'react-redux';
-import store, { RootState } from '../store/store';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+    ActivityIndicator,
+    Animated,
+    BackHandler,
+    Dimensions,
+    Easing,
+    StyleSheet,
+    Text,
+    View
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useDispatch } from 'react-redux';
+import Icon_Sign_Out from '../../assets/SVG/Icon_Sign_Out';
+import InfoPopup from '../components/Popups/InfoPopup';
+import Button from '../components/UI/Button';
+import { DineInStackParamList } from '../navigation/DineInStack';
 import {
     setBranchTable,
     setOrderType,
     setSessionTableId,
 } from '../store/slices/userSlice';
-import { RootStackParamList } from '../navigation/NavigationStack';
-import Icon_Alert from '../../assets/SVG/Icon_Alert';
-import Button from '../components/UI/Button';
-import Icon_Sign_Out from '../../assets/SVG/Icon_Sign_Out';
-import KingActionsSheet, {
-    Action,
-} from '../components/Sheets/DineIn/KingActionsSheet';
-import { user } from '../api/userApi';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import BannedPopup from '../components/DineIn/BannedPopup';
+import store from '../store/store';
+import {
+    COLORS,
+    DINEIN_SOCKET_URL,
+    SCREEN_PADDING,
+    TYPOGRAPHY
+} from '../theme';
+import SocketService from '../utils/SocketService';
 
 export type OrderedItem = {
     id: number;
@@ -143,15 +126,16 @@ const DineInPendingScreen = () => {
     const userState = store.getState().user;
     const screenHeight = Dimensions.get('window').height;
     const translateY = useRef(new Animated.Value(screenHeight)).current;
-    const [showBannedPopup, setShowBannedPopup] = useState(false);
+    const [infoPopup, setInfoPopup] = useState({
+        visible: false,
+        title: '',
+        message: ''
+    })
 
     const { top } = useSafeAreaInsets();
 
     const pulseAnim = useRef(new Animated.Value(1)).current;
     const socketInstance = SocketService.getInstance()
-
-    const [isWaitingForApproval, setIsWaitingForApproval] = useState(false);
-
 
     useEffect(() => {
         const pulse = Animated.loop(
@@ -195,41 +179,44 @@ const DineInPendingScreen = () => {
                 },
             },
             response => {
-                console.log('hello', response);
+                console.log('join table response ', response);
                 console.log('tableSessionId', userState.tableSessionId);
                 console.log('server Session', response.session_table);
 
                 if (response.success) {
                     dispatch(setSessionTableId(response.session_table));
-                    setIsWaitingForApproval(true);
                 } else {
-                    setShowBannedPopup(true);
+
+                    setInfoPopup({
+                        visible: true,
+                        title: '',
+                        message: response.isBanned ? 'You are banned from this table.' : 'Something wrong happened!'
+                    });
+
                     console.log('cant join the table:', response);
                 }
             },
 
         );
+        socketInstance.on('joinRequestApproval', (message) => {
+            console.log('join request approval message', message)
+            if (message.approved) {
+                dispatch(setSessionTableId(message.session_table));
+                console.log('join request approved');
+                navigation.navigate('Table', {
+                    wasApproved: true
+                })
+            } else {
+                setInfoPopup({
+                    visible: true,
+                    title: 'Request Denied',
+                    message: 'Your request to join the table was not approved.'
+                });
+                dispatch(setSessionTableId(null));
+                dispatch(setBranchTable(null));
+            }
+        })
     };
-
-    // wait to see if the user gets approved or not
-
-    useEffect(() => {
-        if (isWaitingForApproval) {
-            socketInstance.on('joinRequestApproval', (message) => {
-
-                console.log('join request approval message', message)
-                if (message.approved) {
-                    dispatch(setSessionTableId(message.session_table));
-                    navigation.navigate('Table')
-                } else {
-                    setShowBannedPopup(true)
-                    dispatch(setSessionTableId(null));
-                    dispatch(setBranchTable(null));
-                }
-            })
-
-        }
-    }, [isWaitingForApproval])
 
 
     useEffect(() => {
@@ -350,19 +337,24 @@ const DineInPendingScreen = () => {
                     </View>
                 </View>
             </View>
-            <BannedPopup
-                visible={showBannedPopup}
-                onClose={() => {
-                    setShowBannedPopup(false);
-                    // Reset the order type and session after user acknowledges
-                    dispatch(
-                        setOrderType({
-                            menuType: null,
-                            orderTypeAlias: null,
-                        }),
-                    );
-                    dispatch(setSessionTableId(null));
-                }}
+
+            <InfoPopup visible={infoPopup.visible} onClose={() => {
+
+                setInfoPopup({
+                    message: '',
+                    title: '',
+                    visible: false,
+                });
+                // Reset the order type and session after user acknowledges
+                dispatch(
+                    setOrderType({
+                        menuType: null,
+                        orderTypeAlias: null,
+                    }),
+                );
+                dispatch(setSessionTableId(null));
+
+            }} message={infoPopup.message}
             />
         </View>
     );
