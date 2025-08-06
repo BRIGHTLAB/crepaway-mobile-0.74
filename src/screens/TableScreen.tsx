@@ -1,9 +1,7 @@
 import BottomSheet, { TouchableOpacity } from '@gorhom/bottom-sheet';
 import {
-  RouteProp,
   useFocusEffect,
-  useNavigation,
-  useRoute
+  useNavigation
 } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useRef, useState } from 'react';
@@ -133,13 +131,6 @@ const kingActions: Action[] = [
   { id: 2, key: 'make-table-admin', text: 'Make table admin' },
 ];
 
-type TableScreenRouteProp = RouteProp<
-  DineInStackParamList,
-  'Table'
->;
-
-
-
 
 const TableScreen = () => {
   const dispatch = useDispatch();
@@ -169,30 +160,9 @@ const TableScreen = () => {
   const socketInstance = SocketService.getInstance();
   const { top, bottom } = useSafeAreaInsets();
 
-  const route = useRoute<TableScreenRouteProp>();
-  const wasApproved = route.params?.wasApproved ?? false;
-
-
-
-  // when the user joins after first approval we request the data.
-  useEffect(() => {
-    if (!wasApproved) return;
-
-    socketInstance.emit(
-      'message',
-      {
-        type: 'triggerTableUpdate',
-        data: {
-          tableName: userState.branchTable,
-        },
-      },)
-
-  }, [wasApproved])
 
 
   const handleInstructionSelect = (instruction: WaiterInstruction) => {
-
-
     // Emit table instruction event
     socketInstance.emit(
       'message',

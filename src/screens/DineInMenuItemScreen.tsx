@@ -1,4 +1,7 @@
-import uuid from 'react-native-uuid';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -6,36 +9,31 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, { useEffect, useRef, useState } from 'react';
 import FastImage from 'react-native-fast-image';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
-import { RootStackParamList } from '../navigation/NavigationStack';
-import { TYPOGRAPHY } from '../constants/typography';
-import TasteTriadProgress from '../components/Menu/TasteTriadProgress';
-import store, { RootState, useAppDispatch } from '../store/store';
-import { addItem, updateItem } from '../store/slices/cartSlice';
-import Icon_Increase_Quantity from '../../assets/SVG/Icon_Increase_Quantity';
-import Icon_Decrease_Quantity from '../../assets/SVG/Icon_Decrease_Quantity';
-import Button from '../components/UI/Button';
-import Icon_Cart from '../../assets/SVG/Icon_Cart';
-import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
-import DynamicSheet from '../components/Sheets/DynamicSheet';
-import Icon_WishList from '../../assets/SVG/Icon_Wishlist';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
-import Input from '../components/UI/Input';
-import Icon_Wishlist_Filled from '../../assets/SVG/Icon_Wishlist_Filled';
-import ModifierGroup from '../components/Menu/ModifierGroup';
+import uuid from 'react-native-uuid';
 import { useSelector } from 'react-redux';
+import Icon_Cart from '../../assets/SVG/Icon_Cart';
+import Icon_Decrease_Quantity from '../../assets/SVG/Icon_Decrease_Quantity';
+import Icon_Increase_Quantity from '../../assets/SVG/Icon_Increase_Quantity';
+import Icon_WishList from '../../assets/SVG/Icon_Wishlist';
+import Icon_Wishlist_Filled from '../../assets/SVG/Icon_Wishlist_Filled';
 import {
   useGetItemDetailsQuery,
   useToggleFavoriteMutation,
 } from '../api/menuApi';
-import { COLORS } from '../theme';
+import ModifierGroup from '../components/Menu/ModifierGroup';
+import TasteTriadProgress from '../components/Menu/TasteTriadProgress';
+import DynamicSheet from '../components/Sheets/DynamicSheet';
+import Button from '../components/UI/Button';
+import Input from '../components/UI/Input';
+import { TYPOGRAPHY } from '../constants/typography';
 import { DineInOrderStackParamList } from '../navigation/DineInOrderStack';
+import { RootState } from '../store/store';
+import { COLORS } from '../theme';
 import SocketService from '../utils/SocketService';
-import { OrderedItem, OrderedItems } from './TableScreen';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { OrderedItem } from './TableScreen';
 
 const SkeletonLoader = () => {
   return (
@@ -110,14 +108,13 @@ const DineInMenuItemScreen = ({ }: IProps) => {
   const [specialInstruction, setSpecialInstruction] = useState('');
   const userState = useSelector((state: RootState) => state.user);
 
-  const menu = 'mobile-app-delivery';
   const branch = userState.branchName || '';
 
   const {
     data: itemData,
     isLoading,
     error,
-  } = useGetItemDetailsQuery({ itemId, menu, branch });
+  } = useGetItemDetailsQuery({ itemId, menuType: userState.menuType, branch });
 
   const [toggleFavorite, { isLoading: isTogglingFavorite }] =
     useToggleFavoriteMutation();
@@ -126,7 +123,7 @@ const DineInMenuItemScreen = ({ }: IProps) => {
   const handleWishList = async () => {
     try {
       setFavorite(prev => !prev);
-      await toggleFavorite({ itemId, menu, branch });
+      await toggleFavorite({ itemId, menuType: userState.menuType, branch });
     } catch (error) {
       setFavorite(prev => !prev);
       console.error('Error toggling favorite:', error);

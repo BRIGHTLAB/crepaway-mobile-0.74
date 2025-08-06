@@ -1,14 +1,14 @@
-import {useNavigation} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
-import {Modal, StyleSheet, Text, View, Dimensions} from 'react-native';
-import {FlatList} from 'react-native-gesture-handler';
-import {useSelector} from 'react-redux';
-import {useGetOffersQuery} from '../../api/offersApi';
-import {DineInStackParamList} from '../../navigation/DineInStack';
-import {TableWaiter} from '../../screens/TableScreen';
-import {RootState} from '../../store/store';
-import {COLORS, TYPOGRAPHY} from '../../theme';
+import { Dimensions, Modal, StyleSheet, Text, View } from 'react-native';
+import { FlatList } from 'react-native-gesture-handler';
+import { useSelector } from 'react-redux';
+import { useGetOffersQuery } from '../../api/offersApi';
+import { DineInStackParamList } from '../../navigation/DineInStack';
+import { TableWaiter } from '../../screens/TableScreen';
+import { RootState } from '../../store/store';
+import { COLORS, TYPOGRAPHY } from '../../theme';
 import OfferCard from '../Menu/OfferCard';
 import Button from '../UI/Button';
 
@@ -30,14 +30,14 @@ type Props = {
 
 type NavigationProp = NativeStackNavigationProp<DineInStackParamList>;
 
-const WelcomePopup = ({visible, onClose, onViewMenu, waiter}: Props) => {
+const WelcomePopup = ({ visible, onClose, onViewMenu, waiter }: Props) => {
   const userState = useSelector((state: RootState) => state.user);
   const {
     data: offers,
     isLoading,
     error,
   } = useGetOffersQuery({
-    menu: 'mobile-app-delivery',
+    menuType: userState.menuType,
     branch: userState.branchTable?.split('.')?.[0] || '',
   });
 
@@ -48,16 +48,16 @@ const WelcomePopup = ({visible, onClose, onViewMenu, waiter}: Props) => {
       screen: 'OffersStack',
       params: {
         screen: 'OfferDetails',
-        params: {itemId: id},
+        params: { itemId: id },
       },
     });
   };
 
-  const renderOfferItem = ({item}: {item: Offer}) => (
+  const renderOfferItem = ({ item }: { item: Offer }) => (
     <OfferCard
       id={item.id}
       image_url={item.image_url}
-      style={{width: CARD_WIDTH, marginRight: 15}}
+      style={{ width: CARD_WIDTH, marginRight: 15 }}
       onItemPress={handleOfferPress}
     />
   );
@@ -87,8 +87,8 @@ const WelcomePopup = ({visible, onClose, onViewMenu, waiter}: Props) => {
           <View style={styles.offersContainer}>
             {isLoading ? (
               <View style={styles.skeletonsContainer}>
-                <OfferSkeleton style={{width: CARD_WIDTH}} />
-                <OfferSkeleton style={{width: CARD_WIDTH}} />
+                <OfferSkeleton style={{ width: CARD_WIDTH }} />
+                <OfferSkeleton style={{ width: CARD_WIDTH }} />
               </View>
             ) : (
               <FlatList
@@ -108,10 +108,10 @@ const WelcomePopup = ({visible, onClose, onViewMenu, waiter}: Props) => {
           </View>
 
           <View style={styles.popupButtonsContainer}>
-            <Button variant="outline" style={{flex: 1}} onPress={onClose}>
+            <Button variant="outline" style={{ flex: 1 }} onPress={onClose}>
               Thank you!
             </Button>
-            <Button style={{flex: 1}} onPress={onViewMenu}>
+            <Button style={{ flex: 1 }} onPress={onViewMenu}>
               Order Now
             </Button>
           </View>
@@ -121,7 +121,7 @@ const WelcomePopup = ({visible, onClose, onViewMenu, waiter}: Props) => {
   );
 };
 
-const OfferSkeleton = ({style}: {style?: object}) => {
+const OfferSkeleton = ({ style }: { style?: object }) => {
   return (
     <View style={[styles.skeletonContainer, style]}>
       <View style={styles.shimmer} />

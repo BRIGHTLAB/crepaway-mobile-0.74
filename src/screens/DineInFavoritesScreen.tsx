@@ -1,20 +1,18 @@
-import { FlatList, StyleSheet, Text, View } from 'react-native';
-import OfferCard from '../components/Menu/OfferCard';
-import React, { useEffect, useState } from 'react';
-import { GET } from '../api';
+import { useNavigation } from '@react-navigation/native';
+import React from 'react';
+import { FlatList, StyleSheet, View } from 'react-native';
+import { useSelector } from 'react-redux';
+import { useGetFavoritesQuery } from '../api/favoriteApi';
 import ItemCard from '../components/Menu/ItemCard';
 import MenuItemSkeleton from '../components/SkeletonLoader/MenuItemSkeleton';
-import { useGetFavoritesQuery } from '../api/favoriteApi';
-import { useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
 import { RootState } from '../store/store';
 
 const DineInFavoritesScreen = () => {
 
-  const branch = useSelector((state: RootState) => state.user.branchName) || ''
+  const userState = useSelector((state: RootState) => state.user)
   const { data: favoriteItems, isLoading } = useGetFavoritesQuery({
-    menu: 'mobile-app-delivery',
-    branch,
+    menuType: userState.menuType,
+    branch: userState.branchName || '',
   });
 
   const navigation = useNavigation<any>();

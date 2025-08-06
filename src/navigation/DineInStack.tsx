@@ -13,9 +13,7 @@ const Stack = createNativeStackNavigator();
 export type DineInStackParamList = {
   ScanTable: undefined;
   Pending: undefined;
-  Table: {
-    wasApproved: boolean
-  } | undefined;
+  Table: undefined;
   OrderStack:
   | {
     screen?: string;

@@ -190,7 +190,7 @@ const DineInPendingScreen = () => {
                     setInfoPopup({
                         visible: true,
                         title: '',
-                        message: response.isBanned ? 'You are banned from this table.' : 'Something wrong happened!'
+                        message: response?.message ?? 'Something went wrong!'
                     });
 
                     console.log('cant join the table:', response);
@@ -203,9 +203,7 @@ const DineInPendingScreen = () => {
             if (message.approved) {
                 dispatch(setSessionTableId(message.session_table));
                 console.log('join request approved');
-                navigation.navigate('Table', {
-                    wasApproved: true
-                })
+                navigation.navigate('Table')
             } else {
                 setInfoPopup({
                     visible: true,

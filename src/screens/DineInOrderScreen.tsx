@@ -1,3 +1,7 @@
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ScrollView,
   StyleSheet,
@@ -5,22 +9,16 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, { useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import Banner from '../components/Banner';
-import CategoryList from '../components/Menu/CategoryList';
-import OffersList from '../components/Menu/OffersList';
-import ItemsList from '../components/Menu/ItemsList';
-import CartCounter from '../components/Menu/CartCounter';
-import NotificationsCounter from '../components/Notifications/NotificationsCounter';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
 import Icon_BackArrow from '../../assets/SVG/Icon_BackArrow';
 import { useGetHomepageQuery } from '../api/homeApi';
-import { useSelector } from 'react-redux';
-import { RootState } from '../store/store';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Banner from '../components/Banner';
+import CategoryList from '../components/Menu/CategoryList';
+import ItemsList from '../components/Menu/ItemsList';
+import OffersList from '../components/Menu/OffersList';
 import { DineInOrderStackParamList } from '../navigation/DineInOrderStack';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { RootState } from '../store/store';
 
 const bannerData = [
   {
@@ -46,7 +44,8 @@ const DineInOrderScreen = () => {
   const state = useSelector((state: RootState) => state.user);
 
   const { data, isLoading, error } = useGetHomepageQuery({
-    menu: 'mobile-app-delivery',
+    // menu: 'mobile-app-delivery',
+    menuType: state.menuType,
     branch: state.branchTable
       ? state.branchTable.split('.')?.[0]?.toLowerCase()
       : '',

@@ -1,14 +1,14 @@
-import {Image, StyleSheet, Text, View} from 'react-native';
+import { RouteProp, useRoute } from '@react-navigation/native';
 import React from 'react';
-import {RouteProp, useRoute} from '@react-navigation/native';
-import {RootStackParamList} from '../navigation/NavigationStack';
-import {normalizeFont} from '../utils/normalizeFonts';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
-import {useGetOfferDetailsQuery} from '../api/offersApi';
-import {COLORS, SCREEN_PADDING} from '../theme';
+import { useGetOfferDetailsQuery } from '../api/offersApi';
+import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
+import { COLORS, SCREEN_PADDING } from '../theme';
+import { normalizeFont } from '../utils/normalizeFonts';
 
 type OfferDetailsScreenRouteProp = RouteProp<
-  RootStackParamList,
+  DeliveryTakeawayStackParamList,
   'OfferDetails'
 >;
 

@@ -1,23 +1,23 @@
-import { FlatList, StyleSheet, Text, View } from 'react-native';
-import OfferCard from '../components/Menu/OfferCard';
-import React, { useEffect, useState } from 'react';
-import { GET } from '../api';
-import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
-import { useGetOffersQuery } from '../api/offersApi';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { DineInOrderStackParamList } from '../navigation/DineInOrderStack';
+import React from 'react';
+import { FlatList, StyleSheet, View } from 'react-native';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import { useSelector } from 'react-redux';
+import { useGetOffersQuery } from '../api/offersApi';
+import OfferCard from '../components/Menu/OfferCard';
+import { DineInOrderStackParamList } from '../navigation/DineInOrderStack';
 import { RootState } from '../store/store';
 
 type NavigationProp = NativeStackNavigationProp<DineInOrderStackParamList>;
 
 const DineInOffersScreen = () => {
-  const branch = useSelector((state: RootState) => state.user.branchName) || ''
+  const userState = useSelector((state: RootState) => state.user)
 
   const { data, isLoading, error } = useGetOffersQuery({
-    menu: 'mobile-app-delivery',
-    branch,
+    menuType: userState.menuType,
+    // menu: 'mobile-app-delivery',
+    branch: userState.branchName || '',
   });
 
   const navigation = useNavigation<NavigationProp>();
