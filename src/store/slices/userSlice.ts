@@ -1,5 +1,5 @@
-import {createSlice, createAsyncThunk, PayloadAction} from '@reduxjs/toolkit';
-import {POST} from '../../api';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { POST } from '../../api';
 import NotificationService from '../../utils/NotificationService';
 
 interface LoginResponse {
@@ -79,7 +79,7 @@ const initialState: IUser = {
 // Login thunk
 export const loginUserThunk = createAsyncThunk(
   'user/login',
-  async (credentials: LoginCredentials, {rejectWithValue}) => {
+  async (credentials: LoginCredentials, { rejectWithValue }) => {
     console.log('credentials', credentials);
     const response = await POST<LoginResponse>({
       endpoint: '/login',
@@ -117,7 +117,7 @@ const userSlice = createSlice({
     setBranchName: (state, action: PayloadAction<string | null>) => {
       return {
         ...state,
-        branchName: action.payload,
+        branchName: action.payload ? action.payload.toLowerCase() : null,
       };
     },
     setAddress: (
@@ -151,7 +151,7 @@ const userSlice = createSlice({
     },
     logoutUser: state => {
       NotificationService.getInstance().deregister();
-      return {...initialState};
+      return { ...initialState };
     },
     autoLoginUser: (state, action: PayloadAction<LoginResponse>) => {
       return {

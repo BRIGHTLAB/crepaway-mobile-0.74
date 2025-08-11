@@ -1,45 +1,44 @@
+import BottomSheet from '@gorhom/bottom-sheet';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Animated,
   Dimensions,
-  StatusBar,
   StyleSheet,
   Text,
-  View,
+  View
 } from 'react-native';
-import Tabs from '../components/UI/Tabs';
-import Button from '../components/UI/Button';
-import Icon_Delivery from '../../assets/SVG/Icon_Delivery';
-import Icon_Take_Away from '../../assets/SVG/Icon_Take_Away';
-import Icon_Dine_In from '../../assets/SVG/Icon_Dine_In';
 import FastImage from 'react-native-fast-image';
 import LinearGradient from 'react-native-linear-gradient';
-import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
-import BottomSheet from '@gorhom/bottom-sheet';
-import { useGetOrderTypesQuery } from '../api/ordersApi';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
-import SelectSheet from '../components/Sheets/SelectSheet';
-import { useGetMenuBranchesQuery } from '../api/branchesApi';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/NavigationStack';
 import { useDispatch } from 'react-redux';
-import {
-  setAddress,
-  setBranchName,
-  setOrderType,
-} from '../store/slices/userSlice';
+import Icon_Delivery from '../../assets/SVG/Icon_Delivery';
+import Icon_Dine_In from '../../assets/SVG/Icon_Dine_In';
+import Icon_Take_Away from '../../assets/SVG/Icon_Take_Away';
+import { useGetMenuBranchesQuery } from '../api/branchesApi';
+import { useGetContentQuery } from '../api/dataApi';
+import { useGetOrderTypesQuery } from '../api/ordersApi';
+import SelectSheet from '../components/Sheets/SelectSheet';
 import DeliverySheet from '../components/Sheets/ServiceSelection/DeliverySheet';
 import TakeawaySheet from '../components/Sheets/ServiceSelection/TakeawaySheet';
-import store from '../store/store';
+import Button from '../components/UI/Button';
+import Tabs from '../components/UI/Tabs';
+import { RootStackParamList } from '../navigation/NavigationStack';
 import {
   clearCart,
   setCartBranchName,
   setCartOrderType,
 } from '../store/slices/cartSlice';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  setBranchName,
+  setOrderType
+} from '../store/slices/userSlice';
+import store from '../store/store';
+import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -52,12 +51,7 @@ const ORDER_TYPE_ICONS: Record<
   'dine-in': <Icon_Dine_In />,
 };
 
-const ORDER_TYPE_BACKGROUNDS = {
-  delivery: require('../../assets/images/main/delivery-take-away-bg.gif'),
-  takeaway: require('../../assets/images/main/delivery-take-away-bg.gif'),
-  'dine-in': require('../../assets/images/main/smart-dining-hub-bg.jpg'),
-  default: require('../../assets/images/main/delivery-take-away-bg.gif'),
-};
+
 
 const ContentSkeleton = () => (
   <SkeletonPlaceholder
@@ -111,9 +105,18 @@ const ServiceSelectionScreen = () => {
   const [currentBackground, setCurrentBackground] = useState<any>(null);
   const [prevBackground, setPrevBackground] = useState<any>(null);
 
+  // Initialize the ref with the initial state
+  useEffect(() => {
+    currentBackgroundRef.current = currentBackground;
+  }, [currentBackground]);
+
   // Animation values for cross-fading
   const currentOpacity = useRef(new Animated.Value(1)).current;
   const prevOpacity = useRef(new Animated.Value(0)).current;
+
+  // Ref to track the last processed background to prevent unnecessary updates
+  const lastProcessedBackground = useRef<string | null>(null);
+  const currentBackgroundRef = useRef<any>(null);
 
   const addressSheetRef = useRef<BottomSheet>(null);
   const takeawaySheetRef = useRef<BottomSheet>(null);
@@ -123,6 +126,28 @@ const ServiceSelectionScreen = () => {
   const dispatch = useDispatch();
 
   const [showSheets, setShowSheets] = useState(false);
+
+  const { data: content } = useGetContentQuery();
+
+  // Create a stable content map
+  const contentMap = useMemo(() => {
+    if (!content) return {};
+
+    const map: Record<string, any> = {};
+    content.forEach(item => {
+      map[item.key] = item;
+    });
+    return map;
+  }, [content]);
+
+  // Get content for the currently selected order type
+  const currentContent = useMemo(() => {
+    if (!orderTypes || orderTypes.length === 0) return null;
+
+    const alias = orderTypes[selectedIdx]?.alias;
+    const contentKey = `service-selection-${alias}`;
+    return contentMap[contentKey] || null;
+  }, [orderTypes, selectedIdx, contentMap]);
 
   useEffect(() => {
     // Small delay to ensure sheets don't automatically open
@@ -142,36 +167,27 @@ const ServiceSelectionScreen = () => {
     [branches],
   );
 
-  // Set initial background when order types load
-  useEffect(() => {
-    if (orderTypes && orderTypes.length > 0) {
-      const initialAlias = orderTypes[0]?.alias;
-      const initialBackground =
-        initialAlias && initialAlias in ORDER_TYPE_BACKGROUNDS
-          ? ORDER_TYPE_BACKGROUNDS[initialAlias]
-          : ORDER_TYPE_BACKGROUNDS.default;
-
-      setCurrentBackground(initialBackground);
-    } else {
-      setCurrentBackground(ORDER_TYPE_BACKGROUNDS.default);
-    }
-  }, [orderTypes]);
-
-  // Handle background image changes when selected tab changes
+  // Handle background image changes
   useEffect(() => {
     if (!orderTypes || orderTypes.length === 0) return;
 
     const alias = orderTypes[selectedIdx]?.alias;
-    const newBackground =
-      alias && alias in ORDER_TYPE_BACKGROUNDS
-        ? ORDER_TYPE_BACKGROUNDS[alias]
-        : ORDER_TYPE_BACKGROUNDS.default;
+    const contentKey = `service-selection-${alias}`;
+    const content = contentMap[contentKey];
 
-    // Only update if background actually changed
-    if (newBackground !== currentBackground) {
+    const newBackgroundUrl = content?.image_url || null;
+
+    // Only update if the background URL actually changed
+    if (newBackgroundUrl !== lastProcessedBackground.current) {
+      const newBackground = newBackgroundUrl ? { uri: newBackgroundUrl } : null;
+
       // Store previous background for crossfade
-      setPrevBackground(currentBackground);
+      setPrevBackground(currentBackgroundRef.current);
       setCurrentBackground(newBackground);
+      currentBackgroundRef.current = newBackground;
+
+      // Update the ref
+      lastProcessedBackground.current = newBackgroundUrl;
 
       // Reset opacities for animation
       prevOpacity.setValue(1);
@@ -191,7 +207,7 @@ const ServiceSelectionScreen = () => {
         }),
       ]).start();
     }
-  }, [selectedIdx, orderTypes, currentBackground, prevOpacity, currentOpacity]);
+  }, [selectedIdx, orderTypes, contentMap, prevOpacity, currentOpacity]);
 
   const getOrderTypeIcon = useCallback((alias: OrderType['alias']) => {
     return alias ? ORDER_TYPE_ICONS[alias] : ORDER_TYPE_ICONS.delivery;
@@ -296,6 +312,7 @@ const ServiceSelectionScreen = () => {
   // }, [selectedIdx, orderTypes]);
 
   const handleProceed = useCallback(() => {
+    console.log('handleProceed')
     if (!orderTypes || orderTypes.length === 0) return;
 
     const cartOrderType = store.getState().cart.orderType;
@@ -412,6 +429,11 @@ const ServiceSelectionScreen = () => {
           </Animated.View>
         )}
 
+        {/* Fallback background when no image is available */}
+        {!currentBackground && !prevBackground && (
+          <View style={[styles.backgroundImageContainer, styles.fallbackBackground]} />
+        )}
+
         <LinearGradient
           style={styles.imageOverlay}
           colors={['rgba(0, 0, 0, 0.2)', 'black']}
@@ -433,10 +455,10 @@ const ServiceSelectionScreen = () => {
             <>
               <View style={styles.textContainer}>
                 <Text style={styles.title}>
-                  {orderTypes?.[selectedIdx]?.title}
+                  {currentContent?.title || orderTypes?.[selectedIdx]?.title}
                 </Text>
                 <Text style={styles.description}>
-                  {orderTypes?.[selectedIdx]?.description}
+                  {currentContent?.description || orderTypes?.[selectedIdx]?.description}
                 </Text>
               </View>
               <Button onPress={handleProceed}>Proceed</Button>
@@ -498,6 +520,9 @@ const styles = StyleSheet.create({
   backgroundImage: {
     width: '100%',
     height: '100%',
+  },
+  fallbackBackground: {
+    backgroundColor: COLORS.primaryColor,
   },
   contentContainer: {
     flex: 1,

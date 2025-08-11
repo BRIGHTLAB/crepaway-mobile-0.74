@@ -71,16 +71,24 @@ type Tags = {
 
 type Offer = {
   id: number;
-  menu_id: number;
+  menus: Menu[];
   title: string;
   description: string;
   image_url: string;
-  order: number;
-  expiry_date: string;
-  value: number;
-  removed: number;
+  url: string | null;
+  start_date: string;
+  end_date: string;
+  enabled: number;
   created_at: string;
   updated_at: string;
+};
+
+type FAQ = {
+  content: string;
+};
+
+type Legal = {
+  content: string;
 };
 
 type ModifierGroup = {
@@ -242,3 +250,13 @@ type WaiterInstruction = {
   description: string;
   type: string;
 };
+
+
+interface Content {
+  id: number;
+  key: string;
+  image_url: string | null;
+  title: string | null;
+  description: string | null;
+}
+

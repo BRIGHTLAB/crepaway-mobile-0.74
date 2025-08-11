@@ -1,33 +1,32 @@
-import React, { useRef, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useMemo, useRef, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
   Dimensions,
-  ScrollView,
+  Image,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
   TextInput,
-  StatusBar,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import CountryPicker, { CountryCode } from 'react-native-country-picker-modal';
 import { useSelector } from 'react-redux';
 import { z } from 'zod';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import CountryPicker, { CountryCode } from 'react-native-country-picker-modal';
-import Input from '../../components/UI/Input';
-import Button from '../../components/UI/Button';
-import DynamicPopup from '../../components/UI/DynamicPopup';
-import Icon_Username from '../../../assets/SVG/Icon_User';
 import Icon_Password from '../../../assets/SVG/Icon_Password';
 import Icon_Phone from '../../../assets/SVG/Icon_Phone';
-import { COLORS, REGEX } from '../../theme';
+import { useGetContentQuery } from '../../api/dataApi';
+import Button from '../../components/UI/Button';
+import DynamicPopup from '../../components/UI/DynamicPopup';
+import Input from '../../components/UI/Input';
+import { LoginStackParamList } from '../../navigation/LoginStack';
 import { loginUserThunk } from '../../store/slices/userSlice';
 import { RootState, useAppDispatch } from '../../store/store';
-import { LoginStackParamList } from '../../navigation/LoginStack';
+import { COLORS, REGEX } from '../../theme';
 
 const { height } = Dimensions.get('window');
 
@@ -52,6 +51,13 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const { status, error } = useSelector((state: RootState) => state.user);
   const isLoading = status === 'pending';
+  const { data: content } = useGetContentQuery();
+
+  // Memoize the login image URL to avoid multiple array searches
+  const loginImageUrl = useMemo(() =>
+    content?.find(item => item.key === 'login-image')?.image_url,
+    [content]
+  );
 
   const {
     control,
@@ -92,8 +98,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         {/* Banner with placeholder image */}
         <View style={styles.bannerContainer}>
           <Image
-            source={{ uri: 'https://picsum.photos/800/600' }}
-            style={styles.bannerImage}
+            source={loginImageUrl ? { uri: loginImageUrl } : undefined}
+            style={[
+              styles.bannerImage,
+              !loginImageUrl && styles.placeholderImage
+            ]}
             resizeMode="cover"
           />
         </View>
@@ -235,6 +244,9 @@ const styles = StyleSheet.create({
   bannerImage: {
     width: '100%',
     height: '100%',
+  },
+  placeholderImage: {
+    backgroundColor: '#E5E5E5', // Light gray placeholder
   },
   formContainer: {
     paddingHorizontal: 24,

@@ -15,9 +15,9 @@ type OfferDetailsScreenRouteProp = RouteProp<
 const OfferDetailsScreen = () => {
   const route = useRoute<OfferDetailsScreenRouteProp>();
 
-  const {itemId} = route.params;
+  const { itemId } = route.params;
 
-  const {data: offer, isLoading, error} = useGetOfferDetailsQuery(itemId);
+  const { data: offer, isLoading, error } = useGetOfferDetailsQuery(itemId);
 
   if (isLoading) {
     return (
@@ -56,36 +56,70 @@ const OfferDetailsScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Image source={{uri: offer?.image_url}} style={styles.image} />
-      <View style={{paddingHorizontal: SCREEN_PADDING.horizontal}}>
+      <Image source={{ uri: offer?.image_url }} style={styles.image} />
+      <View style={{ paddingHorizontal: SCREEN_PADDING.horizontal }}>
         <Text style={styles.title}>{offer?.title}</Text>
         <View
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 4,
-            paddingHorizontal: 8,
-            paddingVertical: 6,
-            borderRadius: 8,
-            backgroundColor: `${COLORS.secondaryColor}20`,
-            width: 'auto',
-            alignSelf: 'flex-start',
+            gap: 8,
+            marginTop: 8,
           }}>
-          <Text
+          <View
             style={{
-              fontFamily: 'Poppins-Regular',
-              fontSize: normalizeFont(14),
-              color: COLORS.secondaryColor,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+              paddingHorizontal: 8,
+              paddingVertical: 6,
+              borderRadius: 8,
+              backgroundColor: `${COLORS.secondaryColor}20`,
+              flex: 1,
             }}>
-            validty{' '}
-            {offer?.expiry_date
-              ? new Date(offer.expiry_date).toLocaleDateString('en-GB', {
+            <Text
+              style={{
+                fontFamily: 'Poppins-Regular',
+                fontSize: normalizeFont(12),
+                color: COLORS.secondaryColor,
+              }}>
+              from{' '}
+              {offer?.start_date
+                ? new Date(offer.start_date).toLocaleDateString('en-GB', {
                   day: '2-digit',
                   month: '2-digit',
                   year: '2-digit',
                 })
-              : ''}
-          </Text>
+                : ''}
+            </Text>
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+              paddingHorizontal: 8,
+              paddingVertical: 6,
+              borderRadius: 8,
+              backgroundColor: `${COLORS.secondaryColor}20`,
+              flex: 1,
+            }}>
+            <Text
+              style={{
+                fontFamily: 'Poppins-Regular',
+                fontSize: normalizeFont(12),
+                color: COLORS.secondaryColor,
+              }}>
+              until{' '}
+              {offer?.end_date
+                ? new Date(offer.end_date).toLocaleDateString('en-GB', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: '2-digit',
+                })
+                : ''}
+            </Text>
+          </View>
         </View>
         <Text
           style={{

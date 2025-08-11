@@ -1,6 +1,5 @@
 import store from '../store/store';
 import { baseApi } from './baseApi';
-import { user } from './userApi';
 
 export interface Checkout {
   summary: {
@@ -65,7 +64,7 @@ export const checkoutApi = baseApi.injectEndpoints({
         const params = new URLSearchParams();
 
         if (formData.order_type === 'takeaway' && branchName) {
-          params.append('branch', branchName.toLowerCase());
+          params.append('branch', branchName);
         }
 
         if (usersAddressesId) {

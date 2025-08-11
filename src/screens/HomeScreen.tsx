@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BackHandler,
@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import Icon_BackArrow from '../../assets/SVG/Icon_BackArrow';
+import { useGetContentQuery } from '../api/dataApi';
 import { useGetHomepageQuery } from '../api/homeApi';
 import Banner from '../components/Banner';
 import CartCounter from '../components/Menu/CartCounter';
@@ -24,20 +25,7 @@ import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawaySt
 import { setOrderType } from '../store/slices/userSlice';
 import { RootState, useAppDispatch } from '../store/store';
 
-const bannerData = [
-  {
-    image: 'https://placehold.co/600x400/png',
-    title: 'Slide 1',
-  },
-  {
-    image: 'https://placehold.co/600x400/png',
-    title: 'Slide 2',
-  },
-  {
-    image: 'https://placehold.co/600x400/png',
-    title: 'Slide 3',
-  },
-];
+
 
 // Define the navigation prop type
 type NavigationProp = NativeStackNavigationProp<DeliveryTakeawayStackParamList>;
@@ -49,6 +37,28 @@ const HomeScreen = () => {
 
   const state = useSelector((state: RootState) => state.user);
   const { bottom, top } = useSafeAreaInsets();
+  const { data: content } = useGetContentQuery();
+
+
+  // Get banner data based on order type
+  const bannerData = useMemo(() => {
+    const orderType = state.orderType;
+    let contentKey = 'home-delivery-swiper'; // default
+
+    if (orderType === 'takeaway') {
+      contentKey = 'home-takeaway-swiper';
+    } else if (orderType === 'delivery') {
+      contentKey = 'home-delivery-swiper';
+    }
+
+    // Find all content items with the matching key and extract image_url
+    const bannerItems = content?.filter(item => item.key === contentKey) || [];
+
+    return bannerItems.map(item => ({
+      image: item.image_url || '',
+      title: item.title || '',
+    }));
+  }, [content, state.orderType]);
 
 
 
@@ -69,16 +79,14 @@ const HomeScreen = () => {
     return () => backHandler.remove();
   }, [dispatch, navigation]);
 
-  useEffect(() => {
-    console.log('branchName', state.orderType);
-  }, [state.branchName]);
 
   const { data, isLoading, error } = useGetHomepageQuery({
     menu: 'mobile-app-delivery',
-    branch: state.branchName ? state.branchName?.toLowerCase() : '',
+    branch: state.branchName ? state.branchName : '',
   });
 
-  console.log('data', data?.featured_items)
+  console.log('branch123', data)
+  console.log('branch1512')
 
 
   const categories = data?.categories;

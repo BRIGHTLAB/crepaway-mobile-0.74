@@ -1,13 +1,12 @@
-import { FlatList, StyleSheet, Text, View } from 'react-native';
-import OfferCard from '../components/Menu/OfferCard';
-import React, { useEffect, useState } from 'react';
-import { GET } from '../api';
-import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
-import { useGetOffersQuery } from '../api/offersApi';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
-import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React from 'react';
+import { FlatList, StyleSheet, View } from 'react-native';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import { useSelector } from 'react-redux';
+import { useGetOffersQuery } from '../api/offersApi';
+import OfferCard from '../components/Menu/OfferCard';
+import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
 import { RootState } from '../store/store';
 
 type OfferCardNavigationProp = NativeStackNavigationProp<

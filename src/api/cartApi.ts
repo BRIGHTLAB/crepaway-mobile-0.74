@@ -1,6 +1,6 @@
-import { baseApi } from './baseApi';
 import { CartItem } from '../store/slices/cartSlice';
 import store from '../store/store';
+import { baseApi } from './baseApi';
 
 export const cartApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
@@ -18,7 +18,7 @@ export const cartApi = baseApi.injectEndpoints({
             query: ({ items, order_type }) => {
                 const branchName = store.getState().user.branchName;
                 const baseUrl = '/cart';
-                const queryParams = order_type === 'takeaway' && branchName ? `?branch=${branchName?.toLowerCase()}` : '';
+                const queryParams = order_type === 'takeaway' && branchName ? `?branch=${branchName}` : '';
                 return {
                     url: `${baseUrl}${queryParams}`,
                     method: 'POST',

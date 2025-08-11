@@ -1,23 +1,21 @@
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useEffect, useState } from 'react';
 import {
-  Image,
   Pressable,
   StyleSheet,
   Text,
-  TouchableOpacity,
-  View,
+  View
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import FastImage from 'react-native-fast-image';
+import { useSelector } from 'react-redux';
 import Icon_WishList from '../../../assets/SVG/Icon_Wishlist';
 import Icon_Wishlist_Filled from '../../../assets/SVG/Icon_Wishlist_Filled';
-import FastImage from 'react-native-fast-image';
-import { capitalizeFirstLetter } from '../../helpers';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../navigation/NavigationStack';
 import { useToggleFavoriteMutation } from '../../api/menuApi';
-import { COLORS } from '../../theme';
-import { useSelector } from 'react-redux';
+import { capitalizeFirstLetter } from '../../helpers';
+import { RootStackParamList } from '../../navigation/NavigationStack';
 import { RootState } from '../../store/store';
+import { COLORS } from '../../theme';
 
 interface IProps {
   id: number;
@@ -63,7 +61,7 @@ const ItemCard = ({
   const handleWishList = async () => {
     try {
       setFavorite(prev => !prev);
-      await toggleFavorite({ itemId: id, menu, branch });
+      await toggleFavorite({ itemId: id, menu, branch: branch });
     } catch (error) {
       setFavorite(prev => !prev);
     }

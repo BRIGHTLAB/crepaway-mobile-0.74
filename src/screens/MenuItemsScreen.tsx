@@ -1,25 +1,24 @@
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  FlatList,
+  Pressable,
   StyleSheet,
   Text,
-  View,
-  FlatList,
   TouchableOpacity,
-  Pressable,
-  Dimensions,
+  View
 } from 'react-native';
-import React, { useEffect, useState, useRef, useCallback } from 'react';
 import FastImage from 'react-native-fast-image';
-import Icon_Wishlist_Filled from '../../assets/SVG/Icon_Wishlist_Filled';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import { useSelector } from 'react-redux';
 import Icon_WishList from '../../assets/SVG/Icon_Wishlist';
+import Icon_Wishlist_Filled from '../../assets/SVG/Icon_Wishlist_Filled';
 import {
   useGetCategoriesQuery,
   useGetItemsQuery,
   useToggleFavoriteMutation,
 } from '../api/menuApi';
-import { COLORS, SCREEN_PADDING } from '../theme';
-import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store/store';
+import { COLORS, SCREEN_PADDING } from '../theme';
 
 // Fixed heights for more accurate calculations
 const ITEM_HEIGHT = 120; // Height of each menu item
@@ -181,12 +180,12 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
   const { data: categories = [], isLoading: isCategoriesLoading } =
     useGetCategoriesQuery({
       menu: 'mobile-app-delivery',
-      branch: userState.branchName?.toLowerCase() || '',
+      branch: userState.branchName || '',
     });
 
   const { data: items, isLoading: isItemsLoading } = useGetItemsQuery({
     menu: 'mobile-app-delivery',
-    branch: userState.branchName?.toLowerCase() || '',
+    branch: userState.branchName || '',
   });
 
   const groupedItems = categories.map(category => ({
@@ -588,6 +587,7 @@ const styles = StyleSheet.create({
   categoryList: {
     paddingVertical: 10,
     marginTop: SCREEN_PADDING.vertical,
+    maxHeight: 70,
   },
   categoryTitle: {
     fontSize: 14,

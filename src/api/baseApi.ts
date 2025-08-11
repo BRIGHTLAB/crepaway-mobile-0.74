@@ -1,11 +1,11 @@
 // src/features/api/apiSlice.js
-import {createApi, fetchBaseQuery} from '@reduxjs/toolkit/query/react';
-import {RootState} from '../store/store';
-import {BASE_URL} from '../theme';
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { RootState } from '../store/store';
+import { BASE_URL } from '../theme';
 
 const baseQueryWithAuth = fetchBaseQuery({
   baseUrl: BASE_URL,
-  prepareHeaders: (headers, {getState}) => {
+  prepareHeaders: (headers, { getState }) => {
     headers.set('Content-Type', 'application/json');
     headers.set('Accept-Language', 'en');
     const state = getState() as RootState;

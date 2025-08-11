@@ -13,6 +13,14 @@ export interface Zone {
     lng: number;
   }>;
 }
+interface Content {
+  id: number;
+  key: string;
+  image_url: string | null;
+  title: string | null;
+  description: string | null;
+}
+
 
 export const dataApi = baseApi.injectEndpoints({
   endpoints: builder => ({
@@ -29,10 +37,17 @@ export const dataApi = baseApi.injectEndpoints({
     getWaiterInstructions: builder.query<WaiterInstruction[], void>({
       query: () => `/waiter_instructions`,
     }),
+    getContent: builder.query<Content[], void>({
+      query: () => `/content`,
+      keepUnusedDataFor: 0, // Keep data indefinitely until app restart
+      extraOptions: {
+        staleTime: Infinity, // Data never becomes stale
+      }
+    }),
   }),
 
   overrideExisting: true,
 });
 
-export const { useGetCitiesQuery, useGetAllergensQuery, useGetZonesQuery, useGetWaiterInstructionsQuery } =
+export const { useGetCitiesQuery, useGetAllergensQuery, useGetContentQuery, useGetZonesQuery, useGetWaiterInstructionsQuery } =
   dataApi;
