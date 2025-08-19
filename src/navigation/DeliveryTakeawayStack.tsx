@@ -39,6 +39,7 @@ import ProfileScreen from '../screens/ProfileScreen';
 import ProfileSettingsScreen from '../screens/ProfileSettingsScreen';
 import SearchScreen from '../screens/SearchScreen';
 import TrackOrderScreen from '../screens/TrackOrderScreen';
+import WalletScreen from '../screens/WalletScreen';
 import { setCartFromFetch } from '../store/slices/cartSlice';
 import { useAppDispatch } from '../store/store';
 import { COLORS } from '../theme';
@@ -212,7 +213,7 @@ const HomeStack = () => {
                     screen: 'Notifications',
                   })
                 }>
-                <NotificationsCounter />
+                //<NotificationsCounter />
               </TouchableOpacity>
             </View>
           ),
@@ -486,6 +487,7 @@ export type ProfileStackParamList = {
   PaymentMethods: undefined;
   Allergies: undefined;
   FavoriteItems: undefined;
+  Wallet: undefined;
 };
 
 const ProfileStack = () => {
@@ -550,6 +552,14 @@ const ProfileStack = () => {
       <Stack.Screen
         name="Allergies"
         component={AllergiesScreen}
+        options={{
+          headerTitleAlign: 'center',
+          headerTitle: 'Allergies',
+        }}
+      />
+      <Stack.Screen
+        name="Wallet"
+        component={WalletScreen}
         options={{
           headerTitleAlign: 'center',
           headerTitle: 'Allergies',

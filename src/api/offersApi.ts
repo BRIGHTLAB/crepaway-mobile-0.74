@@ -2,12 +2,17 @@ import { baseApi } from './baseApi';
 
 export const offersApi = baseApi.injectEndpoints({
   endpoints: builder => ({
-    getOffers: builder.query<Offer[], { menu?: string; menuType?: OrderType['menu_type']; branch: string }>({
-      query: ({ menu, branch, menuType }) => {
+    getOffers: builder.query<Offer[], { menuType?: OrderType['menu_type']; branch: string | null; addressId?: number | null }>({
+      query: ({ branch, menuType, addressId }) => {
         const params = new URLSearchParams();
-        if (menu) params.append('menu', menu);
         if (menuType) params.append('menu_type', menuType);
-        params.append('branch', branch);
+        if (branch) params.append('branch', branch);
+
+        // Add address_id if it exists
+        if (addressId) {
+          params.append('users_addresses_id', addressId.toString());
+        }
+
         return `/exclusive_offers?${params.toString()}`;
       },
       providesTags: ['offers'],

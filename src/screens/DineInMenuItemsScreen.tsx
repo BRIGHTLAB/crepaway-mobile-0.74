@@ -34,21 +34,18 @@ interface MenuItemProps {
 const MenuItem: React.FC<MenuItemProps> = React.memo(
   ({ item, onPress, isFavorite }) => {
     const [favorite, setFavorite] = useState(isFavorite);
-    const branch = useSelector((state: RootState) => state.user.branchName) || ''
+    const userState = useSelector((state: RootState) => state.user)
 
     useEffect(() => {
       setFavorite(isFavorite);
     }, [isFavorite]);
-
-    const menu = 'mobile-app-delivery';
-
     const [toggleFavorite, { isLoading: isTogglingFavorite }] =
       useToggleFavoriteMutation();
 
     const handleWishList = async () => {
       try {
         setFavorite(prev => !prev);
-        await toggleFavorite({ itemId: item.id, menu, branch });
+        await toggleFavorite({ itemId: item.id, menuType: userState.menuType, branch: userState.branchName });
       } catch (error) {
         setFavorite(prev => !prev);
       }
@@ -182,13 +179,13 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
     useGetCategoriesQuery({
       menuType: userState.menuType,
       // menu: 'mobile-app-delivery',
-      branch: userState.branchName || ''
+      branch: userState.branchName,
     });
 
   const { data: items, isLoading: isItemsLoading } = useGetItemsQuery({
     menuType: userState.menuType,
     // menu: 'mobile-app-delivery',
-    branch: userState.branchName || ''
+    branch: userState.branchName,
   });
 
   const groupedItems = categories.map(category => ({

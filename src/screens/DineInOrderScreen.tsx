@@ -44,11 +44,10 @@ const DineInOrderScreen = () => {
   const state = useSelector((state: RootState) => state.user);
 
   const { data, isLoading, error } = useGetHomepageQuery({
-    // menu: 'mobile-app-delivery',
     menuType: state.menuType,
     branch: state.branchTable
       ? state.branchTable.split('.')?.[0]?.toLowerCase()
-      : '',
+      : null,
   });
 
   const categories = data?.categories;

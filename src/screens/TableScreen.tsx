@@ -59,7 +59,7 @@ export type OrderedItem = {
   };
   epoch: number;
   deleted: number;
-  disabled: boolean;
+  is_disabled: boolean;
   status: 'pending' | 'in-kitchen';
   modifier_groups: Array<{
     id: number;

@@ -2,11 +2,11 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import { WebView } from 'react-native-webview';
-import { useGetFAQQuery } from '../api/faqApi';
-import { COLORS, SCREEN_PADDING } from '../theme';
+import { useGetLegalContentQuery } from '../api/legalsApi';
+import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
 
 const FAQScreen = () => {
-  const { data: faq, isLoading, error } = useGetFAQQuery();
+  const { data: faq, isLoading, error } = useGetLegalContentQuery('faq');
 
   if (isLoading) {
     return (
@@ -54,7 +54,14 @@ const FAQScreen = () => {
 
   return (
     <View style={styles.container}>
+      {faq?.title && (
+        <Text style={styles.title}>{faq.title}</Text>
+      )}
+      {faq?.description && (
+        <Text style={styles.description}>{faq.description}</Text>
+      )}
       <WebView
+        style={styles.webView}
         source={{
           html: faq?.content || '<html><body><h1>No FAQ content available</h1></body></html>',
         }}
@@ -70,6 +77,19 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: SCREEN_PADDING.horizontal,
     paddingVertical: SCREEN_PADDING.vertical,
+  },
+  title: {
+    ...TYPOGRAPHY.TITLE,
+    color: COLORS.darkColor,
+    marginBottom: 8,
+  },
+  description: {
+    ...TYPOGRAPHY.BODY,
+    color: COLORS.foregroundColor,
+    marginBottom: 16,
+  },
+  webView: {
+    flex: 1,
   },
   errorText: {
     fontFamily: 'Poppins-Regular',

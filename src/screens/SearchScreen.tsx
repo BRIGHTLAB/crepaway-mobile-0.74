@@ -1,27 +1,26 @@
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { debounce } from 'lodash';
+import React, { useCallback, useState } from 'react';
 import {
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
-import React, { useCallback, useEffect, useState } from 'react';
-import Input from '../components/UI/Input';
+import { useSelector } from 'react-redux';
 import Icon_Search from '../../assets/SVG/Icon_Search';
+import {
+  useGetSearchHistoryQuery,
+  useGetSearchResultsQuery,
+} from '../api/searchApi';
 import ItemsList from '../components/Menu/ItemsList';
 import OffersList from '../components/Menu/OffersList';
-import { debounce } from 'lodash';
-import {
-  useGetSearchResultsQuery,
-  useGetSearchHistoryQuery,
-} from '../api/searchApi';
-import { COLORS, SCREEN_PADDING } from '../theme';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Input from '../components/UI/Input';
 import { RootStackParamList } from '../navigation/NavigationStack';
-import { useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
 import { RootState } from '../store/store';
+import { COLORS, SCREEN_PADDING } from '../theme';
 
 const SearchScreen = () => {
   const [searchValue, setSearchValue] = useState('');
@@ -33,14 +32,14 @@ const SearchScreen = () => {
   const { data: searchHistory, isLoading: isLoadingHistory } =
     useGetSearchHistoryQuery();
 
-  const branch = useSelector((state: RootState) => state.user.branchName) || ''
-
+  const userState = useSelector((state: RootState) => state.user)
 
   const { data: searchResults, isLoading } = useGetSearchResultsQuery(
     {
-      menu: 'mobile-app-delivery',
-      branch,
+      menuType: userState.menuType,
+      branch: userState.branchName,
       searchValue: searchDebounceValue,
+      addressId: userState.addressId,
     },
     // {
     //   skip: searchDebounceValue === '',

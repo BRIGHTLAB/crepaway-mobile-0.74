@@ -1,43 +1,58 @@
 import { baseApi } from './baseApi';
 
 type CommonArgs = {
-    branch: string;
-    menu?: string;
+    branch: string | null;
     menuType?: OrderType['menu_type'];
+    addressId?: number | null;
 };
 
 export const menuApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         getCategories: builder.query<Category[], CommonArgs>({
-            query: ({ menu, menuType, branch }) => {
+            query: ({ menuType, branch, addressId }) => {
                 const params = new URLSearchParams();
-                if (menu) params.append('menu', menu);
                 if (menuType) params.append('menu_type', menuType);
-                params.append('branch', branch);
+                if (branch) params.append('branch', branch);
                 params.append('limit', '999');
+
+                // Add address_id if it exists
+                if (addressId) {
+                    params.append('users_addresses_id', addressId.toString());
+                }
+
                 return `/categories?${params.toString()}`;
             },
             providesTags: ['categories'],
         }),
 
         getItems: builder.query<{ data: Item[] }, CommonArgs>({
-            query: ({ menu, menuType, branch }) => {
+            query: ({ menuType, branch, addressId }) => {
                 const params = new URLSearchParams();
-                if (menu) params.append('menu', menu);
                 if (menuType) params.append('menu_type', menuType);
-                params.append('branch', branch);
+                if (branch) params.append('branch', branch);
                 params.append('limit', '999');
+
+                // Add address_id if it exists
+                if (addressId) {
+                    params.append('users_addresses_id', addressId.toString());
+                }
+
                 return `/items?${params.toString()}`;
             },
             providesTags: ['items'],
         }),
 
         getItemDetails: builder.query<Item, CommonArgs & { itemId: number }>({
-            query: ({ itemId, menu, menuType, branch }) => {
+            query: ({ itemId, menuType, branch, addressId }) => {
                 const params = new URLSearchParams();
-                if (menu) params.append('menu', menu);
                 if (menuType) params.append('menu_type', menuType);
-                params.append('branch', branch);
+                if (branch) params.append('branch', branch);
+
+                // Add address_id if it exists
+                if (addressId) {
+                    params.append('users_addresses_id', addressId.toString());
+                }
+
                 return `/items/${itemId}?${params.toString()}`;
             },
             providesTags: (result, error, { itemId }) => [{ type: 'items', id: itemId }],
@@ -49,11 +64,16 @@ export const menuApi = baseApi.injectEndpoints({
             { success: boolean },
             CommonArgs & { itemId: number }
         >({
-            query: ({ itemId, menu, menuType, branch }) => {
+            query: ({ itemId, menuType, branch, addressId }) => {
                 const params = new URLSearchParams();
-                if (menu) params.append('menu', menu);
                 if (menuType) params.append('menu_type', menuType);
-                params.append('branch', branch);
+                if (branch) params.append('branch', branch);
+
+                // Add address_id if it exists
+                if (addressId) {
+                    params.append('users_addresses_id', addressId.toString());
+                }
+
                 return {
                     url: `/favorite_items/${itemId}?${params.toString()}`,
                     method: 'POST',

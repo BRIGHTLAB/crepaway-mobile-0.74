@@ -32,8 +32,7 @@ interface IProps {
 }
 
 type ItemListNavigationProp = NativeStackNavigationProp<
-  RootStackParamList,
-  'MenuItem'
+  RootStackParamList
 >;
 
 const ItemCard = ({
@@ -52,8 +51,7 @@ const ItemCard = ({
   const navigation = useNavigation<ItemListNavigationProp>();
   const [favorite, setFavorite] = useState(false);
 
-  const menu = 'mobile-app-delivery';
-  const branch = useSelector((state: RootState) => state.user.branchName) || '';
+  const userState = useSelector((state: RootState) => state.user)
 
   const [toggleFavorite, { isLoading: isTogglingFavorite }] =
     useToggleFavoriteMutation();
@@ -61,7 +59,7 @@ const ItemCard = ({
   const handleWishList = async () => {
     try {
       setFavorite(prev => !prev);
-      await toggleFavorite({ itemId: id, menu, branch: branch });
+      await toggleFavorite({ itemId: id, menuType: userState.menuType, branch: userState.branchName, addressId: userState.addressId });
     } catch (error) {
       setFavorite(prev => !prev);
     }

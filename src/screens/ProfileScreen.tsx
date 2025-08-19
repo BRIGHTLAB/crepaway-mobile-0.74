@@ -1,7 +1,7 @@
-import BottomSheet, {TouchableOpacity} from '@gorhom/bottom-sheet';
-import {useNavigation} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import React, {useMemo, useRef} from 'react';
+import BottomSheet, { TouchableOpacity } from '@gorhom/bottom-sheet';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useMemo, useRef } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -24,22 +24,22 @@ import {
   useLazyGetSignedUrlQuery,
   useUpdateProfileMutation,
 } from '../api/profileApi';
-import {useUploadImageMutation} from '../api/s3UploaderApi';
+import { useUploadImageMutation } from '../api/s3UploaderApi';
 import OptionRow from '../components/Profile/OptionRow';
 import ProfilePhotoSheet from '../components/Sheets/Profile/ProfilePhotoSheet';
-import {ProfileStackParamList} from '../navigation/DeliveryTakeawayStack';
-import {COLORS, SCREEN_PADDING, TYPOGRAPHY} from '../theme';
+import { ProfileStackParamList } from '../navigation/DeliveryTakeawayStack';
+import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
 
 const ProfileScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
-  const {data, isLoading} = useGetProfileQuery();
+  const { data, isLoading } = useGetProfileQuery();
   const sheetRef = useRef<BottomSheet>(null);
-  const [getSignedUrl, {error, isLoading: signedUrlLoading}] =
+  const [getSignedUrl, { error, isLoading: signedUrlLoading }] =
     useLazyGetSignedUrlQuery();
-  const [updateProfile, {isLoading: updateProfileLoading}] =
+  const [updateProfile, { isLoading: updateProfileLoading }] =
     useUpdateProfileMutation();
-  const [uploadImage, {isLoading: uploadImageLoading}] =
+  const [uploadImage, { isLoading: uploadImageLoading }] =
     useUploadImageMutation();
 
   const handleImageSelection = async (imageUri: string) => {
@@ -48,14 +48,14 @@ const ProfileScreen = () => {
       console.log('Starting image upload');
 
       // Get the signed URL from your API
-      const resp = await getSignedUrl({objectName}).unwrap();
+      const resp = await getSignedUrl({ objectName }).unwrap();
 
       // Fetch the image and convert it to a blob
       const response = await fetch(imageUri);
       const blob = await response.blob();
 
-      await uploadImage({url: resp.signedUrl, file: blob});
-      await updateProfile({image_url: resp.key});
+      await uploadImage({ url: resp.signedUrl, file: blob });
+      await updateProfile({ image_url: resp.key });
     }
   };
 
@@ -72,25 +72,25 @@ const ProfileScreen = () => {
         icon: <Icon_Support />,
         text: 'Support',
         disabled: true,
-        onPress: () => {},
+        onPress: () => { },
       },
       {
         icon: <Icon_User color={'black'} />,
         text: 'Rewards',
         disabled: true,
-        onPress: () => {},
+        onPress: () => { },
       },
       {
         icon: <Icon_Settings />,
         text: 'Settings',
         disabled: true,
-        onPress: () => {},
+        onPress: () => { },
       },
       {
         icon: <Icon_Share />,
         text: 'Refer a friend',
         disabled: true,
-        onPress: () => {},
+        onPress: () => { },
       },
       {
         icon: <Icon_Legal />,
@@ -105,8 +105,7 @@ const ProfileScreen = () => {
       {
         icon: <Icon_Wallet />,
         text: 'Wallet',
-        disabled: true,
-        onPress: () => {},
+        onPress: () => { navigation.navigate('Wallet') },
       },
     ],
     [navigation],
@@ -114,7 +113,7 @@ const ProfileScreen = () => {
 
   if (isLoading) {
     return (
-      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color={COLORS.primaryColor} />
       </View>
     );
@@ -157,8 +156,8 @@ const ProfileScreen = () => {
                 signedUrlLoading || updateProfileLoading || uploadImageLoading
               }>
               {signedUrlLoading ||
-              updateProfileLoading ||
-              uploadImageLoading ? (
+                updateProfileLoading ||
+                uploadImageLoading ? (
                 <ActivityIndicator size="small" color={COLORS.darkColor} />
               ) : (
                 <Icon_Camera color={'black'} width={15} height={15} />
@@ -172,11 +171,11 @@ const ProfileScreen = () => {
         </View>
         <FlatList
           data={options}
-          renderItem={({index, item}) => (
+          renderItem={({ index, item }) => (
             <View>
               <OptionRow {...item} />
               {index !== options.length - 1 && (
-                <View style={{paddingHorizontal: 16}}>
+                <View style={{ paddingHorizontal: 16 }}>
                   <View style={styles.seperator} />
                 </View>
               )}

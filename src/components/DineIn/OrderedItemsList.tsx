@@ -1,16 +1,14 @@
-import React from 'react';
-import { StyleSheet, Text, View, FlatList, ViewStyle } from 'react-native';
-import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../../theme';
-import { OrderedItem, OrderedItems, TableUsers } from '../../screens/TableScreen';
-import OrderedItemCmp from './OrderedItem';
 import { useNavigation } from '@react-navigation/native';
-import { DineInStackParamList } from '../../navigation/DineInStack';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import SocketService from '../../utils/SocketService';
+import React from 'react';
+import { FlatList, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { useSelector } from 'react-redux';
+import { DineInStackParamList } from '../../navigation/DineInStack';
+import { OrderedItem, OrderedItems, TableUsers } from '../../screens/TableScreen';
 import { RootState } from '../../store/store';
-import { Dayjs } from 'dayjs';
-import { user } from '../../api/userApi';
+import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../../theme';
+import SocketService from '../../utils/SocketService';
+import OrderedItemCmp from './OrderedItem';
 
 type Props = {
   items: OrderedItems;
@@ -104,7 +102,7 @@ const OrderedItemsList = ({ items, users, contentContainerStyle, isTableLocked }
           const orderedByUser = Object.values(users).find(
             user => user.id === item.added_by.id,
           );
-          const isItemDisabled = isTableLocked || item.disabled || (orderedByUser?.id !== userState.id && !isCurrentUserKing)
+          const isItemDisabled = isTableLocked || item.is_disabled || (orderedByUser?.id !== userState.id && !isCurrentUserKing)
           return (
             <OrderedItemCmp
               item={item}

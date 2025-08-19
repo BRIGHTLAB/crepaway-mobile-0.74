@@ -40,7 +40,7 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
     }, [isFavorite]);
 
     const menu = 'mobile-app-delivery';
-    const branch = useSelector((state: RootState) => state.user.branchName) || ''
+    const userState = useSelector((state: RootState) => state.user)
 
     const [toggleFavorite, { isLoading: isTogglingFavorite }] =
       useToggleFavoriteMutation();
@@ -48,7 +48,7 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
     const handleWishList = async () => {
       try {
         setFavorite(prev => !prev);
-        await toggleFavorite({ itemId: item.id, menu, branch });
+        await toggleFavorite({ itemId: item.id, branch: userState.branchName, menuType: userState.menuType, addressId: userState.addressId });
       } catch (error) {
         setFavorite(prev => !prev);
       }
@@ -179,13 +179,15 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
 
   const { data: categories = [], isLoading: isCategoriesLoading } =
     useGetCategoriesQuery({
-      menu: 'mobile-app-delivery',
-      branch: userState.branchName || '',
+      menuType: userState.menuType,
+      branch: userState.branchName,
+      addressId: userState.addressId,
     });
 
   const { data: items, isLoading: isItemsLoading } = useGetItemsQuery({
-    menu: 'mobile-app-delivery',
-    branch: userState.branchName || '',
+    menuType: userState.menuType,
+    branch: userState.branchName,
+    addressId: userState.addressId,
   });
 
   const groupedItems = categories.map(category => ({

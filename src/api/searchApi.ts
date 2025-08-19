@@ -17,8 +17,20 @@ export const searchApi = baseApi.injectEndpoints({
             exclusive_offers: Offer[];
             favorite_items: Item[];
             best_sellers: Item[];
-        }, { menu: string, branch: string, searchValue: string }>({
-            query: ({ menu, branch, searchValue }) => `/homepage?menu=${menu}&branch=${branch}${searchValue ? `&search=${searchValue}` : ''}`,
+        }, { menuType: OrderType['menu_type'], branch: string | null, searchValue: string, addressId?: number | null }>({
+            query: ({ menuType, branch, searchValue, addressId }) => {
+                const params = new URLSearchParams();
+                if (menuType) params.append('menu_type', menuType);
+                if (branch) params.append('branch', branch);
+                if (searchValue) params.append('search', searchValue);
+
+                // Add address_id if it exists
+                if (addressId) {
+                    params.append('users_addresses_id', addressId.toString());
+                }
+
+                return `/homepage?${params.toString()}`;
+            },
         }),
         getSearchHistory: builder.query<SearchHistory[], void>({
             query: () => `/search_history?limit=999`,

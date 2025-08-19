@@ -17,10 +17,22 @@ export const cartApi = baseApi.injectEndpoints({
         addToCart: builder.mutation<void, { items: CartItem[], order_type: string }>({
             query: ({ items, order_type }) => {
                 const branchName = store.getState().user.branchName;
+                const addressId = store.getState().user.addressId;
                 const baseUrl = '/cart';
-                const queryParams = order_type === 'takeaway' && branchName ? `?branch=${branchName}` : '';
+
+                const params = new URLSearchParams();
+                if (order_type === 'takeaway' && branchName) {
+                    params.append('branch', branchName);
+                }
+                if (addressId) {
+                    params.append('users_addresses_id', addressId.toString());
+                }
+
+                const queryString = params.toString();
+                const url = queryString ? `${baseUrl}?${queryString}` : baseUrl;
+
                 return {
-                    url: `${baseUrl}${queryParams}`,
+                    url,
                     method: 'POST',
                     body: {
                         items,

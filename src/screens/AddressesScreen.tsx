@@ -3,6 +3,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import { useDispatch } from 'react-redux';
 import DeleteAnimation from '../../assets/lotties/Delete.json';
 import Icon_Delete from '../../assets/SVG/Icon_Delete';
 import Icon_Location from '../../assets/SVG/Icon_Location';
@@ -13,13 +14,12 @@ import {
 import AddAddressButton from '../components/Address/AddAddressButton';
 import ConfirmationPopup from '../components/Popups/ConfirmationPopup';
 import { ServiceSelectionStackParamList } from '../navigation/ServiceSelectionStack';
-import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
-import { useDispatch } from 'react-redux';
 import {
   setAddress,
   setBranchName,
   setOrderType,
 } from '../store/slices/userSlice';
+import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
 
 type NavigationProp = NativeStackNavigationProp<ServiceSelectionStackParamList>;
 
@@ -64,13 +64,14 @@ const AddressScreen = () => {
         title: address.title,
       }),
     );
-    dispatch(setBranchName('delivery')),
-      dispatch(
-        setOrderType({
-          menuType: 'delivery',
-          orderTypeAlias: 'delivery',
-        }),
-      );
+    // Clear branch when selecting delivery address
+    dispatch(setBranchName(null));
+    dispatch(
+      setOrderType({
+        menuType: 'delivery',
+        orderTypeAlias: 'delivery',
+      }),
+    );
   };
 
   const renderAddressItem = (item: Address) => {

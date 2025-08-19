@@ -81,8 +81,9 @@ const HomeScreen = () => {
 
 
   const { data, isLoading, error } = useGetHomepageQuery({
-    menu: 'mobile-app-delivery',
-    branch: state.branchName ? state.branchName : '',
+    menuType: state.menuType,
+    branch: state.branchName,
+    addressId: state.addressId,
   });
 
   console.log('branch123', data)

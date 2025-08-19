@@ -2,11 +2,11 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import { WebView } from 'react-native-webview';
-import { useGetLegalQuery } from '../api/legalApi';
-import { COLORS, SCREEN_PADDING } from '../theme';
+import { useGetLegalContentQuery } from '../api/legalsApi';
+import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
 
 const LegalScreen = () => {
-  const { data: legal, isLoading, error } = useGetLegalQuery();
+  const { data: legal, isLoading, error } = useGetLegalContentQuery('legal');
 
   if (isLoading) {
     return (
@@ -54,7 +54,14 @@ const LegalScreen = () => {
 
   return (
     <View style={styles.container}>
+      {legal?.title && (
+        <Text style={styles.title}>{legal.title}</Text>
+      )}
+      {legal?.description && (
+        <Text style={styles.description}>{legal.description}</Text>
+      )}
       <WebView
+        style={styles.webView}
         source={{
           html: legal?.content || '<html><body><h1>No legal content available</h1></body></html>',
         }}
@@ -70,6 +77,19 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: SCREEN_PADDING.horizontal,
     paddingVertical: SCREEN_PADDING.vertical,
+  },
+  title: {
+    ...TYPOGRAPHY.TITLE,
+    color: COLORS.darkColor,
+    marginBottom: 8,
+  },
+  description: {
+    ...TYPOGRAPHY.BODY,
+    color: COLORS.foregroundColor,
+    marginBottom: 16,
+  },
+  webView: {
+    flex: 1,
   },
   errorText: {
     fontFamily: 'Poppins-Regular',

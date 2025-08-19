@@ -38,7 +38,7 @@ const WelcomePopup = ({ visible, onClose, onViewMenu, waiter }: Props) => {
     error,
   } = useGetOffersQuery({
     menuType: userState.menuType,
-    branch: userState.branchTable?.split('.')?.[0] || '',
+    branch: userState.branchTable?.split('.')?.[0] || null,
   });
 
   const navigation = useNavigation<NavigationProp>();

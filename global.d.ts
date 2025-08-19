@@ -83,11 +83,9 @@ type Offer = {
   updated_at: string;
 };
 
-type FAQ = {
-  content: string;
-};
-
-type Legal = {
+type LegalContent = {
+  title: string;
+  description: string;
   content: string;
 };
 
@@ -164,7 +162,7 @@ interface Coordinates {
 interface OrderType {
   id: number;
   alias: 'delivery' | 'takeaway' | 'dine-in' | null;
-  menu_type: 'delivery' | 'dine-in' | null;
+  menu_type: 'delivery' | 'dine-in' | 'takeaway' | null;
   type_title: string;
   title: string;
   description: string;

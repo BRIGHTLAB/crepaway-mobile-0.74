@@ -15,7 +15,7 @@ import FastImage from 'react-native-fast-image';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import Icon_Delivery from '../../assets/SVG/Icon_Delivery';
 import Icon_Dine_In from '../../assets/SVG/Icon_Dine_In';
 import Icon_Take_Away from '../../assets/SVG/Icon_Take_Away';
@@ -34,10 +34,11 @@ import {
   setCartOrderType,
 } from '../store/slices/cartSlice';
 import {
+  setAddress,
   setBranchName,
   setOrderType
 } from '../store/slices/userSlice';
-import store from '../store/store';
+import store, { RootState } from '../store/store';
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
 
 const { width, height } = Dimensions.get('window');
@@ -96,10 +97,10 @@ const ServiceSelectionScreen = () => {
   const { data: orderTypes, isLoading: orderTypesLoading } =
     useGetOrderTypesQuery();
   const { data: branches, isLoading: branchesLoading } =
-    useGetMenuBranchesQuery('delivery');
+    useGetMenuBranchesQuery('takeaway');
 
+  const userState = useSelector((state: RootState) => state.user);
   const [selectedIdx, setSelectedIdx] = useState(0);
-  const [selectedBranch, setSelectedBranch] = useState<number | null>(null);
 
   // Track previous and current background for smooth transitions
   const [currentBackground, setCurrentBackground] = useState<any>(null);
@@ -166,6 +167,13 @@ const ServiceSelectionScreen = () => {
       })) || [],
     [branches],
   );
+
+  // Get the selected branch ID based on the branch name from userState
+  const selectedBranchId = useMemo(() => {
+    if (!userState.branchName || !branches) return null;
+    const branch = branches.find(br => br.name === userState.branchName);
+    return branch?.id || null;
+  }, [userState.branchName, branches]);
 
   // Handle background image changes
   useEffect(() => {
@@ -238,13 +246,19 @@ const ServiceSelectionScreen = () => {
             text: 'Change & Clear Cart',
             onPress: () => {
               dispatch(clearCart());
-              setSelectedBranch(value);
               dispatch(
                 setOrderType({
-                  menuType: 'delivery',
+                  menuType: 'takeaway',
                   orderTypeAlias: 'takeaway',
                 }),
               );
+              // Clear address when selecting takeaway branch
+              dispatch(setAddress({
+                id: null,
+                title: null,
+                latitude: null,
+                longitude: null,
+              }));
               dispatch(
                 setBranchName(
                   branches?.find(br => br.id === value)?.name || null,
@@ -255,13 +269,19 @@ const ServiceSelectionScreen = () => {
         ],
       );
     } else {
-      setSelectedBranch(value);
       dispatch(
         setOrderType({
-          menuType: 'delivery',
+          menuType: 'takeaway',
           orderTypeAlias: 'takeaway',
         }),
       );
+      // Clear address when selecting takeaway branch
+      dispatch(setAddress({
+        id: null,
+        title: null,
+        latitude: null,
+        longitude: null,
+      }));
       dispatch(setBranchName(selectedBranchName || null));
       dispatch(setCartBranchName(selectedBranchName || null));
     }
@@ -355,34 +375,34 @@ const ServiceSelectionScreen = () => {
           takeawaySheetRef.current?.expand();
           break;
         case 'dine-in':
-          // dispatch(
-          //   setAddress({
-          //     id: null,
-          //     title:null,
-          //     latitude: null,
-          //     longitude: null,
-          //   }),
-          // );
-
-
-          // Alert.alert(
-          //   'Dine In Experience',
-          //   `Coming soon!`,
-          //   [
-          //     {
-          //       text: 'Okay',
-          //       style: 'cancel',
-          //     },
-          //   ],
-          // );
-
-          // uncomment the part below when we need to enable dine-in
           dispatch(
-            setOrderType({
-              menuType: 'dine-in',
-              orderTypeAlias: 'dine-in',
+            setAddress({
+              id: null,
+              title: null,
+              latitude: null,
+              longitude: null,
             }),
           );
+
+
+          Alert.alert(
+            'Dine In Experience',
+            `Coming soon!`,
+            [
+              {
+                text: 'Okay',
+                style: 'cancel',
+              },
+            ],
+          );
+
+          // uncomment the part below when we need to enable dine-in
+          // dispatch(
+          //   setOrderType({
+          //     menuType: 'dine-in',
+          //     orderTypeAlias: 'dine-in',
+          //   }),
+          // );
           break;
       }
     },
@@ -470,16 +490,13 @@ const ServiceSelectionScreen = () => {
         <>
           <DeliverySheet ref={addressSheetRef} />
           <TakeawaySheet
-            selectedBranch={
-              branchOptions.find(br => br.value === selectedBranch)?.label ||
-              null
-            }
+            selectedBranch={userState.branchName}
             ref={takeawaySheetRef}
             onSelectPress={handleSelectPress}
           />
           <SelectSheet
             ref={branchesSheetRef}
-            value={selectedBranch}
+            value={selectedBranchId}
             options={branchOptions}
             onChange={handleBranchChange}
             title="Select Branch"

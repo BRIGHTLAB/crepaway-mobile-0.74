@@ -1,30 +1,23 @@
 import BottomSheet, {
-  BottomSheetBackdrop,
-  BottomSheetScrollView,
-  BottomSheetView,
+  BottomSheetView
 } from '@gorhom/bottom-sheet';
-import React, {
-  forwardRef,
-  useCallback,
-  useImperativeHandle,
-  useRef,
-} from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Icon_Arrow_Right from '../../../../assets/SVG/Icon_Arrow_Right';
-import Icon_Location from '../../../../assets/SVG/Icon_Location';
-import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../../../theme';
-import AddAddressButton from '../../Address/AddAddressButton';
-import Button from '../../UI/Button';
-import DynamicSheet from '../DynamicSheet';
-import SelectButton from '../../UI/SelectButton';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../../navigation/NavigationStack';
-import { ServiceSelectionStackParamList } from '../../../navigation/ServiceSelectionStack';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../../store/store';
-import { setBranchName, setOrderType } from '../../../store/slices/userSlice';
+import React, {
+  forwardRef
+} from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useDispatch, useSelector } from 'react-redux';
+import Icon_Location from '../../../../assets/SVG/Icon_Location';
+import { ServiceSelectionStackParamList } from '../../../navigation/ServiceSelectionStack';
+import { setBranchName, setOrderType } from '../../../store/slices/userSlice';
+import { RootState } from '../../../store/store';
+import { COLORS, TYPOGRAPHY } from '../../../theme';
+import AddAddressButton from '../../Address/AddAddressButton';
+import Button from '../../UI/Button';
+import SelectButton from '../../UI/SelectButton';
+import DynamicSheet from '../DynamicSheet';
 
 type Props = {};
 type NavigationProp = NativeStackNavigationProp<ServiceSelectionStackParamList>;
@@ -41,13 +34,14 @@ const DeliverySheet = forwardRef<BottomSheet, Props>(({ }, ref) => {
 
   const handleProceedPress = () => {
     console.log('proceed');
-    dispatch(setBranchName('delivery')),
-      dispatch(
-        setOrderType({
-          menuType: 'delivery',
-          orderTypeAlias: 'delivery',
-        }),
-      );
+    // Clear branch when selecting delivery
+    dispatch(setBranchName(null));
+    dispatch(
+      setOrderType({
+        menuType: 'delivery',
+        orderTypeAlias: 'delivery',
+      }),
+    );
   };
 
   return (

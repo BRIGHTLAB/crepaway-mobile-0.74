@@ -1,24 +1,23 @@
-import { FlatList, Platform, StatusBar, StyleSheet, Text, View } from 'react-native';
-import OfferCard from '../components/Menu/OfferCard';
-import React, { useCallback, useEffect, useState } from 'react';
-import { GET } from '../api';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React from 'react';
+import { FlatList, StyleSheet, View } from 'react-native';
+import { useSelector } from 'react-redux';
+import { useGetFavoritesQuery } from '../api/favoriteApi';
 import ItemCard from '../components/Menu/ItemCard';
 import MenuItemSkeleton from '../components/SkeletonLoader/MenuItemSkeleton';
-import { useGetFavoritesQuery } from '../api/favoriteApi';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/NavigationStack';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { SCREEN_PADDING } from '../theme';
-import { useSelector } from 'react-redux';
 import { RootState } from '../store/store';
+import { SCREEN_PADDING } from '../theme';
 
 const FavoritesScreen = () => {
 
-  const branch = useSelector((state: RootState) => state.user.branchName) || ''
+  const userState = useSelector((state: RootState) => state.user)
 
   const { data: favoriteItems, isLoading } = useGetFavoritesQuery({
-    menu: 'mobile-app-delivery',
-    branch,
+    menuType: userState.menuType,
+    branch: userState.branchName,
+    addressId: userState.addressId,
   });
 
   const navigation =
@@ -39,7 +38,6 @@ const FavoritesScreen = () => {
           symbol={item.symbol}
           tags={item.tags}
           isFavorite={item.is_favorite}
-          style={{ width: '100%' }}
           onItemPress={id => {
             navigation.navigate('HomeStack', {
               screen: 'MenuItem',

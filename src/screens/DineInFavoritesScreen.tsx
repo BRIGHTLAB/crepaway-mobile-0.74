@@ -12,7 +12,7 @@ const DineInFavoritesScreen = () => {
   const userState = useSelector((state: RootState) => state.user)
   const { data: favoriteItems, isLoading } = useGetFavoritesQuery({
     menuType: userState.menuType,
-    branch: userState.branchName || '',
+    branch: userState.branchName,
   });
 
   const navigation = useNavigation<any>();

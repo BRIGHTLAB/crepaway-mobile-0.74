@@ -10,19 +10,24 @@ export interface HomepageResponse {
 }
 
 type HomeArgs = {
-    branch: string;
-    menu?: string;
+    branch: string | null;
     menuType?: OrderType['menu_type'];
+    addressId?: number | null;
 };
 
 export const homeApi = baseApi.injectEndpoints({
     endpoints: builder => ({
         getHomepage: builder.query<HomepageResponse, HomeArgs>({
-            query: ({ menu, menuType, branch }) => {
+            query: ({ menuType, branch, addressId }) => {
                 const params = new URLSearchParams();
-                if (menu) params.append('menu', menu);
                 if (menuType) params.append('menu_type', menuType);
-                params.append('branch', branch);
+                if (branch) params.append('branch', branch);
+
+                // Add address_id if it exists
+                if (addressId) {
+                    params.append('users_addresses_id', addressId.toString());
+                }
+
                 return `/homepage?${params.toString()}`;
             },
             providesTags: ['homepage'],

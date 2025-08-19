@@ -12,11 +12,12 @@ import { SCREEN_PADDING } from '../theme';
 
 const FeaturedItemsScreen = () => {
 
-  const branch = useSelector((state: RootState) => state.user.branchName) || ''
+  const userState = useSelector((state: RootState) => state.user)
 
   const { data: featuredItems, isLoading } = useFeaturedItemsQuery({
-    menu: 'mobile-app-delivery',
-    branch,
+    menuType: userState.menuType || '',
+    branch: userState.branchName,
+    addressId: userState.addressId,
   });
 
   const navigation =

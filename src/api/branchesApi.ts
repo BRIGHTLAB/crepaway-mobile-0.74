@@ -1,4 +1,4 @@
-import {baseApi} from './baseApi';
+import { baseApi } from './baseApi';
 
 export const ordersApi = baseApi.injectEndpoints({
   endpoints: builder => ({
@@ -10,4 +10,4 @@ export const ordersApi = baseApi.injectEndpoints({
   overrideExisting: true,
 });
 
-export const {useGetMenuBranchesQuery} = ordersApi;
+export const { useGetMenuBranchesQuery } = ordersApi;

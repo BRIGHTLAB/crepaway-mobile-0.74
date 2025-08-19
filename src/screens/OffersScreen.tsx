@@ -15,11 +15,12 @@ type OfferCardNavigationProp = NativeStackNavigationProp<
 >;
 
 const OffersScreen = () => {
-  const branch = useSelector((state: RootState) => state.user.branchName) || ''
+  const userState = useSelector((state: RootState) => state.user)
 
   const { data, isLoading, error } = useGetOffersQuery({
-    menu: 'mobile-app-delivery',
-    branch,
+    menuType: userState.menuType,
+    branch: userState.branchName,
+    addressId: userState.addressId,
   });
 
   const navigation = useNavigation<OfferCardNavigationProp>();
