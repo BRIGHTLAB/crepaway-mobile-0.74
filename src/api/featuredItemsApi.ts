@@ -11,7 +11,7 @@ export const featuredItemsApi = baseApi.injectEndpoints({
 
                 // Add address_id if it exists
                 if (addressId) {
-                    params.append('users_addresses_id', addressId.toString());
+                    params.append('address_id', addressId.toString());
                 }
 
                 return `/homepage?${params.toString()}`;

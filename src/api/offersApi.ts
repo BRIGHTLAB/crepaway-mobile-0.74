@@ -10,7 +10,7 @@ export const offersApi = baseApi.injectEndpoints({
 
         // Add address_id if it exists
         if (addressId) {
-          params.append('users_addresses_id', addressId.toString());
+          params.append('address_id', addressId.toString());
         }
 
         return `/exclusive_offers?${params.toString()}`;

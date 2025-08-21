@@ -25,7 +25,7 @@ export const cartApi = baseApi.injectEndpoints({
                     params.append('branch', branchName);
                 }
                 if (addressId) {
-                    params.append('users_addresses_id', addressId.toString());
+                    params.append('address_id', addressId.toString());
                 }
 
                 const queryString = params.toString();

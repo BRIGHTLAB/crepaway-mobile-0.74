@@ -86,8 +86,11 @@ const HomeScreen = () => {
     addressId: state.addressId,
   });
 
-  console.log('branch123', data)
-  console.log('branch1512')
+  console.log('branch123', {
+    menuType: state.menuType,
+    branch: state.branchName,
+    addressId: state.addressId,
+  })
 
 
   const categories = data?.categories;

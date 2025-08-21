@@ -1,30 +1,29 @@
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useNavigation } from '@react-navigation/native';
-import TotalSection from '../components/Menu/TotalSection';
-import FastImage from 'react-native-fast-image';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
-import Button from '../components/UI/Button';
+import { useHeaderHeight } from '@react-navigation/elements';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { debounce } from 'lodash';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import FastImage from 'react-native-fast-image';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
 import Icon_Checkout from '../../assets/SVG/Icon_Checkout';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
-import DeliveryInstructionsSheet from '../components/Checkout/DeliveryInstructionsSheet';
-import RadioButton from '../components/UI/RadioButton';
-import { RootStackParamList } from '../navigation/NavigationStack';
-import DateInput from '../components/UI/DateInput';
 import Icon_Paper_Edit from '../../assets/SVG/Icon_Paper_Edit';
-import { debounce } from 'lodash';
-import { useSelector } from 'react-redux';
-import { RootState, useAppDispatch } from '../store/store';
-import { clearCart } from '../store/slices/cartSlice';
-import DynamicSheet from '../components/Sheets/DynamicSheet';
 import { useGetCheckoutQuery, usePlaceOrderMutation } from '../api/checkoutApi';
-import { COLORS, SCREEN_PADDING } from '../theme';
+import DeliveryInstructionsSheet from '../components/Checkout/DeliveryInstructionsSheet';
+import TotalSection from '../components/Menu/TotalSection';
+import DynamicSheet from '../components/Sheets/DynamicSheet';
+import Button from '../components/UI/Button';
+import DateInput from '../components/UI/DateInput';
 import DynamicPopup from '../components/UI/DynamicPopup';
+import RadioButton from '../components/UI/RadioButton';
 import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useHeaderHeight } from '@react-navigation/elements';
+import { clearCart } from '../store/slices/cartSlice';
+import { RootState, useAppDispatch } from '../store/store';
+import { COLORS, SCREEN_PADDING } from '../theme';
 
 const CheckoutScreen = () => {
   const navigation =
@@ -107,7 +106,7 @@ const CheckoutScreen = () => {
     const formData = {
       special_delivery_instructions: specialDeliveryInstructions,
       users_payment_methods_id: 1,
-      users_addresses_id: user?.addressId,
+      address_id: user?.addressId,
       promo_code: debouncedPromoCode,
       is_scheduled: scheduleOrder === 'yes' ? 1 : 0,
       scheduled_date: scheduledDateTime

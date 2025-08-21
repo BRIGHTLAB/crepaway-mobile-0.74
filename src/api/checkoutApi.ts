@@ -15,7 +15,7 @@ export interface Checkout {
 export interface OrderFormData {
   special_delivery_instructions: string;
   users_payment_methods_id: number;
-  users_addresses_id: number | null;
+  address_id: number | null;
   delivery_instructions?: { id: number }[];
   is_scheduled: number;
   scheduled_date: string | null;
@@ -40,7 +40,7 @@ export const checkoutApi = baseApi.injectEndpoints({
         }
 
         if (usersAddressesId) {
-          params.append('users_addresses_id', usersAddressesId.toString());
+          params.append('address_id', usersAddressesId.toString());
         }
 
         const queryString = params.toString();
@@ -68,7 +68,7 @@ export const checkoutApi = baseApi.injectEndpoints({
         }
 
         if (usersAddressesId) {
-          params.append('users_addresses_id', usersAddressesId.toString());
+          params.append('address_id', usersAddressesId.toString());
         }
 
         const queryString = params.toString();
