@@ -21,6 +21,8 @@ const ModifierGroup: React.FC<ModifierGroupProps> = ({
     [],
   );
 
+  console.log('group', group);
+
 
   // This effect syncs the selectedModifiers from the parent with the local selectedItems state
   useEffect(() => {
@@ -220,13 +222,20 @@ const ModifierGroup: React.FC<ModifierGroupProps> = ({
     });
   };
 
+  // Check if group is disabled (max_quantity is 0)
+  const isGroupDisabled = group.max_quantity === 0;
+
   if (group.is_available) return null; // had do it this way because the backend returns false
 
   return (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: 8, opacity: isGroupDisabled ? 0.5 : 1 }}>
       {group.hide_label && ( // had to do it this way because the backend returns false
         <Text
-          style={{ color: COLORS.darkColor, fontSize: 16, fontWeight: '500' }}>
+          style={{
+            color: isGroupDisabled ? COLORS.foregroundColor : COLORS.darkColor,
+            fontSize: 16,
+            fontWeight: '500'
+          }}>
           {group.name}
 
           <Text style={{ fontSize: 12, fontWeight: '400' }}>
@@ -237,10 +246,17 @@ const ModifierGroup: React.FC<ModifierGroupProps> = ({
       {group.collapsed && ( // had to do it this way because the backend returns false
         <View style={{ gap: 8 }}>
           {group.modifier_items.map(item => {
+            // Check if item is disabled (max_quantity is 0)
+            const isItemDisabled = item.max_quantity === 0;
+
             return (
               <View
                 key={item.id}
-                style={{ flexDirection: 'row', alignItems: 'center' }}>
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  opacity: isItemDisabled ? 0.5 : 1
+                }}>
                 {group.max_quantity > 1 && item.max_quantity > 1 ? (
                   <ModifierItemCounter
                     itemId={item.id}
@@ -248,15 +264,15 @@ const ModifierGroup: React.FC<ModifierGroupProps> = ({
                       selectedItems.find(i => i.id === item.id)?.quantity || 0
                     }
                     maxCount={item.max_quantity}
-                    onIncrement={handleIncrement}
-                    onReset={handleReset}
+                    onIncrement={isItemDisabled ? () => { } : handleIncrement}
+                    onReset={isItemDisabled ? () => { } : handleReset}
                     title={`${item.name} ${group.has_additional_charge ? `$${item.price}` : ''
                       }`}
                   />
                 ) : (
                   <Checkbox
                     checked={selectedItems.some(i => i.id === item.id)}
-                    onCheck={isChecked => handleSelectItem(item.id, isChecked)}
+                    onCheck={isItemDisabled ? () => { } : (isChecked => handleSelectItem(item.id, isChecked))}
                     isRadio={group.max_quantity === 1}
                     title={`${item.name} ${group.has_additional_charge && item?.price
                       ? `$${item.price}`
