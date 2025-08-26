@@ -6,7 +6,7 @@ import { useGetLegalContentQuery } from '../api/legalsApi';
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
 
 const FAQScreen = () => {
-  const { data: faq, isLoading, error } = useGetLegalContentQuery('faq');
+  const { data: faq, isLoading, error } = useGetLegalContentQuery('faqs');
 
   if (isLoading) {
     return (

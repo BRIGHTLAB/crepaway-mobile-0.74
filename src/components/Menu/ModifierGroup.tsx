@@ -1,8 +1,8 @@
-import React, {useEffect, useState} from 'react';
-import {View, Text} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Text, View } from 'react-native';
+import { COLORS } from '../../theme';
 import Checkbox from '../UI/Checkbox';
 import ModifierItemCounter from './ModifierItemCounter';
-import {COLORS} from '../../theme';
 
 interface ModifierGroupProps {
   group: ModifierGroup;
@@ -20,6 +20,7 @@ const ModifierGroup: React.FC<ModifierGroupProps> = ({
   const [selectedItems, setSelectedItems] = useState<SelectedModifierItem[]>(
     [],
   );
+
 
   // This effect syncs the selectedModifiers from the parent with the local selectedItems state
   useEffect(() => {
@@ -122,7 +123,7 @@ const ModifierGroup: React.FC<ModifierGroupProps> = ({
         }
 
         const newItems = prev.map(item =>
-          item.id === itemId ? {...item, quantity: item.quantity + 1} : item,
+          item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item,
         );
         updateParentState(newItems);
         return newItems;
@@ -222,50 +223,50 @@ const ModifierGroup: React.FC<ModifierGroupProps> = ({
   if (group.is_available) return null; // had do it this way because the backend returns false
 
   return (
-    <View style={{gap: 8}}>
+    <View style={{ gap: 8 }}>
       {group.hide_label && ( // had to do it this way because the backend returns false
         <Text
-          style={{color: COLORS.darkColor, fontSize: 16, fontWeight: '500'}}>
+          style={{ color: COLORS.darkColor, fontSize: 16, fontWeight: '500' }}>
           {group.name}
 
-          <Text style={{fontSize: 12, fontWeight: '400'}}>
+          <Text style={{ fontSize: 12, fontWeight: '400' }}>
             &nbsp; (Max Item Quantity: {group?.max_quantity})
           </Text>
         </Text>
       )}
-      {!group.collapsed && (
-        <View style={{gap: 8}}>
-          {group.modifier_items.map(item => (
-            <View
-              key={item.id}
-              style={{flexDirection: 'row', alignItems: 'center'}}>
-              {group.max_quantity > 1 && item.max_quantity > 1 ? (
-                <ModifierItemCounter
-                  itemId={item.id}
-                  count={
-                    selectedItems.find(i => i.id === item.id)?.quantity || 0
-                  }
-                  maxCount={item.max_quantity}
-                  onIncrement={handleIncrement}
-                  onReset={handleReset}
-                  title={`${item.name} ${
-                    group.has_additional_charge ? `$${item.price}` : ''
-                  }`}
-                />
-              ) : (
-                <Checkbox
-                  checked={selectedItems.some(i => i.id === item.id)}
-                  onCheck={isChecked => handleSelectItem(item.id, isChecked)}
-                  isRadio={group.max_quantity === 1}
-                  title={`${item.name} ${
-                    group.has_additional_charge && item?.price
+      {group.collapsed && ( // had to do it this way because the backend returns false
+        <View style={{ gap: 8 }}>
+          {group.modifier_items.map(item => {
+            return (
+              <View
+                key={item.id}
+                style={{ flexDirection: 'row', alignItems: 'center' }}>
+                {group.max_quantity > 1 && item.max_quantity > 1 ? (
+                  <ModifierItemCounter
+                    itemId={item.id}
+                    count={
+                      selectedItems.find(i => i.id === item.id)?.quantity || 0
+                    }
+                    maxCount={item.max_quantity}
+                    onIncrement={handleIncrement}
+                    onReset={handleReset}
+                    title={`${item.name} ${group.has_additional_charge ? `$${item.price}` : ''
+                      }`}
+                  />
+                ) : (
+                  <Checkbox
+                    checked={selectedItems.some(i => i.id === item.id)}
+                    onCheck={isChecked => handleSelectItem(item.id, isChecked)}
+                    isRadio={group.max_quantity === 1}
+                    title={`${item.name} ${group.has_additional_charge && item?.price
                       ? `$${item.price}`
                       : ''
-                  }`}
-                />
-              )}
-            </View>
-          ))}
+                      }`}
+                  />
+                )}
+              </View>
+            )
+          })}
         </View>
       )}
     </View>

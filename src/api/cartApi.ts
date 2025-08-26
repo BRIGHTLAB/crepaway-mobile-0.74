@@ -14,19 +14,20 @@ export const cartApi = baseApi.injectEndpoints({
                 };
             },
         }),
-        addToCart: builder.mutation<void, { items: CartItem[], order_type: string }>({
-            query: ({ items, order_type }) => {
+        addToCart: builder.mutation<void, { items: CartItem[], menu_type: string }>({
+            query: ({ items, menu_type }) => {
                 const branchName = store.getState().user.branchName;
                 const addressId = store.getState().user.addressId;
                 const baseUrl = '/cart';
 
                 const params = new URLSearchParams();
-                if (order_type === 'takeaway' && branchName) {
+                if (menu_type === 'takeaway' && branchName) {
                     params.append('branch', branchName);
                 }
-                if (addressId) {
+                if (menu_type === 'delivery' && addressId) {
                     params.append('address_id', addressId.toString());
                 }
+                params.append('menu_type', menu_type);
 
                 const queryString = params.toString();
                 const url = queryString ? `${baseUrl}?${queryString}` : baseUrl;
@@ -36,7 +37,7 @@ export const cartApi = baseApi.injectEndpoints({
                     method: 'POST',
                     body: {
                         items,
-                        order_type,
+                        menu_type,
                     },
                 }
 

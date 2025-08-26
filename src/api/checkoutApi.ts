@@ -1,4 +1,3 @@
-import store from '../store/store';
 import { baseApi } from './baseApi';
 
 export interface Checkout {
@@ -26,23 +25,11 @@ export const checkoutApi = baseApi.injectEndpoints({
   endpoints: builder => ({
     getCheckout: builder.query<Checkout, { promoCode: string | void }>({
       query: ({ promoCode }) => {
-        const user = store.getState().user;
-        const usersAddressesId = user.addressId;
-        const orderType = user.orderType;
         const params = new URLSearchParams();
 
         if (promoCode) {
           params.append('code', promoCode);
         }
-
-        if (orderType) {
-          params.append('order_type', orderType);
-        }
-
-        if (usersAddressesId) {
-          params.append('address_id', usersAddressesId.toString());
-        }
-
         const queryString = params.toString();
 
         console.log('queryParrams', queryString)
@@ -57,19 +44,8 @@ export const checkoutApi = baseApi.injectEndpoints({
       order_id: number;
     }, OrderFormData>({
       query: formData => {
-        const branchName = store.getState().user.branchName;
-        const usersAddressesId = store.getState().user.addressId;
         const baseUrl = '/orders';
-
         const params = new URLSearchParams();
-
-        if (formData.order_type === 'takeaway' && branchName) {
-          params.append('branch', branchName);
-        }
-
-        if (usersAddressesId) {
-          params.append('address_id', usersAddressesId.toString());
-        }
 
         const queryString = params.toString();
 

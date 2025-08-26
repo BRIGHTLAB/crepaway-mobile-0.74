@@ -1,31 +1,29 @@
+import BottomSheet from '@gorhom/bottom-sheet';
 import Geolocation from '@react-native-community/geolocation';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   Dimensions,
+  Linking,
   Platform,
   StyleSheet,
-  Text,
-  View,
-  Alert,
-  Linking,
+  View
 } from 'react-native';
-import MapView, { PROVIDER_GOOGLE, Region, Polygon } from 'react-native-maps';
-import Icon_Add from '../../assets/SVG/Icon_Add';
-import Marker from '../components/Map/Marker';
-import Button from '../components/UI/Button';
-import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
-import AddressDetailsSheet from '../components/Sheets/AddressDetailsSheet';
-import BottomSheet from '@gorhom/bottom-sheet';
-import SelectSheet from '../components/Sheets/SelectSheet';
-import { useGetCitiesQuery, useGetZonesQuery, Zone } from '../api/dataApi';
+import MapView, { Polygon, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import {
   check,
-  request,
-  PERMISSIONS,
-  RESULTS,
   openSettings,
-  checkNotifications,
+  PERMISSIONS,
+  request,
+  RESULTS
 } from 'react-native-permissions';
+import Icon_Add from '../../assets/SVG/Icon_Add';
+import { useGetCitiesQuery, useGetZonesQuery, Zone } from '../api/dataApi';
+import Marker from '../components/Map/Marker';
+import AddressDetailsSheet from '../components/Sheets/AddressDetailsSheet';
+import SelectSheet from '../components/Sheets/SelectSheet';
+import Button from '../components/UI/Button';
+import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
 
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;

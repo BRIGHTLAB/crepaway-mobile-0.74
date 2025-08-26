@@ -1,17 +1,16 @@
 import { Middleware } from "@reduxjs/toolkit";
-import { addItem, clearCart, removeItem, decreaseQuantity, increaseQuantity, updateItem } from "../slices/cartSlice";
-import { POST } from "../../api";
 import { debounce } from "lodash";
-import { cartApi, useAddToCartMutation } from "../../api/cartApi";
+import { cartApi } from "../../api/cartApi";
+import { addItem, clearCart, decreaseQuantity, increaseQuantity, removeItem, updateItem } from "../slices/cartSlice";
 const createSyncCartWithServer = () => {
   return debounce(async (store) => {
     const items = JSON.parse(JSON.stringify(store.getState().cart.items));
-    const orderType = store.getState().user.orderType;
+    const menuType = store.getState().user.menuType;
 
     await store.dispatch(
       cartApi.endpoints.addToCart.initiate({
         items,
-        order_type: orderType
+        menu_type: menuType
       })
     );
     // await POST({
