@@ -17,6 +17,7 @@ import { COLORS } from "../theme";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import Icon_Arrow_Right from "../../assets/SVG/Icon_Arrow_Right";
 import { TYPOGRAPHY } from "../constants/typography";
+import FadeOverlay from "../components/FadeOverlay";
 
 const { width, height } = Dimensions.get("window");
 
@@ -270,6 +271,14 @@ const TutorialScreen = ({ navigation }: IProps) => {
                     })}
                 </View>
             </View>
+
+            {/* Fade In Overlay */}
+            <FadeOverlay
+                duration={800}
+                color="black"
+                onFadeComplete={() => console.log("Fade done")}
+            />
+
         </View>
     );
 };
