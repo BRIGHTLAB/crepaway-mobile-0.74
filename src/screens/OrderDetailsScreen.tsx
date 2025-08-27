@@ -5,7 +5,7 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
-import React from 'react';
+import React, { useCallback } from 'react';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import {OrdersStackParamList} from '../navigation/DeliveryTakeawayStack';
 import {COLORS, SCREEN_PADDING, TYPOGRAPHY} from '../theme';
@@ -14,8 +14,12 @@ import Item from '../components/Order/Item';
 import {formatNumberWithCommas} from '../utils/formatNumberWithCommas';
 import Icon_Location from '../../assets/SVG/Icon_Location';
 import Icon_Driver_Id from '../../assets/SVG/Icon_Driver_Id';
-import {ordersApi, useGetOrderQuery} from '../api/ordersApi';
+import {Order, ordersApi, useGetOrderQuery} from '../api/ordersApi';
 import CartItemComponent from '../components/Cart/CartItemComponent';
+import Button from '../components/UI/Button';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/NavigationStack';
 
 type OrderDetailsRouteProp = RouteProp<OrdersStackParamList, 'OrderDetails'>;
 
@@ -65,6 +69,18 @@ const OrderDetailsScreen = () => {
   const orderType = route.params?.order_type || 'delivery';
 
   const {data: order, isLoading, error} = useGetOrderQuery(orderId);
+  const navigation =
+      useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  const handleTrackOrder = useCallback((order: Order) => {
+      navigation.navigate('HomeStack', {
+        screen: 'TrackOrder',
+        params: {
+          orderId: order.id,
+          order_type: order.order_type,
+        },
+      });
+    }, []);
 
   if (isLoading) {
     return (
@@ -154,6 +170,14 @@ const OrderDetailsScreen = () => {
           // paymentMethod={order?.payment_method?.title}
           disabled
         />
+        <View style={styles.trackOrderContainer}>
+          <Button
+            iconPosition="left"
+            icon={<Icon_Location color={'#FFF'} />}
+            onPress={() => handleTrackOrder(order)}>
+            Track Order
+          </Button>
+        </View>
       </View>
     </ScrollView>
   );
@@ -189,4 +213,7 @@ const styles = StyleSheet.create({
     color: COLORS.errorColor || 'red',
     textAlign: 'center',
   },
+  trackOrderContainer : {
+    paddingVertical: 20
+  }
 });
