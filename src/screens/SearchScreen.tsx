@@ -66,7 +66,7 @@ const SearchScreen = () => {
   return (
     <ScrollView style={styles.container}>
       {/* <StatusBar barStyle={'dark-content'} /> */}
-      <View style={{ paddingTop: 16 }}>
+      <View style={styles.searchContainer}>
         <Input
           placeholder="Search"
           iconLeft={<Icon_Search />}
@@ -186,4 +186,8 @@ const styles = StyleSheet.create({
     gap: 20,
     marginTop: 10,
   },
+  searchContainer : {
+    paddingTop: 16,
+    paddingHorizontal: 13
+  }
 });
