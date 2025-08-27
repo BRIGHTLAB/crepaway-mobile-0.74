@@ -224,7 +224,7 @@ const TrackOrderScreen = () => {
   return (
     <View style={styles.container}>
       {/* Map View */}
-      <View style={{ position: 'relative', flex: 1 }}>
+      <View style={styles.mapContainer}>
         <MapView
           provider={PROVIDER_GOOGLE}
           ref={mapRef}
@@ -311,6 +311,14 @@ const styles = StyleSheet.create({
     flex: 1,
     position: 'relative',
     paddingVertical: 10,
+    margin: 0,
+    padding: 0,
+    backgroundColor: 'red',
+  },
+  mapContainer: {
+    top: -10, 
+    position: 'relative', 
+    flex: 1
   },
   map: {
     width: Dimensions.get('window').width,
@@ -327,7 +335,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.15,
     shadowRadius: 3.84,
     elevation: 5,
     gap: 20,
