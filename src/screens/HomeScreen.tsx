@@ -24,6 +24,7 @@ import NotificationsCounter from '../components/Notifications/NotificationsCount
 import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
 import { setOrderType } from '../store/slices/userSlice';
 import { RootState, useAppDispatch } from '../store/store';
+import FadeOverlay from '../components/FadeOverlay';
 
 
 
@@ -233,6 +234,13 @@ const HomeScreen = () => {
         </View>
         <View style={{ height: 16 }} />
       </ScrollView>
+
+      {/* Fade In Overlay */}
+      <FadeOverlay
+          duration={800}
+          color="black"
+          onFadeComplete={() => console.log("Fade done")}
+      />
     </View>
   );
 };
