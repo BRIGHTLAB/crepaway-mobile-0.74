@@ -425,6 +425,7 @@ const HomeStack = () => {
         component={TrackOrderScreen}
         options={{
           headerTitle: 'Track Order',
+          headerLeft: () => <CustomHeader />,
         }}
       />
     </Stack.Navigator>
@@ -630,6 +631,7 @@ const OrderStack = () => {
         options={{
           headerTitle: 'Orders',
           headerTitleAlign: 'center',
+          headerLeft: () => <CustomHeader />,
         }}
       />
       <Stack.Screen
@@ -637,6 +639,7 @@ const OrderStack = () => {
         component={TrackOrderScreen}
         options={{
           headerTitle: 'Track Order',
+          headerLeft: () => <CustomHeader />,
         }}
       />
     </Stack.Navigator>
