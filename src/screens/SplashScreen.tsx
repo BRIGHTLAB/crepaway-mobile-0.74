@@ -7,7 +7,7 @@ const SplashScreen = ({onAnimationFinish}: {onAnimationFinish: () => void}) => {
     <View style={styles.container}>
       <LottieView
         source={require('../../assets/lotties/Logo_Intro.json')}
-        style={{width: 164, height: 150}}
+        style={{width: 520, height: 520}}
         onAnimationFinish={() => {
           console.log('finished');
           onAnimationFinish();

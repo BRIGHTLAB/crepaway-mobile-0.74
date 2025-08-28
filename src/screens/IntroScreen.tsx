@@ -274,7 +274,7 @@ const TutorialScreen = ({ navigation }: IProps) => {
 
             {/* Fade In Overlay */}
             <FadeOverlay
-                duration={800}
+                duration={500}
                 color="black"
                 onFadeComplete={() => console.log("Fade done")}
             />
