@@ -237,7 +237,7 @@ const HomeScreen = () => {
 
       {/* Fade In Overlay */}
       <FadeOverlay
-          duration={800}
+          duration={400}
           color="black"
           onFadeComplete={() => console.log("Fade done")}
       />
