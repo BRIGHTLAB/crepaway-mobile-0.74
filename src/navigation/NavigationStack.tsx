@@ -74,6 +74,9 @@ const NavigationStack = () => {
             name="Splash"
             options={{
               headerShown: false,
+              contentStyle: {
+                backgroundColor: 'black'
+              }
             }}>
             {() => (
               <SplashScreen
