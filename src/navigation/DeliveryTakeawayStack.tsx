@@ -185,7 +185,33 @@ const HomeStack = () => {
         name="Home"
         component={HomeScreen}
         options={{
-          headerShown: false, gestureEnabled: false,
+          headerTransparent: true,
+          gestureEnabled: false,
+          title: "",
+          headerLeft: () => <CustomHeader color={'white'} />,
+          headerTitleAlign: 'center',
+          headerRight: () => (
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: 5,
+              }}>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('HomeStack', { screen: 'Cart' })
+                }>
+                <CartCounter color={'white'} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('HomeStack', {
+                    screen: 'Notifications',
+                  })
+                }>
+                <NotificationsCounter color={'white'} />
+              </TouchableOpacity>
+            </View>
+          ),
         }}
       />
       <Stack.Screen

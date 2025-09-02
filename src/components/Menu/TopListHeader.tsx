@@ -85,6 +85,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: SCREEN_PADDING.horizontal,
+    paddingBottom: 7,
   },
   topTitle: {
     fontSize: 20,

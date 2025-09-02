@@ -1,9 +1,11 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BackHandler,
+  Dimensions,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -26,7 +28,19 @@ import { setOrderType } from '../store/slices/userSlice';
 import { RootState, useAppDispatch } from '../store/store';
 import FadeOverlay from '../components/FadeOverlay';
 
+import Animated, {
+  useAnimatedScrollHandler,
+  useSharedValue,
+  useAnimatedStyle,
+  interpolate,
+  Extrapolation,
+  runOnJS,
+  interpolateColor
+} from "react-native-reanimated";
+import CustomHeader from '../components/Header';
 
+const { width } = Dimensions.get("window");
+const BANNER_HEIGHT = 250;
 
 // Define the navigation prop type
 type NavigationProp = NativeStackNavigationProp<DeliveryTakeawayStackParamList>;
@@ -39,7 +53,6 @@ const HomeScreen = () => {
   const state = useSelector((state: RootState) => state.user);
   const { bottom, top } = useSafeAreaInsets();
   const { data: content } = useGetContentQuery();
-
 
   // Get banner data based on order type
   const bannerData = useMemo(() => {
@@ -61,8 +74,6 @@ const HomeScreen = () => {
     }));
   }, [content, state.orderType]);
 
-
-
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
       'hardwareBackPress',
@@ -80,19 +91,11 @@ const HomeScreen = () => {
     return () => backHandler.remove();
   }, [dispatch, navigation]);
 
-
   const { data, isLoading, error } = useGetHomepageQuery({
     menuType: state.menuType,
     branch: state.branchName,
     addressId: state.addressId,
   });
-
-  console.log('branch123', {
-    menuType: state.menuType,
-    branch: state.branchName,
-    addressId: state.addressId,
-  })
-
 
   const categories = data?.categories;
   const newItems = data?.new_items;
@@ -101,123 +104,181 @@ const HomeScreen = () => {
   const favoriteItems = data?.favorite_items;
   const bestSellers = data?.best_sellers;
 
-  return (
-    <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View>
-          <Banner data={bannerData} />
-          <View style={[styles.headerContainer, {
-            top
-          }]}>
+  /* */
+  const scrollY = useSharedValue(0);
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+      // calculate color as string
+      const iconColor = interpolateColor(
+        scrollY.value,
+        [0, 100],
+        ["#fff", "#000"]
+      );
+
+      // pass the plain string to JS
+      runOnJS(updateHeaderColor)(iconColor);
+    },
+    
+  });
+
+  function updateHeaderColor(color: string) {
+    navigation.setOptions({
+      headerTintColor: color,
+      // If you use headerLeft / headerRight, always return a function
+      headerLeft: () => <CustomHeader color={color} />,
+      headerRight: () => (
             <View
               style={{
-                width: 70,
-                height: 30,
-                paddingTop: 4,
                 flexDirection: 'row',
-                alignItems: 'center',
+                gap: 5,
               }}>
               <TouchableOpacity
-                onPress={() => {
-                  dispatch(
-                    setOrderType({
-                      menuType: null,
-                      orderTypeAlias: null,
-                    }),
-                  );
-                }}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Icon_BackArrow color={'#FFF'} />
-                <Text
-                  style={{
-                    color: '#FFF',
-                    fontFamily: 'Poppins-Medium',
-                    fontSize: 16,
-                  }}>
-                  Back
-                </Text>
+                onPress={() =>
+                  navigation.navigate('HomeStack', { screen: 'Cart' })
+                }>
+                <CartCounter color={color} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('HomeStack', {
+                    screen: 'Notifications',
+                  })
+                }>
+                <NotificationsCounter color={color} />
               </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={[styles.cartButton, { marginLeft: 'auto' }]}
-              onPress={() => navigation.navigate('Cart')}>
-              <CartCounter color={'#FFF'} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.cartButton}
-              onPress={() => navigation.navigate('Notifications')}>
-              <NotificationsCounter color={'#FFF'} />
-            </TouchableOpacity>
-          </View>
+          ),
+    });
+  }
+  const bannerStyle = useAnimatedStyle(() => {
+    let height = BANNER_HEIGHT;
+    let translateY = 0;
 
-          <View style={styles.listsContainer}>
-            {
-              <CategoryList
-                data={categories ?? []}
-                isLoading={isLoading}
-                onCategoryPress={item => {
-                  navigation.navigate('MenuItems', {
-                    item,
-                  });
-                }}
-              />
-            }
-            {
-              <ItemsList
-                isLoading={isLoading}
-                title="Featured Items"
-                data={featuredItems ?? []}
-                onPress={() => navigation.navigate('featuredItems')}
-                onItemPress={id => {
-                  navigation.navigate('MenuItem', {
-                    itemId: id,
-                  })
-                }
-                }
-              />
-            }
-            {
-              <ItemsList
-                isLoading={isLoading}
-                title="Fav Items"
-                data={favoriteItems ?? []}
-                onPress={() => navigation.navigate('FavoriteItems')}
-                onItemPress={id =>
-                  navigation.navigate('MenuItem', {
-                    itemId: id,
-                  })
-                }
-              // onItemPress={(id) => {navigation.navigate('', {
-              //   itemId: id
-              // })} }
-              />
-            }
+    if (scrollY.value < 0) {
+      height = BANNER_HEIGHT - scrollY.value; // stretch down
+    } else {
+      translateY = interpolate(
+        scrollY.value,
+        [0, BANNER_HEIGHT],
+        [0, -BANNER_HEIGHT],
+        Extrapolation.CLAMP
+      );
+    }
 
-            {
-              <ItemsList
-                isLoading={isLoading}
-                title="New Items"
-                data={newItems ?? []}
-                onPress={() => navigation.navigate('NewItems')}
-                onItemPress={id =>
-                  navigation.navigate('MenuItem', {
-                    itemId: id,
-                  })
-                }
-              />
-            }
+    return { height, transform: [{ translateY }] };
+  });
 
-            {
-              <OffersList
-                isLoading={isLoading}
-                data={exclusiveOffers ?? []}
-                onPress={() => navigation.navigate('Offers')}
-                onItemPress={id => {
-                  navigation.navigate('OfferDetails', { itemId: id });
-                }}
-              />
+  // Update header opacity dynamically
+  useLayoutEffect(() => {
+    scrollY.value = 0; // reset on mount
+  }, []);
+
+  const headerBackgroundStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      scrollY.value,
+      [0, 100],   // smaller distance
+      [0, 1],     // fade fully
+      Extrapolation.CLAMP
+    );
+
+    // React Navigation headers are controlled with setOptions → we need runOnJS
+    runOnJS(navigation.setOptions)({
+      headerStyle: {
+        backgroundColor: `rgba(255,255,255,${opacity})`,
+      },
+      headerTitle: opacity > 0.7 ? "" : "",
+      headerTitleStyle: {
+        opacity,
+      },
+      
+    });
+
+    return {};
+  });
+
+  return (
+    <View style={styles.container}>
+
+      {/* Banner */}
+      <Animated.View style={[styles.bannerContainer, bannerStyle]}>
+        <Image
+          source={{ uri: bannerData[0]?.image || "https://d3u6vq5nc7ocvb.cloudfront.net/categories/images/categories_jLIu2LgjV0.jpg" }}
+          style={styles.bannerImage}
+        />
+        {/* Overlay */}
+        <View style={styles.overlay} />
+      </Animated.View>
+
+      <Animated.ScrollView
+        showsVerticalScrollIndicator={false}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        contentContainerStyle={{ paddingTop: BANNER_HEIGHT }}
+      >
+
+        <View style={styles.listsContainer}>
+
+          <CategoryList
+            data={categories ?? []}
+            isLoading={isLoading}
+            onCategoryPress={item => {
+              navigation.navigate('MenuItems', {
+                item,
+              });
+            }}
+          />
+
+          <ItemsList
+            isLoading={isLoading}
+            title="Featured Items"
+            data={featuredItems ?? []}
+            onPress={() => navigation.navigate('featuredItems')}
+            onItemPress={id => {
+              navigation.navigate('MenuItem', {
+                itemId: id,
+              })
             }
-            {/* {
+            }
+          />
+
+          <ItemsList
+            isLoading={isLoading}
+            title="Fav Items"
+            data={favoriteItems ?? []}
+            onPress={() => navigation.navigate('FavoriteItems')}
+            onItemPress={id =>
+              navigation.navigate('MenuItem', {
+                itemId: id,
+              })
+            }
+          // onItemPress={(id) => {navigation.navigate('', {
+          //   itemId: id
+          // })} }
+          />
+
+          <ItemsList
+            isLoading={isLoading}
+            title="New Items"
+            data={newItems ?? []}
+            onPress={() => navigation.navigate('NewItems')}
+            onItemPress={id =>
+              navigation.navigate('MenuItem', {
+                itemId: id,
+              })
+            }
+          />
+
+          <OffersList
+            isLoading={isLoading}
+            data={exclusiveOffers ?? []}
+            onPress={() => navigation.navigate('Offers')}
+            onItemPress={id => {
+              navigation.navigate('OfferDetails', { itemId: id });
+            }}
+          />
+
+          {/* {
               <ItemsList
                 isLoading={isLoading}
                 title="Best Sellers"
@@ -230,16 +291,18 @@ const HomeScreen = () => {
                 }
               />
             } */}
-          </View>
         </View>
-        <View style={{ height: 16 }} />
-      </ScrollView>
+
+      </Animated.ScrollView>
+
+      {/* invisible hook just to trigger header updates */}
+      <Animated.View style={headerBackgroundStyle} />
 
       {/* Fade In Overlay */}
       <FadeOverlay
-          duration={400}
-          color="black"
-          onFadeComplete={() => console.log("Fade done")}
+        duration={400}
+        color="black"
+        onFadeComplete={() => console.log("Fade done")}
       />
     </View>
   );
@@ -270,4 +333,30 @@ const styles = StyleSheet.create({
     gap: 20,
     marginTop: 10,
   },
+  /* */
+  bannerContainer: {
+    position: "absolute",
+    top: 0,
+    width: width,
+    height: BANNER_HEIGHT,
+    overflow: "hidden",
+  },
+  bannerImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.4)", // semi-transparent overlay
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  bannerStyle: {
+    position: "relative"
+  }
 });

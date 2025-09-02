@@ -29,7 +29,7 @@ type CategoryListNavigationProp = NativeStackNavigationProp<
 const CategoryList = ({data, isLoading, onCategoryPress}: IProps) => {
   const navigation = useNavigation<CategoryListNavigationProp>();
 
-  const [showAll, setShowAll] = React.useState(false);
+  const [showAll, setShowAll] = React.useState(true);
   const numColumns = 4;
   const screenWidth = Dimensions.get('window').width;
   const horizontalPadding = 16;
@@ -45,7 +45,7 @@ const CategoryList = ({data, isLoading, onCategoryPress}: IProps) => {
       <CategoryCard
         name={item.name}
         image_url={item.image_url}
-        style={{width: cardWidth, marginRight: gap}}
+        style={{width: cardWidth, marginRight: gap, marginBottom: gap}}
         onPress={() => onCategoryPress(item)}
       />
     );
