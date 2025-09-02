@@ -179,12 +179,15 @@ const Slide = ({ item, index, scrollX }: SlideProps) => {
                     </Animated.View>
                 </View>
             </Animated.View>
+
+
             <Animated.Text style={[styles.title, animatedTitleStyle]}>
                 {item.title}
             </Animated.Text>
             <Animated.Text style={[styles.description, animatedDescStyle]}>
                 {item.description}
             </Animated.Text>
+
         </View>
     );
 };
@@ -306,15 +309,16 @@ const styles = StyleSheet.create({
         flex: 1,
         width,
         justifyContent: "center",
-        alignItems: "center",
+        alignItems: "flex-start",
         padding: 20,
     },
     title: {
+        paddingTop: 20,
         fontFamily: 'Poppins-Bold',
         color: COLORS.lightColor,
         fontSize: 48,
         lineHeight: 56,
-        textAlign: 'center',
+        textAlign: 'left',
     },
     description: {
         color: COLORS.lightColor,
@@ -322,7 +326,7 @@ const styles = StyleSheet.create({
         fontSize: 20,
         lineHeight: 28,
         opacity: 0.8,
-        textAlign: 'center',
+        textAlign: 'left',
     },
     bottomSection: {
         paddingHorizontal: 16,
