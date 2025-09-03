@@ -27,6 +27,8 @@ import CartItemComponent from '../components/Cart/CartItemComponent';
 import {RootStackParamList} from '../navigation/NavigationStack';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {DeliveryTakeawayStackParamList} from '../navigation/DeliveryTakeawayStack';
+import ReactNativeHapticFeedback from "react-native-haptic-feedback";
+
 
 interface IProps {}
 
@@ -117,10 +119,24 @@ const CartScreen = ({}: IProps) => {
             Object.entries(cartData.items).map(([uuid, item], idx) => {
               const handleIncreaseQuantity = () => {
                 dispatch(increaseQuantity(uuid));
+                
+                // Trigger haptic feedback
+                ReactNativeHapticFeedback.trigger("impactLight", {
+                  enableVibrateFallback: true,
+                  ignoreAndroidSystemSettings: false,
+                });
+
               };
 
               const handleDecreaseQuantity = () => {
                 dispatch(decreaseQuantity(uuid));
+
+                // Trigger haptic feedback
+                ReactNativeHapticFeedback.trigger("impactLight", {
+                  enableVibrateFallback: true,
+                  ignoreAndroidSystemSettings: false,
+                });
+                
               };
 
               const handleNavigateToMenuItem = () => {

@@ -35,7 +35,7 @@ import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawaySt
 import { addItem, updateItem } from '../store/slices/cartSlice';
 import { RootState, useAppDispatch } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
-
+import ReactNativeHapticFeedback from "react-native-haptic-feedback";
 
 const SkeletonLoader = () => {
   return (
@@ -189,6 +189,12 @@ const MenuItemScreen = ({ }: IProps) => {
       } else {
         dispatch(addItem(cartItem));
       }
+
+      // Trigger haptic feedback
+      ReactNativeHapticFeedback.trigger("impactMedium", {
+        enableVibrateFallback: true,
+        ignoreAndroidSystemSettings: false,
+      });
 
       setQuantity(1);
       setSpecialInstruction('');
