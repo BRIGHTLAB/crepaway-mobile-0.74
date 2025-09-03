@@ -307,7 +307,7 @@ const MenuItemScreen = ({ }: IProps) => {
               )}
 
               <View style={styles.contentContainer}>
-                <View style={styles.header}>
+                <View style={styles.headerContainer}>
                   <View
                     style={{
                       width: '100%',
@@ -327,7 +327,7 @@ const MenuItemScreen = ({ }: IProps) => {
                   <Text style={styles.description}>{item?.description}</Text>
                 </View>
 
-                <View style={{ marginBottom: 8, marginTop: 10, gap: 6 }}>
+                <View style={{ paddingHorizontal:16, marginBottom: 8, marginTop: 10, gap: 6 }}>
                   {/* Price  */}
                   <Text style={styles.price}>
                     {item?.symbol} {item?.price}
@@ -397,17 +397,25 @@ const MenuItemScreen = ({ }: IProps) => {
                 <View style={{ marginTop: 16, gap: 16 }}>
                   {item?.modifier_groups.map((group, idx) => {
                     return (
+                      <>
                       <ModifierGroup
                         key={idx}
                         group={group}
                         selectedModifiers={selectedModifiers}
                         setSelectedModifiers={setSelectedModifiers}
                       />
+                      <View style={{
+                        height: 10,
+                        backgroundColor: 'black',
+                        opacity: 0.03,
+                      }} />
+
+                      </>
                     );
                   })}
                 </View>
 
-                <View style={{ marginTop: 16, gap: 6 }}>
+                <View style={{ marginTop: 16, gap: 6, paddingHorizontal: 16 }}>
                   <Text
                     style={{
                       fontFamily: 'Poppins-Medium',
@@ -435,10 +443,11 @@ const MenuItemScreen = ({ }: IProps) => {
                 width: 0,
                 height: -4,
               },
-              shadowOpacity: 0.5,
+              shadowOpacity: 0.03,
               shadowRadius: 4,
               elevation: 5,
             }}>
+              
             {/* Quantity Controls */}
             <View
               style={{
@@ -532,9 +541,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   contentContainer: {
-    padding: 16,
+    paddingVertical: 16,
   },
-  header: {},
+  headerContainer: {
+    paddingHorizontal: 16,
+  },
   title: {
     fontFamily: 'Poppins-Medium',
     fontSize: 24,

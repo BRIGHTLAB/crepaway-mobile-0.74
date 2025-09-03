@@ -44,81 +44,7 @@ import { setCartFromFetch } from '../store/slices/cartSlice';
 import { useAppDispatch } from '../store/store';
 import { COLORS } from '../theme';
 import { RootStackParamList } from './NavigationStack';
-
-interface CustomBottomTabProps {
-  state: {
-    index: number;
-    routes: Array<{
-      key: string;
-      name: string;
-    }>;
-  };
-  descriptors: {
-    [key: string]: {
-      options: {
-        tabBarAccessibilityLabel?: string;
-      };
-    };
-  };
-  navigation: {
-    navigate: (name: string) => void;
-    emit: (event: {
-      type: string;
-      target: string;
-      canPreventDefault: boolean;
-    }) => { defaultPrevented: boolean };
-  };
-}
-
-const CustomBottomTab = ({
-  state,
-  descriptors,
-  navigation,
-}: CustomBottomTabProps) => {
-  return (
-    <View style={styles.bottomTabContainer}>
-      {state.routes.map((route, index) => {
-        const { options } = descriptors[route.key];
-        const isFocused = state.index === index;
-
-        const navItem = navigationData.find(item => item.name === route.name);
-
-        const onPress = () => {
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-          });
-
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
-          }
-        };
-
-        return (
-          <TouchableOpacity
-            key={index}
-            onPress={onPress}
-            style={[
-              styles.tabItem,
-              navItem?.name === 'HomeStack' && styles.homeTabItem,
-            ]}
-            accessibilityRole="button"
-            accessibilityState={isFocused ? { selected: true } : {}}
-            accessibilityLabel={options.tabBarAccessibilityLabel}>
-            <NavigationItem
-              Icon={navItem?.Icon}
-              title={navItem?.title || ''}
-              name={navItem?.name}
-              focused={isFocused}
-              headerShown={navItem?.headerShown}
-            />
-          </TouchableOpacity>
-        );
-      })}
-    </View>
-  );
-};
+import { CustomBottomTab, CustomBottomTabProps } from '../components/CustomBottomTab';
 
 export type DeliveryTakeawayStackParamList = {
   HomeStack: any;
@@ -409,6 +335,7 @@ const HomeStack = () => {
               </TouchableOpacity>
             </View>
           ),
+          
         }}
       />
 
@@ -672,7 +599,7 @@ const OrderStack = () => {
   );
 };
 
-const navigationData = [
+export const navigationData = [
   {
     name: 'SearchStack',
     Component: SearchStack,
@@ -715,45 +642,13 @@ const navigationData = [
   },
 ];
 
-interface INavigationItem {
-  Icon?: React.ComponentType<{ color: string }>;
-  title: string | null;
-  focused: boolean;
-  name?: string;
-  headerShown?: boolean;
-}
-
-const NavigationItem = ({ Icon, title, focused, name }: INavigationItem) => {
-  return (
-    <View
-      style={{
-        height: '100%',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 3,
-        elevation: 0,
-        ...(name === 'HomeStack' ? { top: -10 } : {}),
-      }}>
-      {Icon && <Icon color={focused ? '#DB0032' : '#F7F7F7F7'} />}
-      <Text
-        style={{
-          color: focused ? COLORS.primaryColor : COLORS.lightColor,
-          fontSize: 10,
-          width: '100%',
-          textTransform: 'uppercase',
-          fontFamily: 'Poppins-SemiBold',
-        }}>
-        {title}
-      </Text>
-    </View>
-  );
-};
 
 const DeliveryTakeawayStack = () => {
   return (
     <Tab.Navigator
       initialRouteName="HomeStack"
-      tabBar={props => <CustomBottomTab {...(props as CustomBottomTabProps)} />}
+
+      tabBar={props => <CustomBottomTab navigationData={navigationData} {...(props as CustomBottomTabProps)} />}
     >
       {navigationData?.map((el, idx) => (
         <Tab.Screen
@@ -786,25 +681,5 @@ const DeliveryTakeawayStack = () => {
 export default DeliveryTakeawayStack;
 
 const styles = StyleSheet.create({
-  bottomTabContainer: {
-    flexDirection: 'row',
-    backgroundColor: 'black',
-    height: 70,
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
-  tabItem: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 5,
-  },
-  homeTabItem: {
-    marginTop: -30,
-  },
-  headerTitle: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 16,
-    color: COLORS.darkColor,
-  },
+  
 });

@@ -234,7 +234,8 @@ const ModifierGroup: React.FC<ModifierGroupProps> = ({
           style={{
             color: isGroupDisabled ? COLORS.foregroundColor : COLORS.darkColor,
             fontSize: 16,
-            fontWeight: '500'
+            fontWeight: '500',
+            paddingHorizontal: 16,
           }}>
           {group.name}
 
@@ -255,7 +256,8 @@ const ModifierGroup: React.FC<ModifierGroupProps> = ({
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  opacity: isItemDisabled ? 0.5 : 1
+                  opacity: isItemDisabled ? 0.5 : 1,
+                  paddingHorizontal: 16,
                 }}>
                 {group.max_quantity > 1 && item.max_quantity > 1 ? (
                   <ModifierItemCounter

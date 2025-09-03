@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
   checkbox: {
     width: 24,
     height: 24,
-    borderWidth: 2,
+    borderWidth: 1, //StyleSheet.hairlineWidth,
     borderColor: COLORS.darkColor,
     justifyContent: 'center',
     alignItems: 'center',
