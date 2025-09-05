@@ -1,15 +1,14 @@
 import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
-  BottomSheetFooterProps,
-  BottomSheetView,
+  BottomSheetFooterProps
 } from '@gorhom/bottom-sheet';
-import React, { forwardRef, useCallback, useEffect, useRef } from 'react';
-import { StyleSheet, Keyboard } from 'react-native';
 import { Portal } from '@gorhom/portal';
-import { SCREEN_PADDING } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
+import React, { forwardRef, useCallback, useEffect, useRef } from 'react';
+import { Keyboard, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SCREEN_PADDING } from '../../theme';
 
 type Props = {
   children: React.ReactNode;

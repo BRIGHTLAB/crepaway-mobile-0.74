@@ -1,5 +1,6 @@
 // src/features/api/apiSlice.js
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { logoutUser } from '../store/slices/userSlice';
 import { RootState } from '../store/store';
 import { BASE_URL } from '../theme';
 
@@ -24,6 +25,7 @@ export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: async (args, api, extraOptions) => {
     const result = await baseQueryWithAuth(args, api, extraOptions);
+
     // console.log('args:', api);
     console.log('API Response:', result);
     // console.log('Call Body:', args.body);
@@ -31,7 +33,7 @@ export const baseApi = createApi({
     // console.log('Error Object:', result.error);
     // console.log('Error Status:', result.error?.status);
     if (result.error?.status === 401) {
-      // api.dispatch(logoutUser());
+      api.dispatch(logoutUser());
       //   const user = realmInstance
       //     .objects('User')
       //     .filtered('TRUEPREDICATE LIMIT(1)')[0];

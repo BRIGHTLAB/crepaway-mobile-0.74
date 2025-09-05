@@ -77,6 +77,7 @@ const CheckoutScreen = () => {
   // Handle API errors from usePlaceOrderMutation
   useEffect(() => {
     if (placeOrderError) {
+      console.log('placeOrderError', placeOrderError);
       const error = placeOrderError as any;
       setErrorMessage(error?.data?.message || 'Failed to place order');
     }
