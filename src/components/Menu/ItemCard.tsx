@@ -175,7 +175,7 @@ export default ItemCard;
 
 const styles = StyleSheet.create({
   container: {
-    width: 220,
+    width: '100%',
   },
   image: {
     width: '100%',
