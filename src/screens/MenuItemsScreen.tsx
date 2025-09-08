@@ -522,7 +522,7 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
             data={groupedItems}
             renderItem={renderCategorySection}
             keyExtractor={item => item.id.toString()}
-            style={{ paddingHorizontal: SCREEN_PADDING.horizontal, marginTop: 8, zIndex: 2 }}
+            style={{ paddingHorizontal: SCREEN_PADDING.horizontal, zIndex: 2}}
             showsVerticalScrollIndicator={false}
             onScrollToIndexFailed={info => {
               const wait = new Promise(resolve => setTimeout(resolve, 50));
@@ -598,7 +598,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 8,
     elevation: 5,
-
+    
     zIndex: 5,
     overflow: 'visible'
   },
