@@ -1,35 +1,34 @@
 // TODO keyboard handling
 
-import React, { useState, useRef } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useHeaderHeight } from '@react-navigation/elements';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useRef, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
   TextInput,
   TouchableOpacity,
-  StatusBar,
+  View
 } from 'react-native';
-import { NativeStackNavigationProp, useAnimatedHeaderHeight } from '@react-navigation/native-stack';
-import { z } from 'zod';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import CountryPicker, { CountryCode } from 'react-native-country-picker-modal';
-import Input from '../../components/UI/Input';
-import DateInput from '../../components/UI/DateInput';
-import Button from '../../components/UI/Button';
-import DynamicPopup from '../../components/UI/DynamicPopup';
-import { COLORS, TYPOGRAPHY, REGEX, INPUT_HEIGHT } from '../../theme';
-import Icon_User from '../../../assets/SVG/Icon_User';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { z } from 'zod';
 import Icon_Email from '../../../assets/SVG/Icon_Email';
 import Icon_Password from '../../../assets/SVG/Icon_Password';
 import Icon_Phone from '../../../assets/SVG/Icon_Phone';
+import Icon_User from '../../../assets/SVG/Icon_User';
 import { POST } from '../../api';
+import Button from '../../components/UI/Button';
+import DateInput from '../../components/UI/DateInput';
+import DynamicPopup from '../../components/UI/DynamicPopup';
+import Input from '../../components/UI/Input';
 import { LoginStackParamList } from '../../navigation/LoginStack';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useHeaderHeight } from '@react-navigation/elements';
+import { COLORS, INPUT_HEIGHT, REGEX, TYPOGRAPHY } from '../../theme';
 
 type SignUpScreenProps = {
   navigation: NativeStackNavigationProp<LoginStackParamList>;
@@ -137,9 +136,7 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
 
   return (
     <KeyboardAvoidingView
-      style={{
-        flex: 1,
-      }}
+      style={styles.container}
       behavior={"padding"}
       keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight + 10 : 0}
     >

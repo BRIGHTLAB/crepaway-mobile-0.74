@@ -1,8 +1,8 @@
-import {zodResolver} from '@hookform/resolvers/zod';
-import {useNavigation} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import React, {useEffect, useMemo, useState} from 'react';
-import {Controller, useForm} from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import {
   ActivityIndicator,
   ScrollView,
@@ -10,14 +10,16 @@ import {
   Text,
   View,
 } from 'react-native';
-import CountryPicker, {CountryCode} from 'react-native-country-picker-modal';
-import {z} from 'zod';
+import CountryPicker, { CountryCode } from 'react-native-country-picker-modal';
+import Toast from 'react-native-simple-toast';
+import { z } from 'zod';
+import DeleteAnimation from '../../assets/lotties/Delete.json';
+import LogoutAnimation from '../../assets/lotties/Log_out.json';
 import Icon_Alert from '../../assets/SVG/Icon_Alert';
 import Icon_Credit_Card from '../../assets/SVG/Icon_Credit_Card';
 import Icon_Delete from '../../assets/SVG/Icon_Delete';
 import Icon_Edit from '../../assets/SVG/Icon_Edit';
 import Icon_Location from '../../assets/SVG/Icon_Location';
-import Icon_Pass from '../../assets/SVG/Icon_Pass';
 import Icon_Sign_Out from '../../assets/SVG/Icon_Sign_Out';
 import Icon_Wishlist_Filled from '../../assets/SVG/Icon_Wishlist_Filled';
 import {
@@ -25,17 +27,15 @@ import {
   useGetProfileQuery,
   useUpdateProfileMutation,
 } from '../api/profileApi';
+import ConfirmationPopup from '../components/Popups/ConfirmationPopup';
 import OptionRow from '../components/Profile/OptionRow';
 import Button from '../components/UI/Button';
-import Input from '../components/UI/Input';
-import {ProfileStackParamList} from '../navigation/DeliveryTakeawayStack';
-import {COLORS, INPUT_HEIGHT, SCREEN_PADDING, TYPOGRAPHY} from '../theme';
-import ConfirmationPopup from '../components/Popups/ConfirmationPopup';
-import DeleteAnimation from '../../assets/lotties/Delete.json';
-import LogoutAnimation from '../../assets/lotties/Log_out.json';
-import {useAppDispatch} from '../store/store';
-import {logoutUser} from '../store/slices/userSlice';
 import DateInput from '../components/UI/DateInput';
+import Input from '../components/UI/Input';
+import { ProfileStackParamList } from '../navigation/DeliveryTakeawayStack';
+import { logoutUser } from '../store/slices/userSlice';
+import { useAppDispatch } from '../store/store';
+import { COLORS, INPUT_HEIGHT, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
 
 const profileSchema = z.object({
   name: z.string().nonempty('Name is required'),
@@ -47,7 +47,7 @@ const profileSchema = z.object({
 const ProfileSettingsScreen = () => {
   const {
     control,
-    formState: {errors},
+    formState: { errors },
     setValue,
     handleSubmit,
     trigger,
@@ -55,14 +55,15 @@ const ProfileSettingsScreen = () => {
     resolver: zodResolver(profileSchema),
   });
 
-  const {data, isLoading} = useGetProfileQuery();
+  const { data, isLoading } = useGetProfileQuery();
   const [countryCode, setCountryCode] = useState<CountryCode>('LB');
   const [callingCode, setCallingCode] = useState('');
   const [showCountryPicker, setShowCountryPicker] = useState(false);
-  const [updateProfile, {isLoading: updateProfileLoading}] =
+  const [hasChanged, setHasChanged] = useState(false);
+  const [updateProfile, { isLoading: updateProfileLoading }] =
     useUpdateProfileMutation();
 
-  const [deleteAccount, {isLoading: deleteAccLoading}] =
+  const [deleteAccount, { isLoading: deleteAccLoading }] =
     useDeleteAccountMutation();
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -117,8 +118,10 @@ const ProfileSettingsScreen = () => {
 
   useEffect(() => {
     if (data) {
+      const dobDate = new Date(data.dob);
       setValue('name', data.name);
-      setValue('dob', new Date(data.dob));
+      setValue('dob', dobDate);
+      setHasChanged(false); // Reset hasChanged when data loads
       setCallingCode(
         data?.phone_number?.split(' ')?.[0]?.replace('+', '') || '',
       );
@@ -128,13 +131,16 @@ const ProfileSettingsScreen = () => {
   const handleConfirmDeleteAccount = async () => {
     try {
       await deleteAccount();
+      Toast.show('Account deleted successfully', Toast.SHORT);
       dispatch(logoutUser());
     } catch (error) {
       console.log(error);
+      Toast.show('Failed to delete account. Please try again.', Toast.SHORT);
     }
   };
 
   const handleConfirmSignOut = () => {
+    Toast.show('Signed out successfully', Toast.SHORT);
     dispatch(logoutUser());
   };
 
@@ -142,14 +148,17 @@ const ProfileSettingsScreen = () => {
     console.log('data is 123', data);
     try {
       await updateProfile(data).unwrap();
+      setHasChanged(false); // Reset hasChanged after successful update
+      Toast.show('Profile updated successfully!', Toast.SHORT);
     } catch (error) {
       console.error('ERROR', error);
+      Toast.show('Failed to update profile. Please try again.', Toast.SHORT);
     }
   };
 
   if (isLoading) {
     return (
-      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color={COLORS.primaryColor} />
       </View>
     );
@@ -159,14 +168,17 @@ const ProfileSettingsScreen = () => {
     <ScrollView style={styles.scrollView}>
       <View style={styles.container}>
         {/* name & date of birth */}
-        <View style={[styles.card, {gap: 16}]}>
+        <View style={[styles.card, { gap: 16 }]}>
           <Controller
             control={control}
             name="name"
-            render={({field: {onChange, onBlur, value}}) => (
+            render={({ field: { onChange, onBlur, value } }) => (
               <Input
                 onBlur={onBlur}
-                onChangeText={onChange}
+                onChangeText={(text) => {
+                  onChange(text);
+                  setHasChanged(true);
+                }}
                 value={value}
                 placeholder="Name"
                 error={errors.name?.message}
@@ -176,20 +188,24 @@ const ProfileSettingsScreen = () => {
           <Controller
             control={control}
             name="dob"
-            render={({field: {onChange, onBlur, value}}) => (
+            render={({ field: { onChange, onBlur, value } }) => (
               <DateInput
                 value={value}
-                onChange={onChange}
+                onChange={(date) => {
+                  onChange(date);
+                  setHasChanged(true);
+                }}
                 error={errors.dob?.message}
                 mode="date"
                 placeholder="Date of Birth"
-                // returnKeyType="next"
+              // returnKeyType="next"
               />
             )}
           />
           <Button
             onPress={handleSubmit(onSubmit)}
             isLoading={updateProfileLoading}
+            disabled={!hasChanged}
             icon={<Icon_Edit color={COLORS.lightColor} />}
             iconPosition="left">
             Edit
@@ -218,7 +234,7 @@ const ProfileSettingsScreen = () => {
           ]}>
           <View
             style={styles.countryPicker}
-            // onPress={() => setShowCountryPicker(true)}
+          // onPress={() => setShowCountryPicker(true)}
           >
             <CountryPicker
               countryCode={countryCode}
@@ -235,7 +251,7 @@ const ProfileSettingsScreen = () => {
             />
             <Text style={styles.callingCode}>+{callingCode}</Text>
           </View>
-          <View style={{flex: 1}}>
+          <View style={{ flex: 1 }}>
             <Input
               // onBlur={onBlur}
               // onChangeText={onChange}
@@ -253,7 +269,7 @@ const ProfileSettingsScreen = () => {
             <View key={idx}>
               <OptionRow {...option} />
               {idx !== options.length - 1 && (
-                <View style={{paddingHorizontal: 16}}>
+                <View style={{ paddingHorizontal: 16 }}>
                   <View style={styles.seperator} />
                 </View>
               )}
