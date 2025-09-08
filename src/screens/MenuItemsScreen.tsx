@@ -128,7 +128,7 @@ const CategorySection = React.memo(
     };
   }) => {
     return (
-      <View key={category.id.toString()} >
+      <View key={category.id.toString()}>
         <Text style={styles.sectionHeader}>{category.name}</Text>
         {category.items.map((item, idx) => (
           <MenuItem
@@ -275,7 +275,7 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
     }
 
     if (scrollViewRef.current && categoryOffsets[categoryId] !== undefined) {
-      const scrollOffset = Math.max(0, categoryOffsets[categoryId] - 2);
+      const scrollOffset = Math.max(0, categoryOffsets[categoryId] - 50);
 
       scrollViewRef.current.scrollToOffset({
         offset: scrollOffset,
@@ -491,7 +491,7 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
         <>
           <FlatList
             ref={flatListRef}
-            data={[...categories, ...categories, ...categories, ...categories, ...categories]}
+            data={categories}
             horizontal
             keyExtractor={item => item.id.toString()}
             renderItem={renderCategoryItem}
@@ -598,7 +598,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 8,
     elevation: 5,
-    
+
     zIndex: 5,
     overflow: 'visible'
   },
