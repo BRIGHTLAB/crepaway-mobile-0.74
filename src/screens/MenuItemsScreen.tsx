@@ -419,7 +419,10 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
               borderRadius: 8,
             }}
           /> */}
-          <Text style={[styles.categoryTitle]}>{item.name}</Text>
+          <Text style={[
+            { ...styles.categoryTitle },
+            selectedCategoryIndex === index ? styles.activeCategoryTitle : null,
+          ]}>{item.name}</Text>
         </TouchableOpacity>
       );
     },
@@ -488,7 +491,7 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
         <>
           <FlatList
             ref={flatListRef}
-            data={categories}
+            data={[...categories, ...categories, ...categories, ...categories, ...categories]}
             horizontal
             keyExtractor={item => item.id.toString()}
             renderItem={renderCategoryItem}
@@ -519,7 +522,7 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
             data={groupedItems}
             renderItem={renderCategorySection}
             keyExtractor={item => item.id.toString()}
-            style={{ paddingHorizontal: SCREEN_PADDING.horizontal, marginTop: 8 }}
+            style={{ paddingHorizontal: SCREEN_PADDING.horizontal, marginTop: 8, zIndex: 2 }}
             showsVerticalScrollIndicator={false}
             onScrollToIndexFailed={info => {
               const wait = new Promise(resolve => setTimeout(resolve, 50));
@@ -585,21 +588,43 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   categoryList: {
-    paddingVertical: 4,
+    paddingTop: 4,
     // marginTop: SCREEN_PADDING.vertical,
     maxHeight: 50,
+    backgroundColor: 'white',
+    
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 5,
+
+    zIndex: 5,
+    overflow: 'visible'
   },
   categoryTitle: {
     fontSize: 14,
     fontFamily: 'Poppins-Regular',
     fontWeight: '400',
     color: COLORS.darkColor,
+    opacity: 0.9,
+    // color: COLORS.tertiaryColor,
+
+    borderBottomColor: 'transparent',
+    borderBottomWidth: 2
   },
   activeCategory: {
-    backgroundColor: '#EBE3E3',
+    // backgroundColor: '#e4e4e4ff',
     borderRadius: 8,
     paddingHorizontal: 10,
-    paddingVertical: 10
+    paddingVertical: 10,
+    borderBottomColor: 'red',
+    borderBottomWidth: 2
+
+  },
+  activeCategoryTitle:{
+    fontWeight: '600',
+    color: COLORS.darkColor,
   },
   sectionHeader: {
     marginTop: 6,
