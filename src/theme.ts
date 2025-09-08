@@ -34,6 +34,8 @@ export const DRIVER_SOCKET_URL = 'wss://crepaway-driver-websocket.onrender.com';
 export const DINEIN_SOCKET_URL =
   'wss://crepaway-dinein-websocket-ts-hgga.onrender.com';
 
+export const TOAST_OFFSET = -80;
+
 export const GOOGLE_API_KEY =
   '989336303690-5dsedobl05pj96r71550h24g499imub2.apps.googleusercontent.com';
 

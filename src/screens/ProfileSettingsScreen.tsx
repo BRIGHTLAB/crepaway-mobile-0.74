@@ -35,7 +35,7 @@ import Input from '../components/UI/Input';
 import { ProfileStackParamList } from '../navigation/DeliveryTakeawayStack';
 import { logoutUser } from '../store/slices/userSlice';
 import { useAppDispatch } from '../store/store';
-import { COLORS, INPUT_HEIGHT, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
+import { COLORS, INPUT_HEIGHT, SCREEN_PADDING, TOAST_OFFSET, TYPOGRAPHY } from '../theme';
 
 const profileSchema = z.object({
   name: z.string().nonempty('Name is required'),
@@ -131,16 +131,16 @@ const ProfileSettingsScreen = () => {
   const handleConfirmDeleteAccount = async () => {
     try {
       await deleteAccount();
-      Toast.show('Account deleted successfully', Toast.SHORT);
+      Toast.showWithGravityAndOffset('Account deleted successfully', Toast.SHORT, Toast.BOTTOM, 0, TOAST_OFFSET);
       dispatch(logoutUser());
     } catch (error) {
       console.log(error);
-      Toast.show('Failed to delete account. Please try again.', Toast.SHORT);
+      Toast.showWithGravityAndOffset('Failed to delete account. Please try again.', Toast.SHORT, Toast.BOTTOM, 0, TOAST_OFFSET);
     }
   };
 
   const handleConfirmSignOut = () => {
-    Toast.show('Signed out successfully', Toast.SHORT);
+    Toast.showWithGravityAndOffset('Signed out successfully', Toast.SHORT, Toast.BOTTOM, 0, TOAST_OFFSET);
     dispatch(logoutUser());
   };
 
@@ -149,10 +149,10 @@ const ProfileSettingsScreen = () => {
     try {
       await updateProfile(data).unwrap();
       setHasChanged(false); // Reset hasChanged after successful update
-      Toast.show('Profile updated successfully!', Toast.SHORT);
+      Toast.showWithGravityAndOffset('Profile updated successfully!', Toast.SHORT, Toast.BOTTOM, 0, TOAST_OFFSET);
     } catch (error) {
       console.error('ERROR', error);
-      Toast.show('Failed to update profile. Please try again.', Toast.SHORT);
+      Toast.showWithGravityAndOffset('Failed to update profile. Please try again.', Toast.SHORT, Toast.BOTTOM, 0, TOAST_OFFSET);
     }
   };
 
