@@ -283,7 +283,7 @@ const HomeStack = () => {
           // contentStyle: {
           //   pointerEvents: 'none',
           // },
-
+          headerShadowVisible: false,
           headerRight: () => (
             <View
               style={{

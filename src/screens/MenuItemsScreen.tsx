@@ -39,7 +39,6 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
       setFavorite(isFavorite);
     }, [isFavorite]);
 
-    const menu = 'mobile-app-delivery';
     const userState = useSelector((state: RootState) => state.user)
 
     const [toggleFavorite, { isLoading: isTogglingFavorite }] =
@@ -59,7 +58,7 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
         <View
           style={{
             flexDirection: 'row',
-            gap: 6,
+            gap: 10,
             flex: 1,
           }}>
           <FastImage
@@ -70,14 +69,13 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
             resizeMode={FastImage.resizeMode.cover}
             style={{
               width: 80,
-              height: 88,
-              borderRadius: 8,
+              height: 80,
+              borderRadius: 10,
             }}
           />
-
           <View style={styles.menuItem}>
             <Text style={styles.itemName}>{item.name}</Text>
-            <Text style={styles.itemDescription} numberOfLines={1}>
+            <Text style={styles.itemDescription} numberOfLines={2}>
               {item.description}
             </Text>
             <Text style={styles.itemPrice}>
@@ -130,7 +128,7 @@ const CategorySection = React.memo(
     };
   }) => {
     return (
-      <View key={category.id.toString()}>
+      <View key={category.id.toString()} >
         <Text style={styles.sectionHeader}>{category.name}</Text>
         {category.items.map((item, idx) => (
           <MenuItem
@@ -140,7 +138,7 @@ const CategorySection = React.memo(
             isFavorite={item?.is_favorite === 1}
           />
         ))}
-        <View style={{ height: CATEGORY_FOOTER_HEIGHT }} />
+        <View style={{height: CATEGORY_FOOTER_HEIGHT }} />
       </View>
     );
   },
@@ -409,7 +407,7 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
           onPress={() => {
             scrollToCategory(index, item.id);
           }}>
-          <FastImage
+          {/* <FastImage
             source={{
               uri: item?.image_url,
               priority: FastImage.priority.normal,
@@ -420,7 +418,7 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
               height: 32,
               borderRadius: 8,
             }}
-          />
+          /> */}
           <Text style={[styles.categoryTitle]}>{item.name}</Text>
         </TouchableOpacity>
       );
@@ -587,9 +585,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   categoryList: {
-    paddingVertical: 10,
-    marginTop: SCREEN_PADDING.vertical,
-    maxHeight: 70,
+    paddingVertical: 4,
+    // marginTop: SCREEN_PADDING.vertical,
+    maxHeight: 50,
   },
   categoryTitle: {
     fontSize: 14,
@@ -600,38 +598,35 @@ const styles = StyleSheet.create({
   activeCategory: {
     backgroundColor: '#EBE3E3',
     borderRadius: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 10
   },
   sectionHeader: {
     marginTop: 6,
-    fontSize: 20,
+    fontSize: 22,
     fontFamily: 'Poppins-SemiBold',
     fontWeight: '600',
     color: COLORS.darkColor,
-    marginBottom: 4,
     height: CATEGORY_HEADER_HEIGHT,
   },
   menuContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    height: ITEM_HEIGHT,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#d2d2d2ff',
   },
   menuItem: {
-    flex: 2,
-    gap: 2,
-    marginTop: 2,
+    flex: 1,
+    gap: 3,
+    paddingTop: 0,
   },
   itemName: {
     fontSize: 16,
     fontFamily: 'Poppins-Medium',
     fontWeight: '500',
     color: COLORS.darkColor,
-    lineHeight: 18,
   },
   itemPrice: {
     fontSize: 16,
