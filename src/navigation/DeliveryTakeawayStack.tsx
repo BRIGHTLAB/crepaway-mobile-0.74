@@ -6,16 +6,16 @@ import {
   NativeStackNavigationProp,
 } from '@react-navigation/native-stack';
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Icon_Nav_Fav from '../../assets/SVG/Icon_Nav_Fav';
 import Icon_Nav_Home from '../../assets/SVG/Icon_Nav_Home';
 import Icon_Nav_Orders from '../../assets/SVG/Icon_Nav_Order';
 import Icon_Nav_Profile from '../../assets/SVG/Icon_Nav_Profile';
 import Icon_Nav_Search from '../../assets/SVG/Icon_Nav_Search';
 import { useGetCartQuery } from '../api/cartApi';
+import { CustomBottomTab, CustomBottomTabProps } from '../components/CustomBottomTab';
 import CustomHeader from '../components/Header';
 import CartCounter from '../components/Menu/CartCounter';
-import NotificationsCounter from '../components/Notifications/NotificationsCounter';
 import AddressMapScreen from '../screens/AddressMapScreen';
 import AllergiesScreen from '../screens/AllergiesScreen';
 import CartScreen from '../screens/CartScreen';
@@ -42,9 +42,7 @@ import TrackOrderScreen from '../screens/TrackOrderScreen';
 import WalletScreen from '../screens/WalletScreen';
 import { setCartFromFetch } from '../store/slices/cartSlice';
 import { useAppDispatch } from '../store/store';
-import { COLORS } from '../theme';
 import { RootStackParamList } from './NavigationStack';
-import { CustomBottomTab, CustomBottomTabProps } from '../components/CustomBottomTab';
 
 export type DeliveryTakeawayStackParamList = {
   HomeStack: any;
@@ -128,14 +126,14 @@ const HomeStack = () => {
                 }>
                 <CartCounter color={'white'} />
               </TouchableOpacity>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 onPress={() =>
                   navigation.navigate('HomeStack', {
                     screen: 'Notifications',
                   })
                 }>
                 <NotificationsCounter color={'white'} />
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           ),
         }}
@@ -159,14 +157,14 @@ const HomeStack = () => {
                 }>
                 <CartCounter />
               </TouchableOpacity>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 onPress={() =>
                   navigation.navigate('HomeStack', {
                     screen: 'Notifications',
                   })
                 }>
-                //<NotificationsCounter />
-              </TouchableOpacity>
+                <NotificationsCounter />
+              </TouchableOpacity> */}
             </View>
           ),
         }}
@@ -199,14 +197,14 @@ const HomeStack = () => {
                 }>
                 <CartCounter />
               </TouchableOpacity>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 onPress={() =>
                   navigation.navigate('HomeStack', {
                     screen: 'Notifications',
                   })
                 }>
                 <NotificationsCounter />
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           ),
         }}
@@ -230,14 +228,14 @@ const HomeStack = () => {
                 }>
                 <CartCounter />
               </TouchableOpacity>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 onPress={() =>
                   navigation.navigate('HomeStack', {
                     screen: 'Notifications',
                   })
                 }>
                 <NotificationsCounter />
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           ),
         }}
@@ -261,14 +259,14 @@ const HomeStack = () => {
                 }>
                 <CartCounter />
               </TouchableOpacity>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 onPress={() =>
                   navigation.navigate('HomeStack', {
                     screen: 'Notifications',
                   })
                 }>
                 <NotificationsCounter />
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           ),
         }}
@@ -296,14 +294,14 @@ const HomeStack = () => {
                 }>
                 <CartCounter />
               </TouchableOpacity>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 onPress={() =>
                   navigation.navigate('HomeStack', {
                     screen: 'Notifications',
                   })
                 }>
                 <NotificationsCounter />
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           ),
         }}
@@ -327,15 +325,15 @@ const HomeStack = () => {
                 }>
                 <CartCounter />
               </TouchableOpacity>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 onPress={() =>
                   navigation.navigate('HomeStack', { screen: 'Notifications' })
                 }>
                 <NotificationsCounter />
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           ),
-          
+
         }}
       />
 
@@ -538,12 +536,12 @@ const ProfileStack = () => {
                 }>
                 <CartCounter />
               </TouchableOpacity>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 onPress={() =>
                   navigation.navigate('HomeStack', { screen: 'Notifications' })
                 }>
                 <NotificationsCounter />
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           ),
         }}
@@ -681,5 +679,5 @@ const DeliveryTakeawayStack = () => {
 export default DeliveryTakeawayStack;
 
 const styles = StyleSheet.create({
-  
+
 });

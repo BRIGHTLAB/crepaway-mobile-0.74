@@ -6,36 +6,31 @@ import {
   BackHandler,
   Dimensions,
   Image,
-  ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
-import Icon_BackArrow from '../../assets/SVG/Icon_BackArrow';
 import { useGetContentQuery } from '../api/dataApi';
 import { useGetHomepageQuery } from '../api/homeApi';
-import Banner from '../components/Banner';
+import FadeOverlay from '../components/FadeOverlay';
 import CartCounter from '../components/Menu/CartCounter';
 import CategoryList from '../components/Menu/CategoryList';
 import ItemsList from '../components/Menu/ItemsList';
 import OffersList from '../components/Menu/OffersList';
-import NotificationsCounter from '../components/Notifications/NotificationsCounter';
 import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
 import { setOrderType } from '../store/slices/userSlice';
 import { RootState, useAppDispatch } from '../store/store';
-import FadeOverlay from '../components/FadeOverlay';
 
 import Animated, {
-  useAnimatedScrollHandler,
-  useSharedValue,
-  useAnimatedStyle,
-  interpolate,
   Extrapolation,
+  interpolate,
+  interpolateColor,
   runOnJS,
-  interpolateColor
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue
 } from "react-native-reanimated";
 import CustomHeader from '../components/Header';
 
@@ -119,7 +114,7 @@ const HomeScreen = () => {
       // pass the plain string to JS
       runOnJS(updateHeaderColor)(iconColor);
     },
-    
+
   });
 
   function updateHeaderColor(color: string) {
@@ -128,27 +123,27 @@ const HomeScreen = () => {
       // If you use headerLeft / headerRight, always return a function
       headerLeft: () => <CustomHeader color={color} />,
       headerRight: () => (
-            <View
-              style={{
-                flexDirection: 'row',
-                gap: 5,
-              }}>
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate('HomeStack', { screen: 'Cart' })
-                }>
-                <CartCounter color={color} />
-              </TouchableOpacity>
-              <TouchableOpacity
+        <View
+          style={{
+            flexDirection: 'row',
+            gap: 5,
+          }}>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('HomeStack', { screen: 'Cart' })
+            }>
+            <CartCounter color={color} />
+          </TouchableOpacity>
+          {/* <TouchableOpacity
                 onPress={() =>
                   navigation.navigate('HomeStack', {
                     screen: 'Notifications',
                   })
                 }>
                 <NotificationsCounter color={color} />
-              </TouchableOpacity>
-            </View>
-          ),
+              </TouchableOpacity> */}
+        </View>
+      ),
     });
   }
   const bannerStyle = useAnimatedStyle(() => {
@@ -191,7 +186,7 @@ const HomeScreen = () => {
       headerTitleStyle: {
         opacity,
       },
-      
+
     });
 
     return {};

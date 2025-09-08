@@ -105,6 +105,7 @@ const ProfileScreen = () => {
       {
         icon: <Icon_Wallet />,
         text: 'Wallet',
+        disabled: true,
         onPress: () => { navigation.navigate('Wallet') },
       },
     ],

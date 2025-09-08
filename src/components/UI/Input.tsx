@@ -1,22 +1,21 @@
-import React, { useState, forwardRef, useEffect, JSX } from 'react';
+import React, { forwardRef, JSX, useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
   TextInput,
   TextInputProps,
-  View,
   TouchableOpacity,
+  View,
 } from 'react-native';
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
   interpolate,
-  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming
 } from 'react-native-reanimated';
-import { COLORS, INPUT_HEIGHT, TYPOGRAPHY } from '../../theme';
 import Icon_Eye from '../../../assets/SVG/Icon_Eye';
 import Icon_Eye_Line from '../../../assets/SVG/Icon_Eye_Line';
+import { COLORS, INPUT_HEIGHT, TYPOGRAPHY } from '../../theme';
 
 interface InputProps extends TextInputProps {
   iconLeft?: JSX.Element;
@@ -55,7 +54,7 @@ const Input = forwardRef<TextInput, InputProps>(
 
     const animatedStyle = useAnimatedStyle(() => {
       return {
-        top: interpolate(animation.value, [0, 1], [-12, INPUT_HEIGHT / 2 - 12]),
+        top: interpolate(animation.value, [0, 1], [-13, INPUT_HEIGHT / 2 - 12]),
         fontSize: interpolate(animation.value, [0, 1], [12, 16]),
       };
     });

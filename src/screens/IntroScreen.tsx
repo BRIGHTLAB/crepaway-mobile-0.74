@@ -1,23 +1,24 @@
-import React, { useEffect, useRef, useState } from "react";
-import { View, Text, Dimensions, StyleSheet, Image } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Dimensions, Image, StyleSheet, Text, View } from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
 import Animated, {
-    useAnimatedScrollHandler,
-    useSharedValue,
-    useAnimatedStyle,
-    interpolate,
+    Easing,
     Extrapolation,
+    interpolate,
     SharedValue,
+    useAnimatedScrollHandler,
+    useAnimatedStyle,
+    useSharedValue,
     withRepeat,
     withTiming,
-    Easing,
 } from "react-native-reanimated";
-import { normalizeFont } from '../utils/normalizeFonts';
-import Icon_Spine from "../../assets/SVG/Icon_Spine";
-import { COLORS } from "../theme";
-import { TouchableOpacity } from "react-native-gesture-handler";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon_Arrow_Right from "../../assets/SVG/Icon_Arrow_Right";
-import { TYPOGRAPHY } from "../constants/typography";
+import Icon_Spine from "../../assets/SVG/Icon_Spine";
 import FadeOverlay from "../components/FadeOverlay";
+import { TYPOGRAPHY } from "../constants/typography";
+import { COLORS } from "../theme";
+import { normalizeFont } from '../utils/normalizeFonts';
 
 const { width, height } = Dimensions.get("window");
 
@@ -201,6 +202,7 @@ type IProps = {
 const TutorialScreen = ({ navigation }: IProps) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const scrollX = useSharedValue(0);
+    const insets = useSafeAreaInsets();
 
     const scrollHandler = useAnimatedScrollHandler({
         onScroll: (event) => {
@@ -213,7 +215,7 @@ const TutorialScreen = ({ navigation }: IProps) => {
             {/* Header with Skip button */}
             <View style={styles.header}>
                 <TouchableOpacity
-                    style={styles.skipContainer}
+                    style={[styles.skipContainer, { paddingTop: insets.top + 15 }]}
                     onPress={() => navigation.navigate('Login')}>
                     <Text style={[{ color: 'white' }, TYPOGRAPHY.SUB_HEADLINE]}>Skip</Text>
                     <Icon_Arrow_Right />
@@ -300,7 +302,6 @@ const styles = StyleSheet.create({
     },
     skipContainer: {
         flexDirection: 'row',
-        paddingTop: 70,
         alignItems: 'center',
         gap: 6,
     },

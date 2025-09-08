@@ -1,9 +1,9 @@
-import {StyleSheet, View, FlatList} from 'react-native';
 import React from 'react';
-import TopListHeader from './TopListHeader';
-import ItemCard from './ItemCard';
+import { Dimensions, FlatList, StyleSheet, View } from 'react-native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
-import {COLORS, SCREEN_PADDING} from '../../theme';
+import { COLORS, SCREEN_PADDING } from '../../theme';
+import ItemCard from './ItemCard';
+import TopListHeader from './TopListHeader';
 
 interface IProps {
   title: string;
@@ -23,6 +23,11 @@ const ItemsList = ({
   isLoading,
 }: IProps) => {
   const [showAll, setShowAll] = React.useState(false);
+
+  // Calculate card width to show 1.5 cards per screen
+  const { width: screenWidth } = Dimensions.get('window');
+  const availableWidth = screenWidth - (SCREEN_PADDING.horizontal * 2); // Account for screen padding
+  const cardWidth = (availableWidth / 1.5) - 8; // 1.5 cards per screen, minus gap
 
   if (isLoading) {
     return (
@@ -44,7 +49,7 @@ const ItemsList = ({
             <SkeletonPlaceholder>
               <SkeletonPlaceholder.Item flexDirection="column">
                 <SkeletonPlaceholder.Item
-                  width={220}
+                  width={cardWidth}
                   height={156}
                   borderRadius={8}
                   marginBottom={8}
@@ -58,9 +63,9 @@ const ItemsList = ({
               </SkeletonPlaceholder.Item>
             </SkeletonPlaceholder>
           )}
-          ItemSeparatorComponent={() => <View style={{width: 16}} />}
-          ListFooterComponent={() => <View style={{width: 16}} />}
-          ListHeaderComponent={() => <View style={{width: 16}} />}
+          ItemSeparatorComponent={() => <View style={{ width: 16 }} />}
+          ListFooterComponent={() => <View style={{ width: 16 }} />}
+          ListHeaderComponent={() => <View style={{ width: 16 }} />}
         />
       </View>
     );
@@ -80,7 +85,7 @@ const ItemsList = ({
       <FlatList
         data={data?.length > 0 ? data?.slice(0, 8) : []}
         keyExtractor={item => item.id.toString()}
-        renderItem={({item}) => {
+        renderItem={({ item }) => {
           return (
             <ItemCard
               id={item.id}
@@ -92,15 +97,16 @@ const ItemsList = ({
               tags={item.tags}
               isFavorite={item.is_favorite}
               showNoDetails={showNoDetails}
-              onItemPress={onItemPress || (() => {})}
+              style={{ width: cardWidth }}
+              onItemPress={onItemPress || (() => { })}
             />
           );
         }}
         horizontal
         showsHorizontalScrollIndicator={false}
-        ItemSeparatorComponent={() => <View style={{width: 16}} />}
-        ListFooterComponent={() => <View style={{width: 16}} />}
-        ListHeaderComponent={() => <View style={{width: 16}} />}
+        ItemSeparatorComponent={() => <View style={{ width: 16 }} />}
+        ListFooterComponent={() => <View style={{ width: 16 }} />}
+        ListHeaderComponent={() => <View style={{ width: 16 }} />}
       />
     </View>
   );
