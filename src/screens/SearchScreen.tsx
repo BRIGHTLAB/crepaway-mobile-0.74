@@ -3,7 +3,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { debounce } from 'lodash';
 import React, { useCallback, useState } from 'react';
 import {
-  ScrollView,
+  FlatList,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -11,12 +11,10 @@ import {
 } from 'react-native';
 import { useSelector } from 'react-redux';
 import Icon_Search from '../../assets/SVG/Icon_Search';
-import {
-  useGetSearchHistoryQuery,
-  useGetSearchResultsQuery,
-} from '../api/searchApi';
-import ItemsList from '../components/Menu/ItemsList';
-import OffersList from '../components/Menu/OffersList';
+import { useGetItemsQuery } from '../api/menuApi';
+import { useGetSearchHistoryQuery } from '../api/searchApi';
+import ItemCard from '../components/Menu/ItemCard';
+import MenuItemSkeleton from '../components/SkeletonLoader/MenuItemSkeleton';
 import Input from '../components/UI/Input';
 import { RootStackParamList } from '../navigation/NavigationStack';
 import { RootState } from '../store/store';
@@ -26,25 +24,24 @@ const SearchScreen = () => {
   const [searchValue, setSearchValue] = useState('');
   const [searchDebounceValue, setSearchDebounceValue] = useState('');
 
+  console.log('searchDebounceValue', searchDebounceValue);
+
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const { data: searchHistory, isLoading: isLoadingHistory } =
     useGetSearchHistoryQuery();
 
+
   const userState = useSelector((state: RootState) => state.user)
 
-  const { data: searchResults, isLoading } = useGetSearchResultsQuery(
-    {
-      menuType: userState.menuType,
-      branch: userState.branchName,
-      searchValue: searchDebounceValue,
-      addressId: userState.addressId,
-    },
-    // {
-    //   skip: searchDebounceValue === '',
-    // },
-  );
+  const { data: searchResults, isFetching } = useGetItemsQuery({
+    menuType: userState.menuType,
+    branch: userState.branchName,
+    addressId: userState.addressId,
+    search: searchDebounceValue, // Add search parameter
+  });
+  console.log('searchResults', searchResults);
 
   const handleChangeSearch = (value: string) => {
     setSearchValue(value);
@@ -54,7 +51,7 @@ const SearchScreen = () => {
   const handleSearchDebounce = useCallback(
     debounce(async (value: string) => {
       setSearchDebounceValue(value);
-    }, 1500),
+    }, 500),
     [],
   );
 
@@ -63,8 +60,30 @@ const SearchScreen = () => {
     setSearchDebounceValue(value);
   };
 
+  const renderItem = ({ item }: { item: Item }) => {
+    return (
+      <View style={styles.cardContainer}>
+        <ItemCard
+          id={item.id}
+          name={item.name}
+          description={item.description || ''}
+          image_url={item.image_url || ''}
+          price={item.price || 0}
+          symbol={item.symbol}
+          tags={item.tags}
+          isFavorite={item.is_favorite}
+          onItemPress={id => {
+            navigation.navigate('HomeStack', {
+              screen: 'MenuItem',
+              params: { itemId: id },
+            });
+          }}
+        />
+      </View>
+    );
+  };
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       {/* <StatusBar barStyle={'dark-content'} /> */}
       <View style={styles.searchContainer}>
         <Input
@@ -75,87 +94,62 @@ const SearchScreen = () => {
         />
       </View>
 
-      <View style={{ gap: 8 }}>
-        {/* Header  */}
-        {searchHistory && (
-          <View style={styles.header}>
-            <Text style={styles.title}>History</Text>
-            {/* Chips  */}
-            <View style={styles.chips}>
-              {searchHistory?.length > 0 &&
-                searchHistory?.map((el, idx) => {
-                  return (
-                    <TouchableOpacity
-                      key={idx}
-                      style={{
-                        backgroundColor: COLORS.lightColor,
-                        paddingVertical: 4,
-                        paddingHorizontal: 6,
-                        borderRadius: 8,
-                      }}
-                      onPress={() => handleChipPress(el.search_value)}>
-                      <Text style={{ color: COLORS.darkColor }}>
-                        {el?.search_value}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-            </View>
+      {/* Header  */}
+      {searchHistory && (
+        <View style={styles.header}>
+          <Text style={styles.title}>History</Text>
+          {/* Chips  */}
+          <View style={styles.chips}>
+            {searchHistory?.length > 0 &&
+              searchHistory?.map((el, idx) => {
+                return (
+                  <TouchableOpacity
+                    key={idx}
+                    style={{
+                      backgroundColor: COLORS.lightColor,
+                      paddingVertical: 4,
+                      paddingHorizontal: 6,
+                      borderRadius: 8,
+                    }}
+                    onPress={() => handleChipPress(el.search_value)}>
+                    <Text style={{ color: COLORS.darkColor }}>
+                      {el?.search_value}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
           </View>
-        )}
-
-        <View style={styles.listContainer}>
-          {
-            <ItemsList
-              title="New Items"
-              isLoading={isLoading}
-              data={searchResults?.new_items ?? []}
-              onPress={() =>
-                navigation.navigate('HomeStack', { screen: 'NewItems' })
-              }
-              onItemPress={id => {
-                navigation.navigate('HomeStack', {
-                  screen: 'MenuItem',
-                  params: { itemId: id },
-                });
-              }}
-            />
-          }
-          {
-            <OffersList
-              data={searchResults?.exclusive_offers ?? []}
-              isLoading={isLoading}
-              onPress={() =>
-                navigation.navigate('HomeStack', { screen: 'Offers' })
-              }
-              onItemPress={id => {
-                navigation.navigate('HomeStack', {
-                  screen: 'MenuItem',
-                  params: { itemId: id },
-                });
-              }}
-            />
-          }
-          {/* {
-            <ItemsList
-              title="Best Sellers"
-              data={searchResults?.best_sellers ?? []}
-              isLoading={isLoading}
-              onPress={() =>
-                navigation.navigate('HomeStack', {screen: 'BestSellers'})
-              }
-              onItemPress={id => {
-                navigation.navigate('HomeStack', {
-                  screen: 'MenuItem',
-                  params: {itemId: id},
-                });
-              }}
-            />
-          } */}
         </View>
-      </View>
-      <View style={{ height: 16 }} />
-    </ScrollView>
+      )}
+
+      {searchDebounceValue ? (
+        isFetching ? (
+          <MenuItemSkeleton />
+        ) : (
+          <FlatList
+            data={searchResults?.data || []}
+            renderItem={renderItem}
+            keyExtractor={item => item.id?.toString()}
+            numColumns={2}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ gap: 16 }}
+            ListHeaderComponent={() => (
+              <View style={{ height: 16 }} />
+            )}
+            ListFooterComponent={() => (
+              <View style={{ height: SCREEN_PADDING.vertical }} />
+            )}
+            columnWrapperStyle={{
+              gap: 16,
+            }}
+          />
+        )
+      ) : (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>Start typing to search for items</Text>
+        </View>
+      )}
+    </View>
   );
 };
 
@@ -163,13 +157,12 @@ export default SearchScreen;
 
 const styles = StyleSheet.create({
   container: {
-    // paddingVertical: SCREEN_PADDING.vertical,
     flex: 1,
     backgroundColor: '#fff',
+    paddingHorizontal: SCREEN_PADDING.horizontal,
   },
   header: {
     gap: 8,
-    paddingHorizontal: SCREEN_PADDING.horizontal,
   },
   title: {
     fontSize: 20,
@@ -182,12 +175,23 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
   },
-  listContainer: {
-    gap: 20,
-    marginTop: 10,
-  },
-  searchContainer : {
+  searchContainer: {
     paddingTop: 16,
-    paddingHorizontal: 13
+  },
+  cardContainer: {
+    flex: 1,
+    maxWidth: '48%',
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontFamily: 'Poppins-Medium',
+    color: COLORS.foregroundColor,
+    textAlign: 'center',
   }
 });

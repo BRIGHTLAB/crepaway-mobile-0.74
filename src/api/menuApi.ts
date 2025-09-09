@@ -4,6 +4,7 @@ type CommonArgs = {
     branch: string | null;
     menuType?: OrderType['menu_type'];
     addressId?: number | null;
+    search?: string;
 };
 
 export const menuApi = baseApi.injectEndpoints({
@@ -26,7 +27,7 @@ export const menuApi = baseApi.injectEndpoints({
         }),
 
         getItems: builder.query<{ data: Item[] }, CommonArgs>({
-            query: ({ menuType, branch, addressId }) => {
+            query: ({ menuType, branch, addressId, search }) => {
                 const params = new URLSearchParams();
                 if (menuType) params.append('menu_type', menuType);
                 if (branch) params.append('branch', branch);
@@ -35,6 +36,11 @@ export const menuApi = baseApi.injectEndpoints({
                 // Add address_id if it exists
                 if (addressId) {
                     params.append('address_id', addressId.toString());
+                }
+
+                // Add search parameter if it exists
+                if (search && search.trim() !== '') {
+                    params.append('search', search.trim());
                 }
 
                 return `/items?${params.toString()}`;
