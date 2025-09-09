@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { COLORS } from '../theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FadeInFastImage } from './FadeInFastImage';
+import FastImage from 'react-native-fast-image';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -32,7 +34,18 @@ const Banner: React.FC<BannerProps> = ({ data }) => {
   const renderItem = ({ item }: { item: BannerItem }) => {
     return (
       <View style={[styles.slide]}>
-        <Image source={{ uri: item.image }} style={styles.image} />
+        <FadeInFastImage
+          source={{
+            uri: item.image ||
+              'https://d3vfh4cqgoixck.cloudfront.net/images/locations_placeholder1.webp',
+            priority: FastImage.priority.normal,
+          }}
+          style={styles.image}
+          containerStyle={styles.image}
+          duration={300}
+          resizeMode={FastImage.resizeMode.cover}
+          placeholderColor="#f2f2f2"
+        />
         <Text style={styles.title}>{item.title}</Text>
         <View
           style={{
