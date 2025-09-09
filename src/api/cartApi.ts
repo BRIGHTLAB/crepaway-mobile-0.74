@@ -46,11 +46,11 @@ export const cartApi = baseApi.injectEndpoints({
             async onQueryStarted(_, { dispatch, queryFulfilled }) {
                 try {
                     await queryFulfilled
-                    setTimeout(() => {
-                        dispatch(
-                            cartApi.util.invalidateTags(['cart'])
-                        );
-                    }, 3000);
+                    // setTimeout(() => {
+                    //     dispatch(
+                    //         cartApi.util.invalidateTags(['cart'])
+                    //     );
+                    // }, 3000);
 
                     console.log('Cart synced with server');
 
