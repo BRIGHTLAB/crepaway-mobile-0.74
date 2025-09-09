@@ -167,10 +167,9 @@ const CartScreen = ({}: IProps) => {
             <Button
               icon={<Icon_Checkout />}
               iconPosition="left"
+              disabled={cartData.isSyncing}
               onPress={() => navigation.navigate('Checkout')}>
-              Checkout {getCurrencySymbol()}
-              {/* total  */}
-              {calculateCartTotal().toFixed(2)}
+              {`Checkout ${getCurrencySymbol()}${calculateCartTotal().toFixed(2)}`}
             </Button>
           </>
         )}

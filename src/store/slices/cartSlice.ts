@@ -45,6 +45,7 @@ interface ICart {
   branchName: string | null;
   loading: boolean;
   error: string | null;
+  isSyncing: boolean;
 }
 
 export const fetchCart = createAsyncThunk(
@@ -75,6 +76,7 @@ const initialState: ICart = {
   error: null,
   orderType: null,
   branchName: null,
+  isSyncing: false,
 };
 
 const cartSlice = createSlice({
@@ -175,6 +177,12 @@ const cartSlice = createSlice({
         branchName: action.payload,
       };
     },
+    setCartSyncing: (state, action: PayloadAction<boolean>) => {
+      return {
+        ...state,
+        isSyncing: action.payload,
+      };
+    },
   },
 
   // },
@@ -217,5 +225,6 @@ export const {
   setCartFromFetch,
   setCartOrderType,
   setCartBranchName,
+  setCartSyncing,
 } = cartSlice.actions;
 export default cartSlice.reducer;

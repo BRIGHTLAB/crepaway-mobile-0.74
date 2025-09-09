@@ -1,9 +1,12 @@
 import { Middleware } from "@reduxjs/toolkit";
 import { debounce } from "lodash";
 import { cartApi } from "../../api/cartApi";
-import { addItem, clearCart, decreaseQuantity, increaseQuantity, removeItem, updateItem } from "../slices/cartSlice";
-const createSyncCartWithServer = () => {
-  return debounce(async (store) => {
+import { addItem, clearCart, decreaseQuantity, increaseQuantity, removeItem, updateItem, setCartSyncing } from "../slices/cartSlice";
+
+const syncCartWithServer = debounce(async (store) => {
+  try {
+    store.dispatch(setCartSyncing(true));
+    
     const items = JSON.parse(JSON.stringify(store.getState().cart.items));
     const menuType = store.getState().user.menuType;
 
@@ -17,15 +20,15 @@ const createSyncCartWithServer = () => {
     //   endpoint: `/cart?branch=ashrafieh`,
     //   formData: { items, order_type: orderType }
     // });
-    // console.log('Cart synced with server');
-
-  }, 800);
-};
-
+    console.log('Cart synced with server');
+  } catch (error) {
+    console.error('Error syncing cart:', error);
+  } finally {
+    store.dispatch(setCartSyncing(false));
+  }
+}, 800);
 
 const cartMiddleware: Middleware = store => next => async action => {
-  const syncCartWithServer = createSyncCartWithServer();
-
   const result = next(action);
 
   if (
