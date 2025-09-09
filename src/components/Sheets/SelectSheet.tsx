@@ -1,15 +1,13 @@
-import React, { forwardRef } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import BottomSheet, {
-  BottomSheetFlatList,
-  BottomSheetScrollView,
-  BottomSheetView,
+  BottomSheetFlatList
 } from '@gorhom/bottom-sheet';
-import DynamicSheet from './DynamicSheet';
-import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
-import { COLORS, TYPOGRAPHY } from '../../theme';
-import { FlatList } from 'react-native-gesture-handler';
+import React, { forwardRef } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import Icon_BackArrow from '../../../assets/SVG/Icon_BackArrow';
+import { COLORS, TYPOGRAPHY } from '../../theme';
+import DynamicSheet from './DynamicSheet';
 
 type Option = {
   label: string;
@@ -22,10 +20,12 @@ type SelectSheetProps = {
   onChange: (value: number | null) => void;
   title: string;
   loading?: boolean;
+  showBackButton?: boolean;
+  onBackPress?: () => void;
 };
 
 const SelectSheet = forwardRef<BottomSheet, SelectSheetProps>(
-  ({ value, options, onChange, title, loading = false }, ref) => {
+  ({ value, options, onChange, title, loading = false, showBackButton = false, onBackPress }, ref) => {
     // const handleOptionSelect = (option: Option) => {
     //   onChange(option.value);
     //   // Use the forwarded ref to close the sheet
@@ -62,7 +62,14 @@ const SelectSheet = forwardRef<BottomSheet, SelectSheetProps>(
 
     return (
       <DynamicSheet ref={ref} snapPoints={['70%']}>
-        <Text style={styles.title}>{title}</Text>
+        <View style={styles.headerContainer}>
+          {showBackButton && (
+            <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
+              <Icon_BackArrow />
+            </TouchableOpacity>
+          )}
+          <Text style={[styles.title, showBackButton && styles.titleWithBack]}>{title}</Text>
+        </View>
         {loading ? (
           <View style={styles.listContainer}>
             {loadingItems.map((_, index) => (
@@ -88,10 +95,21 @@ const SelectSheet = forwardRef<BottomSheet, SelectSheetProps>(
 );
 
 const styles = StyleSheet.create({
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  backButton: {
+    marginRight: 12,
+    padding: 4,
+  },
   title: {
     ...TYPOGRAPHY.TITLE,
     color: COLORS.black,
-    marginBottom: 16,
+  },
+  titleWithBack: {
+    flex: 1,
   },
   listContainer: {
     paddingTop: 16,
