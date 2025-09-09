@@ -1,23 +1,18 @@
-import { StyleSheet, Text, View, Dimensions, FlatList } from 'react-native';
-import React, { useEffect, useRef, useState } from 'react';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import dayjs from 'dayjs';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Dimensions, FlatList, StyleSheet, Text, View } from 'react-native';
+import MapView, { LatLng, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
-import MapView, { Marker, PROVIDER_GOOGLE, LatLng } from 'react-native-maps';
 import Icon_Order_Accepted from '../../assets/SVG/Icon_Order_Accepted';
 import Icon_Spine from '../../assets/SVG/Icon_Spine';
-import SocketService from '../utils/SocketService';
-import { DRIVER_SOCKET_URL, SCREEN_PADDING } from '../theme';
-import { COLORS } from '../theme';
-import { useSelector } from 'react-redux';
-import store, { RootState } from '../store/store';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/NavigationStack';
 import { useGetOrderStatusQuery } from '../api/ordersApi';
-import dayjs from 'dayjs';
 import {
-  DeliveryTakeawayStackParamList,
-  OrdersStackParamList,
+  OrdersStackParamList
 } from '../navigation/DeliveryTakeawayStack';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import store from '../store/store';
+import { COLORS, DRIVER_SOCKET_URL, SCREEN_PADDING } from '../theme';
+import SocketService from '../utils/SocketService';
 
 type OrderScreenRouteProps = RouteProp<OrdersStackParamList, 'TrackOrder'>;
 
@@ -111,6 +106,7 @@ const TrackOrderScreen = () => {
   const [addressLocation, setAddressLocation] = useState<LatLng | null>(null);
   const [isFitting, setIsFitting] = useState(false);
   const [initialMapLoad, setInitialMapLoad] = useState(true);
+  const [hasFittedOnce, setHasFittedOnce] = useState(false);
   const userState = store.getState().user;
   const mapRef = useRef<MapView>(null);
 
@@ -121,6 +117,11 @@ const TrackOrderScreen = () => {
   const { data: orderStatus, isLoading } = useGetOrderStatusQuery(orderId, {
     pollingInterval: 2000,
   });
+
+  // Memoize orderStatus to prevent unnecessary re-renders when data hasn't changed
+  const memoizedOrderStatus = useMemo(() => {
+    return orderStatus;
+  }, [orderStatus?.status_history, orderStatus?.estimated_delivery_time]);
 
   // This effect will run when address coordinates change
   useEffect(() => {
@@ -198,14 +199,16 @@ const TrackOrderScreen = () => {
     }
   }, [orderId]);
 
+
   // zoom out so we can see both the driver and address at the same time
   useEffect(() => {
-    // Only run this when both locations are available
-    if (mapRef.current && driverLocation && addressLocation) {
-      console.log('We are fitting the coordinates');
+    // Only run this when both locations are available and we haven't fitted once yet
+    if (mapRef.current && driverLocation && addressLocation && !hasFittedOnce) {
+      console.log('We are fitting the coordinates for the first time');
 
       // Set fitting flag to prevent region updates
       setIsFitting(true);
+      setHasFittedOnce(true);
 
       setTimeout(() => {
         mapRef.current?.fitToCoordinates([driverLocation, addressLocation], {
@@ -219,7 +222,7 @@ const TrackOrderScreen = () => {
         }, 1000); // Animation usually takes about 500ms, so wait a bit longer
       }, 500);
     }
-  }, [driverLocation, addressLocation]);
+  }, [driverLocation, addressLocation, hasFittedOnce]);
 
   return (
     <View style={styles.container}>
@@ -281,7 +284,7 @@ const TrackOrderScreen = () => {
           </>
         ) : (
           <FlatList
-            data={orderStatus?.status_history}
+            data={memoizedOrderStatus?.status_history}
             renderItem={({ item }) => (
               <OrderItem
                 icon={getStatusIcon(item.key)}
@@ -294,7 +297,7 @@ const TrackOrderScreen = () => {
                 style={{
                   marginTop: 12,
                 }}>
-                Estimated {userState.orderType === 'delivery' ? 'arrival' : 'preparation time'}: {orderStatus?.estimated_delivery_time} min
+                Estimated {userState.orderType === 'delivery' ? 'arrival' : 'preparation time'}: {memoizedOrderStatus?.estimated_delivery_time} min
               </Text>
             }
           />
@@ -316,8 +319,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'red',
   },
   mapContainer: {
-    top: -10, 
-    position: 'relative', 
+    top: -10,
+    position: 'relative',
     flex: 1
   },
   map: {

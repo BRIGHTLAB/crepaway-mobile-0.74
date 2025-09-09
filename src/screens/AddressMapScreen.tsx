@@ -76,6 +76,13 @@ const AddressMapScreen = () => {
     }, 800);
   };
 
+  const handleBackPress = () => {
+    citiesSheetRef.current?.close();
+    setTimeout(() => {
+      detailsSheetRef.current?.expand();
+    }, 500);
+  };
+
   useEffect(() => {
     requestLocationAccess();
   }, []);
@@ -360,6 +367,8 @@ const AddressMapScreen = () => {
         }
         title="Select City"
         loading={citiesLoading}
+        showBackButton={true}
+        onBackPress={handleBackPress}
       />
     </View>
   );

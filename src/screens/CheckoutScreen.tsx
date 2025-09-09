@@ -175,6 +175,7 @@ const CheckoutScreen = () => {
     instructions: { id: number; title: string }[],
     specialNotes: string,
   ) => {
+
     setDeliveryInstructions(instructions);
     setSpecialDeliveryInstructions(specialNotes);
   };
@@ -190,9 +191,38 @@ const CheckoutScreen = () => {
   };
 
 
-  console.log('userAddress', user.addressId)
+  console.log('total123', data?.summary?.final_total)
 
   const headerHeight = useHeaderHeight()
+
+  // Calculate minimum date: now + 5 minutes, rounded up to next 30-minute interval
+  const getMinimumDate = (): Date => {
+    const now = new Date();
+    const d = new Date(now.getTime() + 5 * 60 * 1000); // now + 5 minutes
+    d.setSeconds(0, 0); // clear seconds & ms
+
+    const minutes = d.getMinutes();
+    const remainder = minutes % 30;
+
+    if (remainder !== 0) {
+      // add the difference to reach the next 30-min boundary
+      d.setMinutes(minutes + (30 - remainder));
+    }
+
+    // set seconds/ms again just in case setMinutes changed them
+    d.setSeconds(0, 0);
+
+    return d;
+  };
+
+  // Calculate maximum date: 2 days from now
+  const getMaximumDate = (): Date => {
+    const now = new Date();
+    const maxDate = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000); // 2 days from now
+    maxDate.setHours(23, 59, 59, 999); // Set to end of day
+    return maxDate;
+  };
+
   return (
     <>
       <KeyboardAvoidingView
@@ -302,7 +332,7 @@ const CheckoutScreen = () => {
             </View>
 
             {/* Delivery instructions  */}
-            {deliveryInstructions?.length > 0 && (
+            {(deliveryInstructions?.length > 0 || specialDeliveryInstructions) && (
               <View style={styles.boxContainer}>
                 <Text style={styles.boxContainerTitle}>
                   Delivery Instructions
@@ -383,6 +413,9 @@ const CheckoutScreen = () => {
               onChange={setScheduledDateTime}
               mode="datetime"
               placeholder="Select Date and Time"
+              minimumDate={getMinimumDate()}
+              maximumDate={getMaximumDate()}
+              minuteInterval={30}
             />
           </View>
           <Button onPress={handleScheduleConfirm}>Confirm Schedule</Button>

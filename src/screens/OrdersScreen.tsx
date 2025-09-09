@@ -1,26 +1,26 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  FlatList,
-  TouchableOpacity,
-  SectionList,
-} from 'react-native';
-import React, { useCallback, useMemo } from 'react';
-import Button from '../components/UI/Button';
-import Icon_Spine from '../../assets/SVG/Icon_Spine';
-import Icon_Arrow_Right from '../../assets/SVG/Icon_Arrow_Right';
-import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
-import Icon_Location from '../../assets/SVG/Icon_Location';
-import Icon_Refresh from '../../assets/SVG/Icon_Refresh';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
-import Item from '../components/Order/Item';
+import React, { useCallback, useMemo } from 'react';
+import {
+  FlatList,
+  SectionList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import Icon_Arrow_Right from '../../assets/SVG/Icon_Arrow_Right';
+import Icon_Location from '../../assets/SVG/Icon_Location';
+import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
+import Icon_Refresh from '../../assets/SVG/Icon_Refresh';
+import Icon_Spine from '../../assets/SVG/Icon_Spine';
 import { Order, OrderItem, useGetOrdersQuery } from '../api/ordersApi';
-import { COLORS, SCREEN_PADDING } from '../theme';
-import { RootStackParamList } from '../navigation/NavigationStack';
 import HeaderShadow from '../components/HeaderShadow';
+import Item from '../components/Order/Item';
+import Button from '../components/UI/Button';
+import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
+import { RootStackParamList } from '../navigation/NavigationStack';
+import { COLORS, SCREEN_PADDING } from '../theme';
 
 const OrderComponent = React.memo(
   ({
@@ -268,10 +268,10 @@ const OrdersScreen = () => {
 
   return (
     <View style={styles.container}>
-      
+
       {/* custom header inside the page */}
       <HeaderShadow />
-      
+
       <View style={{ paddingHorizontal: SCREEN_PADDING.horizontal, flex: 1 }}>
         {renderContent()}
       </View>
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 5,
-    
+
   },
   orderHeader: {
     flexDirection: 'row',
