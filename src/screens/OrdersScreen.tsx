@@ -20,6 +20,7 @@ import Item from '../components/Order/Item';
 import { Order, OrderItem, useGetOrdersQuery } from '../api/ordersApi';
 import { COLORS, SCREEN_PADDING } from '../theme';
 import { RootStackParamList } from '../navigation/NavigationStack';
+import HeaderShadow from '../components/HeaderShadow';
 
 const OrderComponent = React.memo(
   ({
@@ -45,8 +46,6 @@ const OrderComponent = React.memo(
       (orderItem: OrderItem) => orderItem.uuid,
       [],
     );
-
-    console.log('order item card', item);
 
     return (
       <View style={styles.orderContainer}>
@@ -269,6 +268,10 @@ const OrdersScreen = () => {
 
   return (
     <View style={styles.container}>
+      
+      {/* custom header inside the page */}
+      <HeaderShadow />
+      
       <View style={{ paddingHorizontal: SCREEN_PADDING.horizontal, flex: 1 }}>
         {renderContent()}
       </View>
@@ -281,7 +284,7 @@ export default OrdersScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.lightColor,
+    backgroundColor: COLORS.white,
   },
   noOrdersContainer: {
     flex: 1,
@@ -310,16 +313,18 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   orderContainer: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.lightColor,
     gap: 10,
     borderRadius: 12,
     padding: 16,
     marginBottom: 8,
+
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 5,
+    
   },
   orderHeader: {
     flexDirection: 'row',
