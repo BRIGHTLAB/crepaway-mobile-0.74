@@ -13,9 +13,9 @@ const CartCounter = ({color}: {color?: string}) => {
     <View style={styles.container}>
       <Icon_Cart
         color={color || '#191919'}
-        width={32}
-        height={32}
-        style={{marginTop: 5, marginRight: 3}}
+        width={26}
+        height={26}
+        style={styles.iconStyle}
       />
       {itemCount > 0 && (
         <View style={styles.cartCount}>
@@ -32,21 +32,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     position: 'relative',
+    justifyContent: 'center'
+  },
+  iconStyle: {
+    marginTop: 5, 
+    marginRight: 3,
   },
   cartCount: {
     position: 'absolute',
     top: 0,
     right: 0,
     backgroundColor: COLORS.primaryColor,
-    width: 20,
-    height: 20,
+    width: 18,
+    height: 18,
     borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
   },
   cartCountText: {
     fontFamily: 'Poppins-Medium',
-    fontSize: 14,
+    fontSize: 12,
     color: 'white',
   },
 });

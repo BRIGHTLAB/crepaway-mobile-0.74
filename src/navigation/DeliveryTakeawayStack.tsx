@@ -281,7 +281,7 @@ const HomeStack = () => {
           // contentStyle: {
           //   pointerEvents: 'none',
           // },
-
+          headerShadowVisible: false,
           headerRight: () => (
             <View
               style={{
@@ -566,7 +566,6 @@ const OrderStack = () => {
   return (
     <Stack.Navigator
       screenOptions={{
-
       }}>
       <Stack.Screen
         name="Orders"
@@ -574,6 +573,7 @@ const OrderStack = () => {
         options={{
           headerTitle: 'Orders',
           headerTitleAlign: 'center',
+          headerShadowVisible: false,
         }}
       />
       <Stack.Screen
@@ -583,6 +583,7 @@ const OrderStack = () => {
           headerTitle: 'Orders',
           headerTitleAlign: 'center',
           headerLeft: () => <CustomHeader />,
+          headerShadowVisible: false,
         }}
       />
       <Stack.Screen
@@ -591,6 +592,7 @@ const OrderStack = () => {
         options={{
           headerTitle: 'Track Order',
           headerLeft: () => <CustomHeader />,
+          
         }}
       />
     </Stack.Navigator>
