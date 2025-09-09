@@ -175,6 +175,7 @@ const CheckoutScreen = () => {
     instructions: { id: number; title: string }[],
     specialNotes: string,
   ) => {
+
     setDeliveryInstructions(instructions);
     setSpecialDeliveryInstructions(specialNotes);
   };
@@ -302,7 +303,7 @@ const CheckoutScreen = () => {
             </View>
 
             {/* Delivery instructions  */}
-            {deliveryInstructions?.length > 0 && (
+            {(deliveryInstructions?.length > 0 || specialDeliveryInstructions) && (
               <View style={styles.boxContainer}>
                 <Text style={styles.boxContainerTitle}>
                   Delivery Instructions
