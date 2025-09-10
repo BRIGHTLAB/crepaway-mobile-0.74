@@ -109,7 +109,6 @@ const NavigationStack = () => {
               options={{
                 headerTitle: '',
                 headerShown: true,
-                presentation: 'modal',
               }}
             />
           </Stack.Navigator>
@@ -128,7 +127,6 @@ const NavigationStack = () => {
               options={{
                 headerTitle: '',
                 headerShown: true,
-                presentation: 'modal',
               }}
             />
           </Stack.Navigator>
