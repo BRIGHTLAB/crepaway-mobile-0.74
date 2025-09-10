@@ -23,8 +23,8 @@ const CategoryCard = ({ name, image_url, style, onPress }: IProps) => {
         }}
         style={styles.image}
         containerStyle={styles.image}
-        duration={300}
-        placeholderColor="#f2f2f2"
+        duration={350}
+        placeholderColor="#fff"
       />
 
       {/* <FastImage

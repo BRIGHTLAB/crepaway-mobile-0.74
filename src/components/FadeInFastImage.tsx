@@ -33,10 +33,10 @@ export const FadeInFastImage: React.FC<Props> = ({
   const opacity = useSharedValue(0)
 
   // Reset opacity whenever the image source changes
-  useMemo(() => {
-    cancelAnimation(opacity)
-    opacity.value = 0
-  }, [source, opacity])
+  // useMemo(() => {
+  //   cancelAnimation(opacity)
+  //   opacity.value = 1;
+  // }, [source, opacity])
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,

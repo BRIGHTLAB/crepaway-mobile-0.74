@@ -6,7 +6,7 @@ import {
 } from "react-native";
 import { COLORS } from "../theme";
 import { SvgProps } from "react-native-svg";
-
+import RightCurvedBar from "./Curve";
 
 export interface INavigationItem {
     Icon?: React.ComponentType<{ color: string }>;
@@ -92,6 +92,27 @@ export const CustomBottomTab = ({
 }: CustomBottomTabProps) => {
     return (
         <View style={styles.mainContainer}>
+            {/* Right Divider */}
+            <View pointerEvents="none" style={{ position: 'absolute', right:0,  top: -50, backgroundColor: 'transparent', width: '100%' }}>
+
+                <View style={{ height: 50, position: 'relative', backgroundColor: 'transparent'}} >
+                    <RightCurvedBar
+                        width={25}
+                        height={25}
+                        color="black"
+                        style={{ position: "absolute", right: -1, bottom: 1 }}
+                    />
+
+                    <RightCurvedBar
+                        flip
+                        width={25}
+                        height={25}
+                        color="black"
+                        style={{ position: "absolute", left: -1, bottom: 1 }}
+                    />
+                </View>
+            </View>
+
             <View style={styles.bottomTabContainer}>
                 {state.routes.map((route, index) => {
                     const { options } = descriptors[route.key];
@@ -139,6 +160,8 @@ export const CustomBottomTab = ({
 
 const styles = StyleSheet.create({
     mainContainer: {
+        position: 'relative',
+        borderWidth: 1
     },
     bottomTabContainer: {
         flexDirection: 'row',
@@ -167,4 +190,10 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: COLORS.darkColor,
     },
+    rightDivider: {
+
+    }
 });
+
+
+
