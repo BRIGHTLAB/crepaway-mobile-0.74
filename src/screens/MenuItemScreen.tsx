@@ -33,7 +33,7 @@ import DynamicSheet from '../components/Sheets/DynamicSheet';
 import Button from '../components/UI/Button';
 import Input from '../components/UI/Input';
 import { TYPOGRAPHY } from '../constants/typography';
-import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
+import { RootStackParamList } from '../navigation/NavigationStack';
 import { addItem, updateItem } from '../store/slices/cartSlice';
 import { RootState, useAppDispatch } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
@@ -94,7 +94,7 @@ interface IProps {
 }
 
 type MenuItemScreenRouteProp = RouteProp<
-  DeliveryTakeawayStackParamList,
+  RootStackParamList,
   'MenuItem'
 >;
 

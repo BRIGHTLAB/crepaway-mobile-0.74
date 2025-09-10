@@ -13,7 +13,7 @@ import Icon_Nav_Orders from '../../assets/SVG/Icon_Nav_Order';
 import Icon_Nav_Profile from '../../assets/SVG/Icon_Nav_Profile';
 import Icon_Nav_Search from '../../assets/SVG/Icon_Nav_Search';
 import { useGetCartQuery } from '../api/cartApi';
-import { CustomBottomTab, CustomBottomTabProps } from '../components/CustomBottomTab';
+import { CustomBottomTab } from '../components/CustomBottomTab';
 import CustomHeader from '../components/Header';
 import CartCounter from '../components/Menu/CartCounter';
 import AddressMapScreen from '../screens/AddressMapScreen';
@@ -25,7 +25,6 @@ import FavoritesScreen from '../screens/FavoritesScreen';
 import FeaturedItemsScreen from '../screens/FeaturedItemsScreen';
 import HomeScreen from '../screens/HomeScreen';
 import LegalScreen from '../screens/LegalScreen';
-import MenuItemScreen from '../screens/MenuItemScreen';
 import MenuItemsScreen from '../screens/MenuItemsScreen';
 import NewItemsScreen from '../screens/NewItemsScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
@@ -57,7 +56,6 @@ export type DeliveryTakeawayStackParamList = {
   NewItems: undefined;
   featuredItems: undefined;
   MenuItems: { item: Category };
-  MenuItem: { itemId: number; itemUuid?: string };
   Cart: undefined;
   Notifications: undefined;
   Checkout: undefined;
@@ -298,36 +296,6 @@ const HomeStack = () => {
           ),
         }}
       />
-      <Stack.Screen
-        name="MenuItem"
-        component={MenuItemScreen}
-        options={{
-          headerTitle: '',
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
-          headerRight: () => (
-            <View
-              style={{
-                flexDirection: 'row',
-                gap: 5,
-              }}>
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate('HomeStack', { screen: 'Cart' })
-                }>
-                <CartCounter />
-              </TouchableOpacity>
-              {/* <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate('HomeStack', { screen: 'Notifications' })
-                }>
-                <NotificationsCounter />
-              </TouchableOpacity> */}
-            </View>
-          ),
-
-        }}
-      />
 
       <Stack.Screen
         name="Cart"
@@ -378,7 +346,6 @@ const HomeStack = () => {
 
 export type SearchStackParamList = {
   Search: undefined;
-  MenuItem: { itemId: number };
 };
 
 const SearchStack = () => {
@@ -398,24 +365,12 @@ const SearchStack = () => {
           headerTitleAlign: 'center',
         }}
       />
-      <Stack.Screen
-        name="MenuItem"
-        component={MenuItemScreen}
-        options={{
-          headerTitle: '',
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
-
-
-        }}
-      />
     </Stack.Navigator>
   );
 };
 
 export type FavoritesStackParamList = {
   Favorites: undefined;
-  MenuItem: { itemId: number };
 };
 
 
@@ -439,30 +394,6 @@ const FavoritesStack = () => {
         }}
       />
 
-      <Stack.Screen
-        name="MenuItem"
-        component={MenuItemScreen}
-        options={{
-          headerTitle: '',
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
-          // headerRight: () => (
-          //   <View
-          //     style={{
-          //       flexDirection: 'row',
-          //       gap: 5,
-          //     }}>
-          //     <TouchableOpacity
-          //       onPress={() =>
-          //         navigation.navigate('HomeStack', { screen: 'Cart' })
-          //       }>
-          //       <CartCounter />
-          //     </TouchableOpacity>
-          //   </View>
-          // ),
-
-        }}
-      />
 
     </Stack.Navigator>
   );
@@ -479,7 +410,6 @@ export type ProfileStackParamList = {
   Allergies: undefined;
   FavoriteItems: undefined;
   Wallet: undefined;
-  MenuItem: { itemId: number };
 };
 
 const ProfileStack = () => {
@@ -562,15 +492,6 @@ const ProfileStack = () => {
         component={FavoritesScreen}
         options={{
           headerTitle: 'Favorite Items',
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
-        }}
-      />
-      <Stack.Screen
-        name="MenuItem"
-        component={MenuItemScreen}
-        options={{
-          headerTitle: '',
           headerLeft: () => <CustomHeader />,
           headerTitleAlign: 'center',
         }}
@@ -678,7 +599,7 @@ const DeliveryTakeawayStack = () => {
     <Tab.Navigator
       initialRouteName="HomeStack"
 
-      tabBar={props => <CustomBottomTab navigationData={navigationData} {...(props as CustomBottomTabProps)} />}
+      tabBar={props => <CustomBottomTab {...(props as any)} navigationData={navigationData} />}
     >
       {navigationData?.map((el, idx) => (
         <Tab.Screen

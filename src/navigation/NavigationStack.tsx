@@ -3,12 +3,14 @@ import {
   NavigationContainerRef,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { View } from 'react-native';
 import { useSelector } from 'react-redux';
 import { RootState, useAppDispatch } from '../store/store';
-import { KeyboardAvoidingView, Platform, View } from 'react-native';
 
+import MenuItemScreen from '../screens/MenuItemScreen';
 import SplashScreen from '../screens/SplashScreen';
+import NotificationService from '../utils/NotificationService';
 import DeliveryTakeawayStack, {
   DeliveryTakeawayStackParamList,
   ProfileStackParamList,
@@ -18,24 +20,15 @@ import LoginStack, { LoginStackParamList } from './LoginStack';
 import ServiceSelectionStack, {
   ServiceSelectionStackParamList,
 } from './ServiceSelectionStack';
-import NotificationService from '../utils/NotificationService';
 
 export type RootStackParamList = {
   LoginStack: {
     screen: keyof LoginStackParamList;
     params?: LoginStackParamList[keyof LoginStackParamList];
   };
-  Delivery: undefined;
+  DeliveryTakeaway: undefined;
   DineIn: undefined;
-  // MenuItems: {item: Category};
-  // MenuItem: {itemId: number; itemUuid?: string};
-  // OfferDetails: {itemId: number};
-  // Cart: undefined;
-  // Orders: undefined;
-  // Search: undefined;
-  // TrackOrder: {
-  //   orderId: number;
-  // };
+  MenuItem: { itemId: number; itemUuid?: string };
   HomeStack: {
     screen: keyof DeliveryTakeawayStackParamList;
     params?: DeliveryTakeawayStackParamList[keyof DeliveryTakeawayStackParamList];
@@ -104,15 +97,41 @@ const NavigationStack = () => {
       case 'delivery':
       case 'takeaway':
         return (
-          <View style={{ flex: 1 }}>
-            <DeliveryTakeawayStack />
-          </View>
+          <Stack.Navigator>
+            <Stack.Screen
+              name="DeliveryTakeaway"
+              component={DeliveryTakeawayStack}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="MenuItem"
+              component={MenuItemScreen}
+              options={{
+                headerTitle: '',
+                headerShown: true,
+                presentation: 'modal',
+              }}
+            />
+          </Stack.Navigator>
         );
       case 'dine-in':
         return (
-          <View style={{ flex: 1 }}>
-            <DineInStack />
-          </View>
+          <Stack.Navigator>
+            <Stack.Screen
+              name="DineIn"
+              component={DineInStack}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="MenuItem"
+              component={MenuItemScreen}
+              options={{
+                headerTitle: '',
+                headerShown: true,
+                presentation: 'modal',
+              }}
+            />
+          </Stack.Navigator>
         );
       default:
         // if the user hasn't selected yet
