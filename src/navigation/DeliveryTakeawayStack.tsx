@@ -655,16 +655,16 @@ const DeliveryTakeawayStack = () => {
           key={idx}
           name={el?.name as keyof DeliveryTakeawayStackParamList}
           component={el?.Component}
-          listeners={({ navigation, route }) => ({
-            tabPress: (e) => {
-              e.preventDefault();
-              navigation.navigate(el.name as any
-                , {
-                  screen: el.initialScreen
-                }
-              )
-            },
-          })}
+          // listeners={({ navigation, route }) => ({
+          //   tabPress: (e) => {
+          //     e.preventDefault();
+          //     navigation.navigate(el.name as any
+          //       , {
+          //         screen: el.initialScreen
+          //}       
+          //     )
+          //   },
+          // })}
           options={{
             headerShown: el?.headerShown,
             headerStyle: {
