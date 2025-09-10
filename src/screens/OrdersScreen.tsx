@@ -2,6 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   SectionList,
   StyleSheet,
@@ -192,8 +193,14 @@ const OrdersScreen = () => {
   );
 
   const LoadingState = useMemo(
-    () => <Text style={styles.loadingText}>Loading orders...</Text>,
-    [],
+    () => {
+      return (
+        <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primaryColor} />
+      </View>
+      )
+    },
+    []
   );
 
   const allOrdersSections = useMemo(() => {
@@ -282,6 +289,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   noOrdersContainer: {
     flex: 1,
