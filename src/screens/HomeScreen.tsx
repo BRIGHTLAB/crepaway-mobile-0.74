@@ -8,7 +8,8 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
-  View
+  View,
+  Text
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
@@ -33,9 +34,15 @@ import Animated, {
   useSharedValue
 } from "react-native-reanimated";
 import CustomHeader from '../components/Header';
+import { COLORS } from '../theme';
+import Banner from '../components/Banner';
 
 const { width } = Dimensions.get("window");
-const BANNER_HEIGHT = 250;
+const BANNER_HEIGHT = 350;
+
+const IMAGES = {
+  bannerBg: require('../../assets/images/banner.png')
+}
 
 // Define the navigation prop type
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -199,8 +206,9 @@ const HomeScreen = () => {
       {/* Banner */}
       <Animated.View style={[styles.bannerContainer, bannerStyle]}>
         <Image
-          source={{ uri: bannerData[0]?.image || "https://d3u6vq5nc7ocvb.cloudfront.net/categories/images/categories_jLIu2LgjV0.jpg" }}
+          source={IMAGES.bannerBg}
           style={styles.bannerImage}
+          blurRadius={3}
         />
         {/* Overlay */}
         <View style={styles.overlay} />
@@ -210,8 +218,13 @@ const HomeScreen = () => {
         showsVerticalScrollIndicator={false}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
-        contentContainerStyle={{ paddingTop: BANNER_HEIGHT }}
+        contentContainerStyle={{ paddingTop: BANNER_HEIGHT - 100, marginTop: -20 }}
       >
+
+        <View style={styles.swiperContainer}>
+          <View style={{ width: '100%', height: 200, backgroundColor: 'red', borderRadius: 5, opacity: 0.5 }} />
+          {/* <Banner data={bannerData} /> */}
+        </View>
 
         <View style={styles.listsContainer}>
 
@@ -330,6 +343,10 @@ const styles = StyleSheet.create({
   listsContainer: {
     gap: 20,
     marginTop: 10,
+    paddingTop: 15,
+    borderTopRightRadius: 10,
+    borderTopLeftRadius: 10,
+    backgroundColor: COLORS.white
   },
   /* */
   bannerContainer: {
@@ -356,5 +373,11 @@ const styles = StyleSheet.create({
   },
   bannerStyle: {
     position: "relative"
+  },
+  swiperContainer:{
+    paddingHorizontal: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: -110
   }
 });
