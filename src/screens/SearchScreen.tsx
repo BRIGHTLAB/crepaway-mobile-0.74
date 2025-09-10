@@ -19,7 +19,6 @@ import Input from '../components/UI/Input';
 import { RootStackParamList } from '../navigation/NavigationStack';
 import { RootState } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
-import { SearchStackParamList } from '../navigation/DeliveryTakeawayStack';
 
 const SearchScreen = () => {
   const [searchValue, setSearchValue] = useState('');
@@ -28,7 +27,7 @@ const SearchScreen = () => {
   console.log('searchDebounceValue', searchDebounceValue);
 
   const navigation =
-    useNavigation<NativeStackNavigationProp<SearchStackParamList>>();
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const { data: searchHistory, isLoading: isLoadingHistory } =
     useGetSearchHistoryQuery();

@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { useGetFavoritesQuery } from '../api/favoriteApi';
 import ItemCard from '../components/Menu/ItemCard';
 import MenuItemSkeleton from '../components/SkeletonLoader/MenuItemSkeleton';
-import { FavoritesStackParamList, ProfileStackParamList } from '../navigation/DeliveryTakeawayStack';
+import { RootStackParamList } from '../navigation/NavigationStack';
 import { RootState } from '../store/store';
 import { SCREEN_PADDING } from '../theme';
 
@@ -21,7 +21,7 @@ const FavoritesScreen = () => {
   });
 
   const navigation =
-    useNavigation<NativeStackNavigationProp<ProfileStackParamList | FavoritesStackParamList>>();
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
 
 

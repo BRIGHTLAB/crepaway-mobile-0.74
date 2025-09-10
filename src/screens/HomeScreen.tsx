@@ -19,7 +19,7 @@ import CartCounter from '../components/Menu/CartCounter';
 import CategoryList from '../components/Menu/CategoryList';
 import ItemsList from '../components/Menu/ItemsList';
 import OffersList from '../components/Menu/OffersList';
-import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
+import { RootStackParamList } from '../navigation/NavigationStack';
 import { setOrderType } from '../store/slices/userSlice';
 import { RootState, useAppDispatch } from '../store/store';
 
@@ -38,7 +38,7 @@ const { width } = Dimensions.get("window");
 const BANNER_HEIGHT = 250;
 
 // Define the navigation prop type
-type NavigationProp = NativeStackNavigationProp<DeliveryTakeawayStackParamList>;
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const HomeScreen = () => {
   const { t, i18n } = useTranslation();
@@ -218,8 +218,9 @@ const HomeScreen = () => {
             data={categories ?? []}
             isLoading={isLoading}
             onCategoryPress={item => {
-              navigation.navigate('MenuItems', {
-                item,
+              navigation.navigate('HomeStack', {
+                screen: 'MenuItems',
+                params: { item },
               });
             }}
           />
@@ -228,7 +229,7 @@ const HomeScreen = () => {
             isLoading={isLoading}
             title="Featured Items"
             data={featuredItems ?? []}
-            onPress={() => navigation.navigate('featuredItems')}
+            onPress={() => navigation.navigate('HomeStack', { screen: 'featuredItems' })}
             onItemPress={id => {
               navigation.navigate('MenuItem', {
                 itemId: id,
@@ -241,7 +242,7 @@ const HomeScreen = () => {
             isLoading={isLoading}
             title="Fav Items"
             data={favoriteItems ?? []}
-            onPress={() => navigation.navigate('FavoriteItems')}
+            onPress={() => navigation.navigate('HomeStack', { screen: 'FavoriteItems' })}
             onItemPress={id =>
               navigation.navigate('MenuItem', {
                 itemId: id,
@@ -256,7 +257,7 @@ const HomeScreen = () => {
             isLoading={isLoading}
             title="New Items"
             data={newItems ?? []}
-            onPress={() => navigation.navigate('NewItems')}
+            onPress={() => navigation.navigate('HomeStack', { screen: 'NewItems' })}
             onItemPress={id =>
               navigation.navigate('MenuItem', {
                 itemId: id,
@@ -267,9 +268,9 @@ const HomeScreen = () => {
           <OffersList
             isLoading={isLoading}
             data={exclusiveOffers ?? []}
-            onPress={() => navigation.navigate('Offers')}
+            onPress={() => navigation.navigate('HomeStack', { screen: 'Offers' })}
             onItemPress={id => {
-              navigation.navigate('OfferDetails', { itemId: id });
+              navigation.navigate('HomeStack', { screen: 'OfferDetails', params: { itemId: id } });
             }}
           />
 
