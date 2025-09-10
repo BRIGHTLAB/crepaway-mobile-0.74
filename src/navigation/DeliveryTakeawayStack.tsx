@@ -120,12 +120,12 @@ const HomeStack = () => {
                 flexDirection: 'row',
                 gap: 5,
               }}>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 onPress={() =>
                   navigation.navigate('HomeStack', { screen: 'Cart' })
                 }>
                 <CartCounter color={'white'} />
-              </TouchableOpacity>
+              </TouchableOpacity> */}
               {/* <TouchableOpacity
                 onPress={() =>
                   navigation.navigate('HomeStack', {
@@ -294,14 +294,6 @@ const HomeStack = () => {
                 }>
                 <CartCounter />
               </TouchableOpacity>
-              {/* <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate('HomeStack', {
-                    screen: 'Notifications',
-                  })
-                }>
-                <NotificationsCounter />
-              </TouchableOpacity> */}
             </View>
           ),
         }}
@@ -377,6 +369,7 @@ const HomeStack = () => {
         options={{
           headerTitle: 'Track Order',
           headerLeft: () => <CustomHeader />,
+          headerTitleAlign: 'center',
         }}
       />
     </Stack.Navigator>
@@ -385,9 +378,12 @@ const HomeStack = () => {
 
 export type SearchStackParamList = {
   Search: undefined;
+  MenuItem: { itemId: number };
 };
 
 const SearchStack = () => {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   return (
     <Stack.Navigator
       screenOptions={{
@@ -402,15 +398,32 @@ const SearchStack = () => {
           headerTitleAlign: 'center',
         }}
       />
+      <Stack.Screen
+        name="MenuItem"
+        component={MenuItemScreen}
+        options={{
+          headerTitle: '',
+          headerLeft: () => <CustomHeader />,
+          headerTitleAlign: 'center',
+
+
+        }}
+      />
     </Stack.Navigator>
   );
 };
 
 export type FavoritesStackParamList = {
   Favorites: undefined;
+  MenuItem: { itemId: number };
 };
 
+
 const FavoritesStack = () => {
+
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
   return (
     <Stack.Navigator
       screenOptions={{
@@ -425,6 +438,32 @@ const FavoritesStack = () => {
           headerTitleAlign: 'center',
         }}
       />
+
+      <Stack.Screen
+        name="MenuItem"
+        component={MenuItemScreen}
+        options={{
+          headerTitle: '',
+          headerLeft: () => <CustomHeader />,
+          headerTitleAlign: 'center',
+          // headerRight: () => (
+          //   <View
+          //     style={{
+          //       flexDirection: 'row',
+          //       gap: 5,
+          //     }}>
+          //     <TouchableOpacity
+          //       onPress={() =>
+          //         navigation.navigate('HomeStack', { screen: 'Cart' })
+          //       }>
+          //       <CartCounter />
+          //     </TouchableOpacity>
+          //   </View>
+          // ),
+
+        }}
+      />
+
     </Stack.Navigator>
   );
 };
@@ -581,6 +620,7 @@ const OrderStack = () => {
         component={TrackOrderScreen}
         options={{
           headerTitle: 'Track Order',
+          headerTitleAlign: 'center',
           headerLeft: () => <CustomHeader />,
 
         }}

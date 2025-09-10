@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import React, { useCallback } from 'react';
 import {RouteProp, useRoute} from '@react-navigation/native';
-import {OrdersStackParamList} from '../navigation/DeliveryTakeawayStack';
+import {DeliveryTakeawayStackParamList, OrdersStackParamList} from '../navigation/DeliveryTakeawayStack';
 import {COLORS, SCREEN_PADDING, TYPOGRAPHY} from '../theme';
 import TotalSection from '../components/Menu/TotalSection';
 import Item from '../components/Order/Item';
@@ -70,15 +70,12 @@ const OrderDetailsScreen = () => {
 
   const {data: order, isLoading, error} = useGetOrderQuery(orderId);
   const navigation =
-      useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+      useNavigation<NativeStackNavigationProp<DeliveryTakeawayStackParamList>>();
 
   const handleTrackOrder = useCallback((order: Order) => {
-      navigation.navigate('HomeStack', {
-        screen: 'TrackOrder',
-        params: {
-          orderId: order.id,
-          order_type: order.order_type,
-        },
+      navigation.navigate('TrackOrder', {
+        orderId: order.id,
+        order_type: order.order_type,
       });
     }, []);
 

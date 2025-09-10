@@ -19,6 +19,7 @@ import Input from '../components/UI/Input';
 import { RootStackParamList } from '../navigation/NavigationStack';
 import { RootState } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
+import { SearchStackParamList } from '../navigation/DeliveryTakeawayStack';
 
 const SearchScreen = () => {
   const [searchValue, setSearchValue] = useState('');
@@ -27,7 +28,7 @@ const SearchScreen = () => {
   console.log('searchDebounceValue', searchDebounceValue);
 
   const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    useNavigation<NativeStackNavigationProp<SearchStackParamList>>();
 
   const { data: searchHistory, isLoading: isLoadingHistory } =
     useGetSearchHistoryQuery();
@@ -73,10 +74,7 @@ const SearchScreen = () => {
           tags={item.tags}
           isFavorite={item.is_favorite}
           onItemPress={id => {
-            navigation.navigate('HomeStack', {
-              screen: 'MenuItem',
-              params: { itemId: id },
-            });
+            navigation.navigate('MenuItem', { itemId: id });
           }}
         />
       </View>

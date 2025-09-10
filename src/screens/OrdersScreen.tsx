@@ -130,7 +130,7 @@ const SectionTitle = React.memo(({ title }: { title: string }) => (
 
 const OrdersScreen = () => {
   const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    useNavigation<NativeStackNavigationProp<DeliveryTakeawayStackParamList>>();
 
   const {
     data: orders,
@@ -139,12 +139,9 @@ const OrdersScreen = () => {
   } = useGetOrdersQuery();
 
   const handleTrackOrder = useCallback((order: Order) => {
-    navigation.navigate('HomeStack', {
-      screen: 'TrackOrder',
-      params: {
-        orderId: order.id,
-        order_type: order.order_type,
-      },
+    navigation.navigate('TrackOrder', {
+      orderId: order.id,
+      order_type: order.order_type,
     });
   }, []);
 
