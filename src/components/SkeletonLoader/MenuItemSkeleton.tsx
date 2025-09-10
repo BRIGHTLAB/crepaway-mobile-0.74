@@ -13,7 +13,7 @@ const MenuItemSkeleton = () => {
         {[...Array(4)].map((_, index) => (
           <SkeletonPlaceholder.Item
             key={index}
-            width={170}
+            width="47%"
             borderRadius={8}
             marginBottom={16}>
             <SkeletonPlaceholder.Item
