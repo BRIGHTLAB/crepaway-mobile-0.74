@@ -120,8 +120,7 @@ const HomeScreen = () => {
   function updateHeaderColor(color: string) {
     navigation.setOptions({
       headerTintColor: color,
-      // If you use headerLeft / headerRight, always return a function
-      headerLeft: () => <CustomHeader color={color} />,
+      headerLeft: () => <CustomHeader color={color} clearOrderType/>,
       headerRight: () => (
         <View
           style={{

@@ -5,10 +5,13 @@ import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../navigation/NavigationStack';
 import {COLORS} from '../theme';
+import {useAppDispatch} from '../store/store';
+import {setOrderType} from '../store/slices/userSlice';
 
 interface IProps {
   title?: string;
   color?: string;
+  clearOrderType?: boolean;
 }
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -16,8 +19,26 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const CustomHeader: React.FC<IProps> = ({
   title = 'Back',
   color = COLORS.darkColor,
+  clearOrderType = false,
 }) => {
   const navigation = useNavigation<NavigationProp>();
+  const dispatch = useAppDispatch();
+  
+  const handleBackPress = () => {
+    if (clearOrderType) {
+      console.log('clear order type');
+      dispatch(
+        setOrderType({
+          menuType: null,
+          orderTypeAlias: null,
+        }),
+      );
+    } else {
+      console.log('normal back navigation');
+      navigation.goBack();
+    }
+  };
+
   return (
     <View
       style={{
@@ -28,7 +49,7 @@ const CustomHeader: React.FC<IProps> = ({
         alignItems: 'center',
       }}>
       <TouchableOpacity
-        onPress={() => navigation.goBack()}
+        onPress={handleBackPress}
         style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
         <Icon_BackArrow color={color} />
         <Text style={[styles.headerTitle, {color: color}]}>{title}</Text>

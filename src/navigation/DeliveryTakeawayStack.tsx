@@ -110,7 +110,7 @@ const HomeStack = () => {
           headerTransparent: true,
           gestureEnabled: false,
           title: "",
-          headerLeft: () => <CustomHeader color={'white'} />,
+          headerLeft: () => <CustomHeader color={'white'} clearOrderType/>,
           headerTitleAlign: 'center',
           headerRight: () => (
             <View
