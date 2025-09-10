@@ -81,6 +81,7 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
     <KeyboardAvoidingView
       style={{
         flex: 1,
+        backgroundColor: 'white',
       }}
       behavior={"padding"}
       keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight + 10 : 0}
