@@ -1,7 +1,8 @@
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React from 'react';
 import FastImage from 'react-native-fast-image';
 import LinearGradient from 'react-native-linear-gradient';
+import { FadeInFastImage } from '../FadeInFastImage';
 
 
 interface IProps {
@@ -11,10 +12,22 @@ interface IProps {
   onPress: () => void;
 }
 
-const CategoryCard = ({name, image_url, style, onPress}: IProps) => {
+const CategoryCard = ({ name, image_url, style, onPress }: IProps) => {
   return (
     <TouchableOpacity onPress={onPress} style={[styles.container, style]}>
-      <FastImage
+
+      <FadeInFastImage
+        source={{
+          uri: image_url || 'https://d3vfh4cqgoixck.cloudfront.net/images/locations_placeholder1.webp',
+          priority: FastImage.priority.normal
+        }}
+        style={styles.image}
+        containerStyle={styles.image}
+        duration={300}
+        placeholderColor="#f2f2f2"
+      />
+
+      {/* <FastImage
         source={{
           uri:
             image_url ||
@@ -23,7 +36,8 @@ const CategoryCard = ({name, image_url, style, onPress}: IProps) => {
         }}
         resizeMode={FastImage.resizeMode.cover}
         style={styles.image}
-      />
+      /> */}
+
       <LinearGradient colors={['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.7)']} style={styles.titleContainer}>
         <Text style={styles.title}>{name}</Text>
       </LinearGradient>
@@ -50,7 +64,7 @@ const styles = StyleSheet.create({
     height: 110,
     borderRadius: 10,
   },
-  titleContainer:{
+  titleContainer: {
     position: 'absolute',
     bottom: 0,
     width: '100%',

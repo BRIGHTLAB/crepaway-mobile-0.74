@@ -36,7 +36,7 @@ const CategoryList = ({data, isLoading, onCategoryPress}: IProps) => {
   const gap = 8;
 
   const cardWidth =
-    (screenWidth - horizontalPadding * 2 - gap * (numColumns - 1)) / numColumns;
+    (screenWidth - (horizontalPadding * 2 ) - (gap*(numColumns-1)) ) / numColumns;
 
   const displayedCategories = showAll ? data : data.slice(0, numColumns);
 
@@ -61,15 +61,18 @@ const CategoryList = ({data, isLoading, onCategoryPress}: IProps) => {
           isLoading={isLoading}
         />
 
-        <View style={styles.gridContainer}>
-          {[...Array(4)].map((_, index) => (
+        <View style={[
+          styles.gridContainer,
+          {
+            paddingLeft: horizontalPadding,
+          }
+        ]}>
+          {[...Array(9)].map((_, index) => (
             <View
               key={index}
               style={[
-                styles.skeletonItem,
                 {
-                  width: cardWidth,
-                  marginRight: index < 3 ? gap : 0,
+                  width: cardWidth, marginRight: gap, marginBottom: gap
                 },
               ]}>
               <SkeletonPlaceholder>
@@ -78,14 +81,8 @@ const CategoryList = ({data, isLoading, onCategoryPress}: IProps) => {
                   alignItems="center">
                   <SkeletonPlaceholder.Item
                     width={cardWidth}
-                    height={85}
-                    borderRadius={8}
-                    marginBottom={4}
-                  />
-                  <SkeletonPlaceholder.Item
-                    width={cardWidth}
-                    height={12}
-                    marginTop={4}
+                    height={110}
+                    borderRadius={10}
                   />
                 </SkeletonPlaceholder.Item>
               </SkeletonPlaceholder>
@@ -111,8 +108,8 @@ const CategoryList = ({data, isLoading, onCategoryPress}: IProps) => {
         keyExtractor={(item, index) => index.toString()}
         numColumns={numColumns}
         scrollEnabled={false}
-        contentContainerStyle={{paddingBottom: 8}}
-        style={{paddingHorizontal: horizontalPadding}}
+        // contentContainerStyle={{ paddingBottom: 2}}
+        style={{ paddingHorizontal: horizontalPadding }}
         columnWrapperStyle={{
           justifyContent: 'flex-start',
         }}
@@ -131,10 +128,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
-    paddingHorizontal: SCREEN_PADDING.horizontal,
   },
   skeletonItem: {
-    marginBottom: 12,
+    marginBottom: 10,
   },
 });
 

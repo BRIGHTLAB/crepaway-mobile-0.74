@@ -16,6 +16,7 @@ import { capitalizeFirstLetter } from '../../helpers';
 import { RootStackParamList } from '../../navigation/NavigationStack';
 import { RootState } from '../../store/store';
 import { COLORS } from '../../theme';
+import { FadeInFastImage } from '../FadeInFastImage';
 
 interface IProps {
   id: number;
@@ -86,15 +87,19 @@ const ItemCard = ({
   return (
     <Pressable onPress={() => onItemPress(id)}>
       <View style={[styles.container, style]}>
-        <FastImage
+
+        <FadeInFastImage
           source={{
             uri:
               image_url ||
               'https://d3vfh4cqgoixck.cloudfront.net/images/locations_placeholder1.webp',
             priority: FastImage.priority.normal,
           }}
-          resizeMode={FastImage.resizeMode.cover}
           style={styles.image}
+          containerStyle={styles.image}
+          duration={300}
+          resizeMode={FastImage.resizeMode.cover}
+          placeholderColor="#f2f2f2"
         />
         <View style={styles.content}>
           <View style={styles.leftContent}>

@@ -4,6 +4,7 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,6 +14,7 @@ import {
   View,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
+import ReactNativeHapticFeedback from "react-native-haptic-feedback";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import { useSelector } from 'react-redux';
@@ -35,7 +37,6 @@ import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawaySt
 import { addItem, updateItem } from '../store/slices/cartSlice';
 import { RootState, useAppDispatch } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
-import ReactNativeHapticFeedback from "react-native-haptic-feedback";
 
 const SkeletonLoader = () => {
   return (
@@ -327,7 +328,7 @@ const MenuItemScreen = ({ }: IProps) => {
                   <Text style={styles.description}>{item?.description}</Text>
                 </View>
 
-                <View style={{ paddingHorizontal:16, marginBottom: 8, marginTop: 10, gap: 6 }}>
+                <View style={{ paddingHorizontal: 16, marginBottom: 8, marginTop: 10, gap: 6 }}>
                   {/* Price  */}
                   <Text style={styles.price}>
                     {item?.symbol} {item?.price}
@@ -398,17 +399,17 @@ const MenuItemScreen = ({ }: IProps) => {
                   {item?.modifier_groups.map((group, idx) => {
                     return (
                       <>
-                      <ModifierGroup
-                        key={idx}
-                        group={group}
-                        selectedModifiers={selectedModifiers}
-                        setSelectedModifiers={setSelectedModifiers}
-                      />
-                      <View style={{
-                        height: 10,
-                        backgroundColor: 'black',
-                        opacity: 0.03,
-                      }} />
+                        <ModifierGroup
+                          key={idx}
+                          group={group}
+                          selectedModifiers={selectedModifiers}
+                          setSelectedModifiers={setSelectedModifiers}
+                        />
+                        <View style={{
+                          height: 10,
+                          backgroundColor: 'black',
+                          opacity: 0.03,
+                        }} />
 
                       </>
                     );
@@ -425,9 +426,11 @@ const MenuItemScreen = ({ }: IProps) => {
                     Special Instruction
                   </Text>
                   <Input
-                    placeholder="Special Instruction"
+                    placeholder=""
                     value={specialInstruction}
                     onChangeText={setSpecialInstruction}
+                    returnKeyType="done"
+                    onSubmitEditing={() => Keyboard.dismiss()}
                   />
                 </View>
               </View>
@@ -447,7 +450,7 @@ const MenuItemScreen = ({ }: IProps) => {
               shadowRadius: 4,
               elevation: 5,
             }}>
-              
+
             {/* Quantity Controls */}
             <View
               style={{
