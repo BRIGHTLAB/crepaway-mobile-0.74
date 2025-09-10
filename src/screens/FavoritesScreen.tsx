@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { useGetFavoritesQuery } from '../api/favoriteApi';
 import ItemCard from '../components/Menu/ItemCard';
 import MenuItemSkeleton from '../components/SkeletonLoader/MenuItemSkeleton';
-import { RootStackParamList } from '../navigation/NavigationStack';
+import { ProfileStackParamList } from '../navigation/DeliveryTakeawayStack';
 import { RootState } from '../store/store';
 import { SCREEN_PADDING } from '../theme';
 
@@ -21,7 +21,7 @@ const FavoritesScreen = () => {
   });
 
   const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
 
 
 
@@ -39,10 +39,7 @@ const FavoritesScreen = () => {
           tags={item.tags}
           isFavorite={item.is_favorite}
           onItemPress={id => {
-            navigation.navigate('HomeStack', {
-              screen: 'MenuItem',
-              params: { itemId: id },
-            });
+            navigation.navigate('MenuItem', { itemId: id });
           }}
         />
       </View>

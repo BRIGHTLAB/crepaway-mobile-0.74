@@ -440,6 +440,7 @@ export type ProfileStackParamList = {
   Allergies: undefined;
   FavoriteItems: undefined;
   Wallet: undefined;
+  MenuItem: { itemId: number };
 };
 
 const ProfileStack = () => {
@@ -524,26 +525,15 @@ const ProfileStack = () => {
           headerTitle: 'Favorite Items',
           headerLeft: () => <CustomHeader />,
           headerTitleAlign: 'center',
-          headerRight: () => (
-            <View
-              style={{
-                flexDirection: 'row',
-                gap: 5,
-              }}>
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate('HomeStack', { screen: 'Cart' })
-                }>
-                <CartCounter />
-              </TouchableOpacity>
-              {/* <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate('HomeStack', { screen: 'Notifications' })
-                }>
-                <NotificationsCounter />
-              </TouchableOpacity> */}
-            </View>
-          ),
+        }}
+      />
+      <Stack.Screen
+        name="MenuItem"
+        component={MenuItemScreen}
+        options={{
+          headerTitle: '',
+          headerLeft: () => <CustomHeader />,
+          headerTitleAlign: 'center',
         }}
       />
     </Stack.Navigator>
@@ -592,7 +582,7 @@ const OrderStack = () => {
         options={{
           headerTitle: 'Track Order',
           headerLeft: () => <CustomHeader />,
-          
+
         }}
       />
     </Stack.Navigator>
