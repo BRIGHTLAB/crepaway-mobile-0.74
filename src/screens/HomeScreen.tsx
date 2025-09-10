@@ -1,6 +1,6 @@
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useLayoutEffect, useMemo } from 'react';
+import React, { useLayoutEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BackHandler,
@@ -69,22 +69,24 @@ const HomeScreen = () => {
     }));
   }, [content, state.orderType]);
 
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      () => {
-        dispatch(
-          setOrderType({
-            menuType: null,
-            orderTypeAlias: null,
-          }),
-        );
-        return true;
-      },
-    );
+  useFocusEffect(
+    React.useCallback(() => {
+      const backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        () => {
+          dispatch(
+            setOrderType({
+              menuType: null,
+              orderTypeAlias: null,
+            }),
+          );
+          return true;
+        },
+      );
 
-    return () => backHandler.remove();
-  }, [dispatch, navigation]);
+      return () => backHandler.remove();
+    }, [dispatch])
+  );
 
   const { data, isLoading, error } = useGetHomepageQuery({
     menuType: state.menuType,
@@ -120,7 +122,7 @@ const HomeScreen = () => {
   function updateHeaderColor(color: string) {
     navigation.setOptions({
       headerTintColor: color,
-      headerLeft: () => <CustomHeader color={color} clearOrderType/>,
+      headerLeft: () => <CustomHeader color={color} clearOrderType />,
       headerRight: () => (
         <View
           style={{
