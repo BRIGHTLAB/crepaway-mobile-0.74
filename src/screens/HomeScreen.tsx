@@ -8,8 +8,7 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
-  View,
-  Text
+  View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
@@ -35,7 +34,6 @@ import Animated, {
 } from "react-native-reanimated";
 import CustomHeader from '../components/Header';
 import { COLORS } from '../theme';
-import Banner from '../components/Banner';
 
 const { width } = Dimensions.get("window");
 const BANNER_HEIGHT = 350;
@@ -222,7 +220,7 @@ const HomeScreen = () => {
       >
 
         <View style={styles.swiperContainer}>
-          <View style={{ width: '100%', height: 200, backgroundColor: 'red', borderRadius: 5, opacity: 0.5 }} />
+          <View style={{ width: '100%', height: 200, backgroundColor: 'red', borderRadius: 5, opacity: 0 }} />
           {/* <Banner data={bannerData} /> */}
         </View>
 
@@ -374,7 +372,7 @@ const styles = StyleSheet.create({
   bannerStyle: {
     position: "relative"
   },
-  swiperContainer:{
+  swiperContainer: {
     paddingHorizontal: 10,
     justifyContent: 'center',
     alignItems: 'center',
