@@ -64,6 +64,7 @@ const CheckoutScreen = () => {
         switch (getCheckoutError.status) {
           case 488:
             setPromoError('Invalid Promo Code');
+            setDebouncedPromoCode('');
             break;
           default:
             setErrorMessage((getCheckoutError?.data as any)?.message || 'Failed to load checkout data');
@@ -94,6 +95,9 @@ const CheckoutScreen = () => {
   const debouncedApplyPromo = useCallback(
     debounce((code: string) => {
       setDebouncedPromoCode(code);
+      if (!code.trim()) {
+        setPromoError(null); 
+      }
       console.log('promo code', code);
     }, 500),
     [],
@@ -182,6 +186,11 @@ const CheckoutScreen = () => {
 
   const handlePromoCodeChange = (code: string) => {
     setPromoCode(code);
+
+    if (!code.trim() && promoError) {
+      setPromoError(null);
+    }
+
     debouncedApplyPromo(code);
   };
 
