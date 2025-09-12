@@ -7,7 +7,6 @@ import { useDispatch } from 'react-redux';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
 import Icon_Order_Accepted from '../../assets/SVG/Icon_Order_Accepted';
 import Icon_Spine from '../../assets/SVG/Icon_Spine';
-import { baseApi } from '../api/baseApi';
 import { useGetOrderStatusQuery } from '../api/ordersApi';
 import {
   OrdersStackParamList
@@ -129,14 +128,6 @@ const TrackOrderScreen = () => {
   const memoizedOrderStatus = useMemo(() => {
     return orderStatus;
   }, [orderStatus?.status_history, orderStatus?.estimated_delivery_time]);
-
-
-  // Invalidate getOrders query when order is delivered
-  useEffect(() => {
-    if (orderStatus?.status_history?.[orderStatus?.status_history?.length - 1]?.key === 'delivered') {
-      dispatch(baseApi.util.invalidateTags(['Order']));
-    }
-  }, [orderStatus?.status_history, dispatch]);
 
   // This effect will run when address coordinates change
   useEffect(() => {

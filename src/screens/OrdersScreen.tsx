@@ -140,7 +140,9 @@ const OrdersScreen = () => {
     data: orders,
     isLoading: loading,
     refetch: fetchOrders,
-  } = useGetOrdersQuery();
+  } = useGetOrdersQuery(undefined, {
+    pollingInterval: 2000,
+  });
 
   const handleTrackOrder = useCallback((order: Order) => {
     navigation.navigate('TrackOrder', {
