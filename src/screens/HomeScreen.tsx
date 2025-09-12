@@ -16,6 +16,7 @@ import { useSelector } from 'react-redux';
 import { useGetContentQuery } from '../api/dataApi';
 import { useGetHomepageQuery } from '../api/homeApi';
 import FadeOverlay from '../components/FadeOverlay';
+import LoyaltyCard from '../components/LoyaltyCard';
 import CartCounter from '../components/Menu/CartCounter';
 import CategoryList from '../components/Menu/CategoryList';
 import ItemsList from '../components/Menu/ItemsList';
@@ -218,15 +219,17 @@ const HomeScreen = () => {
         showsVerticalScrollIndicator={false}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
-        contentContainerStyle={{ paddingTop: BANNER_HEIGHT - 100, marginTop: -20 }}
+        contentContainerStyle={{ paddingTop: BANNER_HEIGHT - 100, marginTop: -20, backgroundColor: 'gray' }}
       >
 
-        <View style={styles.swiperContainer}>
-          <View style={{ width: '100%', height: 200, backgroundColor: 'red', borderRadius: 5, opacity: 0.5 }} />
-          {/* <Banner data={bannerData} /> */}
-        </View>
-
         <View style={styles.listsContainer}>
+
+          <View style={styles.swiperContainer}>
+            {/* <View style={{ width: '100%', height: 200, backgroundColor: 'red', borderRadius: 5, opacity: 0.5 }} /> */}
+            <Banner data={bannerData} />
+          </View>
+
+          <LoyaltyCard />
 
           <CategoryList
             data={categories ?? []}
@@ -342,7 +345,7 @@ const styles = StyleSheet.create({
   },
   listsContainer: {
     gap: 20,
-    marginTop: 10,
+    marginTop: 120,
     paddingTop: 15,
     borderTopRightRadius: 10,
     borderTopLeftRadius: 10,
@@ -378,6 +381,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: -110
+    marginTop: -260
   }
 });
