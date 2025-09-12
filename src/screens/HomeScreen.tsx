@@ -37,6 +37,7 @@ import Animated, {
 import CustomHeader from '../components/Header';
 import { COLORS } from '../theme';
 import Banner from '../components/Banner';
+import ParallaxBanner from '../components/ParallaxBanner';
 
 const { width } = Dimensions.get("window");
 const BANNER_HEIGHT = 350;
@@ -219,14 +220,14 @@ const HomeScreen = () => {
         showsVerticalScrollIndicator={false}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
-        contentContainerStyle={{ paddingTop: BANNER_HEIGHT - 100, marginTop: -20, backgroundColor: 'gray' }}
+        contentContainerStyle={{ paddingTop: BANNER_HEIGHT - 180, marginTop: -20, }}
       >
 
         <View style={styles.listsContainer}>
 
           <View style={styles.swiperContainer}>
             {/* <View style={{ width: '100%', height: 200, backgroundColor: 'red', borderRadius: 5, opacity: 0.5 }} /> */}
-            <Banner data={bannerData} />
+            <ParallaxBanner data={bannerData} />
           </View>
 
           <LoyaltyCard />
@@ -381,6 +382,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: -260
+    marginTop: -170,
+    marginBottom: -20,
   }
 });

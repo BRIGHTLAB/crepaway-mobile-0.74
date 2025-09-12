@@ -28,7 +28,7 @@ export default LoyaltyCard;
 
 const styles = StyleSheet.create({
     mainContainer: {
-        padding: 10
+        padding: 10,
     },
     container: {
         flex: 1,
