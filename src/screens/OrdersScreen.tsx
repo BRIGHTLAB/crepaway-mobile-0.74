@@ -13,25 +13,25 @@ import {
 import Icon_Arrow_Right from '../../assets/SVG/Icon_Arrow_Right';
 import Icon_Location from '../../assets/SVG/Icon_Location';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
-import Icon_Refresh from '../../assets/SVG/Icon_Refresh';
 import Icon_Spine from '../../assets/SVG/Icon_Spine';
 import { Order, OrderItem, useGetOrdersQuery } from '../api/ordersApi';
 import HeaderShadow from '../components/HeaderShadow';
 import Item from '../components/Order/Item';
 import Button from '../components/UI/Button';
 import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
-import { RootStackParamList } from '../navigation/NavigationStack';
 import { COLORS, SCREEN_PADDING } from '../theme';
 
 const OrderComponent = React.memo(
   ({
     item,
     onTrackOrder,
-    onReorder,
+    // onReorder,
+    sectionTitle,
   }: {
     item: Order;
     onTrackOrder: (order: Order) => void;
-    onReorder: (order: Order) => void;
+    // onReorder: (order: Order) => void;
+    sectionTitle: string;
   }) => {
     const navigation =
       useNavigation<
@@ -95,14 +95,16 @@ const OrderComponent = React.memo(
           initialNumToRender={5}
         />
 
-        {item?.status?.key === 'delivered' ? (
+        {/* Reorder button temporarily disabled
+        {sectionTitle === 'Past Orders' ? (
           <Button
             iconPosition="left"
             icon={<Icon_Refresh color={'#FFF'} />}
             onPress={() => onReorder(item)}>
             Re-order
           </Button>
-        ) : (
+        ) : ( */}
+        {sectionTitle === 'Ongoing Orders' && item?.status?.key !== 'delivered' && (
           <Button
             iconPosition="left"
             icon={<Icon_Location color={'#FFF'} />}
@@ -110,6 +112,7 @@ const OrderComponent = React.memo(
             Track Order
           </Button>
         )}
+        {/* )} */}
       </View>
     );
   },
@@ -146,21 +149,22 @@ const OrdersScreen = () => {
     });
   }, []);
 
-  const handleReorder = useCallback((order: Order) => {
-    // console.log('Reorder:', order.id);
-  }, []);
+  // const handleReorder = useCallback((order: Order) => {
+  //   // console.log('Reorder:', order.id);
+  // }, []);
 
   const renderOrder = useCallback(
-    ({ item }: { item: Order }) => {
+    ({ item, section }: { item: Order; section: { title: string } }) => {
       return (
         <OrderComponent
           item={item}
           onTrackOrder={handleTrackOrder}
-          onReorder={handleReorder}
+          // onReorder={handleReorder}
+          sectionTitle={section.title}
         />
       );
     },
-    [handleTrackOrder, handleReorder],
+    [handleTrackOrder],
   );
 
   const keyExtractor = useCallback((item: Order) => item.id.toString(), []);
@@ -196,8 +200,8 @@ const OrdersScreen = () => {
     () => {
       return (
         <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primaryColor} />
-      </View>
+          <ActivityIndicator size="large" color={COLORS.primaryColor} />
+        </View>
       )
     },
     []

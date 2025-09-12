@@ -1,25 +1,22 @@
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useCallback } from 'react';
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
   View,
-  ActivityIndicator,
 } from 'react-native';
-import React, { useCallback } from 'react';
-import {RouteProp, useRoute} from '@react-navigation/native';
-import {DeliveryTakeawayStackParamList, OrdersStackParamList} from '../navigation/DeliveryTakeawayStack';
-import {COLORS, SCREEN_PADDING, TYPOGRAPHY} from '../theme';
-import TotalSection from '../components/Menu/TotalSection';
-import Item from '../components/Order/Item';
-import {formatNumberWithCommas} from '../utils/formatNumberWithCommas';
-import Icon_Location from '../../assets/SVG/Icon_Location';
 import Icon_Driver_Id from '../../assets/SVG/Icon_Driver_Id';
-import {Order, ordersApi, useGetOrderQuery} from '../api/ordersApi';
+import Icon_Location from '../../assets/SVG/Icon_Location';
+import { Order, useGetOrderQuery } from '../api/ordersApi';
 import CartItemComponent from '../components/Cart/CartItemComponent';
+import TotalSection from '../components/Menu/TotalSection';
 import Button from '../components/UI/Button';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/NavigationStack';
+import { DeliveryTakeawayStackParamList, OrdersStackParamList } from '../navigation/DeliveryTakeawayStack';
+import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
+import { formatNumberWithCommas } from '../utils/formatNumberWithCommas';
 
 type OrderDetailsRouteProp = RouteProp<OrdersStackParamList, 'OrderDetails'>;
 
@@ -68,16 +65,16 @@ const OrderDetailsScreen = () => {
   const orderId = route.params?.id || 0;
   const orderType = route.params?.order_type || 'delivery';
 
-  const {data: order, isLoading, error} = useGetOrderQuery(orderId);
+  const { data: order, isLoading, error } = useGetOrderQuery(orderId);
   const navigation =
-      useNavigation<NativeStackNavigationProp<DeliveryTakeawayStackParamList>>();
+    useNavigation<NativeStackNavigationProp<DeliveryTakeawayStackParamList>>();
 
   const handleTrackOrder = useCallback((order: Order) => {
-      navigation.navigate('TrackOrder', {
-        orderId: order.id,
-        order_type: order.order_type,
-      });
-    }, []);
+    navigation.navigate('TrackOrder', {
+      orderId: order.id,
+      order_type: order.order_type,
+    });
+  }, []);
 
   if (isLoading) {
     return (
@@ -127,7 +124,7 @@ const OrderDetailsScreen = () => {
           />
         )}
 
-        <View style={{marginTop: 16}}>
+        <View style={{ marginTop: 16 }}>
           {order.items.map((item, index) => (
             <React.Fragment key={item.uuid}>
               <CartItemComponent item={item} />
@@ -144,7 +141,7 @@ const OrderDetailsScreen = () => {
           ))}
         </View>
       </View>
-      <View style={{marginTop: 16, marginBottom: 50}}>
+      <View style={{ marginTop: 16, marginBottom: 50 }}>
         <TotalSection
           orderType={order?.order_type}
           subtotal={`${order?.currency?.symbol} ${formatNumberWithCommas(
@@ -153,13 +150,12 @@ const OrderDetailsScreen = () => {
           deliveryCharge={
             order.delivery_charge && order?.order_type === 'delivery'
               ? `${order?.currency?.symbol} ${formatNumberWithCommas(
-                  Number(order?.delivery_charge),
-                )}`
+                Number(order?.delivery_charge),
+              )}`
               : ''
           }
-          pointsRewarded={`+ ${
-            formatNumberWithCommas(order?.points_rewarded || 0) || '0'
-          } pts`}
+          pointsRewarded={`+ ${formatNumberWithCommas(order?.points_rewarded || 0) || '0'
+            } pts`}
           total={`${order?.currency?.symbol} ${formatNumberWithCommas(
             Number(order?.total?.default_currency),
           )}`}
@@ -167,14 +163,16 @@ const OrderDetailsScreen = () => {
           // paymentMethod={order?.payment_method?.title}
           disabled
         />
-        <View style={styles.trackOrderContainer}>
-          <Button
-            iconPosition="left"
-            icon={<Icon_Location color={'#FFF'} />}
-            onPress={() => handleTrackOrder(order)}>
-            Track Order
-          </Button>
-        </View>
+        {order?.status?.key !== 'delivered' && (
+          <View style={styles.trackOrderContainer}>
+            <Button
+              iconPosition="left"
+              icon={<Icon_Location color={'#FFF'} />}
+              onPress={() => handleTrackOrder(order)}>
+              Track Order
+            </Button>
+          </View>
+        )}
       </View>
     </ScrollView>
   );
@@ -210,7 +208,7 @@ const styles = StyleSheet.create({
     color: COLORS.errorColor || 'red',
     textAlign: 'center',
   },
-  trackOrderContainer : {
+  trackOrderContainer: {
     paddingVertical: 20
   }
 });
