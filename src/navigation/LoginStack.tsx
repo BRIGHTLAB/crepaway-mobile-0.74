@@ -2,11 +2,12 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 
 // Import screens from their separate files
+import CustomHeader from '../components/Header';
+import CreateNewPasswordScreen from '../screens/Authentication/CreateNewPasswordScreen';
 import LoginScreen from '../screens/Authentication/LoginScreen';
+import OTPScreen from '../screens/Authentication/OTPScreen';
 import ResetPasswordScreen from '../screens/Authentication/ResetPasswordScreen';
 import SignUpScreen from '../screens/Authentication/SignUpScreen';
-import OTPScreen from '../screens/Authentication/OTPScreen';
-import CreateNewPasswordScreen from '../screens/Authentication/CreateNewPasswordScreen';
 import { SuccessfulPasswordChangeScreen } from '../screens/Authentication/SuccessfulPasswordChangeScreen';
 import IntroScreen from '../screens/IntroScreen';
 
@@ -50,7 +51,9 @@ const LoginStack = () => {
         component={ResetPasswordScreen}
         options={{
           title: 'Reset Password',
-
+          headerBackVisible: false,
+          headerLeft: () => <CustomHeader />,
+          headerTitleAlign: 'center',
         }}
       />
       <Stack.Screen
@@ -58,6 +61,9 @@ const LoginStack = () => {
         component={SignUpScreen}
         options={{
           title: 'Sign Up',
+          headerBackVisible: false,
+          headerLeft: () => <CustomHeader />,
+          headerTitleAlign: 'center',
           // statusBarStyle: 'light',
         }}
       />
@@ -66,7 +72,9 @@ const LoginStack = () => {
         component={OTPScreen}
         options={{
           title: 'OTP',
-
+          headerBackVisible: false,
+          headerLeft: () => <CustomHeader />,
+          headerTitleAlign: 'center',
         }}
       />
       <Stack.Screen
@@ -74,7 +82,9 @@ const LoginStack = () => {
         component={CreateNewPasswordScreen}
         options={{
           title: 'Create New Password',
-
+          headerBackVisible: false,
+          headerLeft: () => <CustomHeader />,
+          headerTitleAlign: 'center',
         }}
       />
       <Stack.Screen
