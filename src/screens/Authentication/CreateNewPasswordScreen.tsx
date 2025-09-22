@@ -1,21 +1,21 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import {
-  View,
-  Text,
-  StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { z } from 'zod';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import Input from '../../components/UI/Input';
+import Icon_Password from '../../../assets/SVG/Icon_Password';
+import { POST } from '../../api';
 import Button from '../../components/UI/Button';
 import DynamicPopup from '../../components/UI/DynamicPopup';
-import Icon_Password from '../../../assets/SVG/Icon_Password';
+import Input from '../../components/UI/Input';
 import { COLORS, REGEX } from '../../theme';
-import { POST } from '../../api';
 
 import { useHeaderHeight } from '@react-navigation/elements';
 
@@ -84,9 +84,7 @@ const CreateNewPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <KeyboardAvoidingView
-      style={{
-        flex: 1,
-      }}
+      style={styles.container}
       behavior={"padding"}
       keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight + 10 : 0}
     >
