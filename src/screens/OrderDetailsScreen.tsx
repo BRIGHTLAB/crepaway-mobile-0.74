@@ -65,7 +65,11 @@ const OrderDetailsScreen = () => {
   const orderId = route.params?.id || 0;
   const orderType = route.params?.order_type || 'delivery';
 
-  const { data: order, isLoading, error } = useGetOrderQuery(orderId);
+  const { data: order, isLoading, error } = useGetOrderQuery(orderId, {
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
   const navigation =
     useNavigation<NativeStackNavigationProp<DeliveryTakeawayStackParamList>>();
 
