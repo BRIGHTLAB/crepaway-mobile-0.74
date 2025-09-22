@@ -58,8 +58,6 @@ const otpSchema = z.object({
     )
     .length(4, 'All fields required'),
 });
-  const [isLoading, setIsLoading] = useState(false);
-  const [isResending, setIsResending] = useState(false);
 
 type OTPForm = z.infer<typeof otpSchema>;
 
@@ -72,6 +70,9 @@ const OTPScreen: React.FC<Props> = ({ navigation, route }) => {
   const [countdown, setCountdown] = useState(RESEND_TIME);
   const [canResend, setCanResend] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
 
   const {
