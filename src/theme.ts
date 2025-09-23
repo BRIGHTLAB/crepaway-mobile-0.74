@@ -114,8 +114,8 @@ export const REGEX = {
     valFailureMsg: 'Please enter an valid Email Address',
   },
   PASSWORD: {
-    regex: '^(?=.*\\d)(?=.*[A-Z])(?=.*[!@#\\$]).{6,25}$',
-    valFailureMsg: 'High Strength Password 6 to 25 Characters',
+    regex: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};\':"\\\\|,.<>\\/?]).{8,}$',
+    valFailureMsg: 'Password must be at least 8 characters with mixed case, numbers, and symbols',
   },
   EMAIL_USERNAME: {
     regex:
