@@ -1,18 +1,17 @@
-import { BackHandler, StyleSheet, Text, View } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import { parseQueryParams } from '../utils/parseQueryParams';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useEffect } from 'react';
+import { BackHandler, StyleSheet, View } from 'react-native';
 import { Code } from 'react-native-vision-camera';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../store/store';
 import QrCodeCamera from '../components/QrCodeCamera';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { DineInStackParamList } from '../navigation/DineInStack';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import {
   setBranchTable,
-  setOrderType,
-  setSessionTableId,
+  setOrderType
 } from '../store/slices/userSlice';
+import { RootState } from '../store/store';
+import { parseQueryParams } from '../utils/parseQueryParams';
 
 type NavigationProp = NativeStackNavigationProp<DineInStackParamList>;
 
@@ -23,11 +22,11 @@ const ScanTableScreen = () => {
   const userState = useSelector((state: RootState) => state.user);
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    setTimeout(() => {
-      dispatch(setBranchTable('ashrafieh.table1'));
-    }, 100);
-  }, []);
+  // useEffect(() => {
+  //   setTimeout(() => {
+  //     dispatch(setBranchTable('ashrafieh.table1'));
+  //   }, 100);
+  // }, []);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -69,9 +68,9 @@ const ScanTableScreen = () => {
       console.log('branchTable', queryParams);
       if (branchTable && !Array.isArray(branchTable)) {
         dispatch(setBranchTable(branchTable));
-        setTimeout(() => {
-          navigation.navigate('Pending');
-        }, 200);
+        // setTimeout(() => {
+        //   navigation.navigate('Pending');
+        // }, 200);
         try {
           console.log('branchTable', branchTable);
         } catch (error) {

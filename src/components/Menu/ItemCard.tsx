@@ -60,7 +60,13 @@ const ItemCard = ({
   const handleWishList = async () => {
     try {
       setFavorite(prev => !prev);
-      await toggleFavorite({ itemId: id, menuType: userState.menuType, branch: userState.branchName, addressId: userState.addressId });
+      await toggleFavorite({
+        itemId: id, menuType: userState.menuType,
+        branch: userState.menuType === 'dine-in' ? userState.branchTable
+          ? userState.branchTable.split('.')?.[0]?.toLowerCase()
+          : null : userState.branchName
+        , addressId: userState.addressId
+      });
     } catch (error) {
       setFavorite(prev => !prev);
     }

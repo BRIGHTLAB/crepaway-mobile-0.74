@@ -45,7 +45,11 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
     const handleWishList = async () => {
       try {
         setFavorite(prev => !prev);
-        await toggleFavorite({ itemId: item.id, menuType: userState.menuType, branch: userState.branchName });
+        await toggleFavorite({
+          itemId: item.id, menuType: userState.menuType, branch: userState.branchTable
+            ? userState.branchTable.split('.')?.[0]?.toLowerCase()
+            : null,
+        });
       } catch (error) {
         setFavorite(prev => !prev);
       }
