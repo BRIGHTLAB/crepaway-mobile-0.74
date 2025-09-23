@@ -183,13 +183,17 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
     useGetCategoriesQuery({
       menuType: userState.menuType,
       // menu: 'mobile-app-delivery',
-      branch: userState.branchName,
+      branch: userState.branchTable
+        ? userState.branchTable.split('.')?.[0]?.toLowerCase()
+        : null,
     });
 
   const { data: items, isLoading: isItemsLoading } = useGetItemsQuery({
     menuType: userState.menuType,
     // menu: 'mobile-app-delivery',
-    branch: userState.branchName,
+    branch: userState.branchTable
+      ? userState.branchTable.split('.')?.[0]?.toLowerCase()
+      : null,
   });
 
   const groupedItems = categories.map(category => ({
