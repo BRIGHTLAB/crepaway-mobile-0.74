@@ -100,14 +100,14 @@ const Button: React.FC<ButtonProps> = ({
     <TouchableOpacity
       activeOpacity={0.8}
       disabled={disabled || isLoading}
-      style={[styles.buttonContainer, style]}
+      style={[styles.buttonContainer, ]}
       {...props}
     >
       {variant === 'primary' ? (
         <View
           style={[
             getSizeStyle(),
-            styles.button,
+            styles.button, style,
             (disabled || isLoading) && styles.disabled,
           ]}
         >
@@ -122,7 +122,7 @@ const Button: React.FC<ButtonProps> = ({
         <View
           style={[
             getSizeStyle(),
-            styles.button,
+            styles.button, style,
             getVariantStyle(),
             (disabled || isLoading) && styles.disabled,
           ]}
