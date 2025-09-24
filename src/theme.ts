@@ -106,7 +106,7 @@ export const REGEX = {
     valFailureMsg: 'Please enter an alphanumeric string up to 65 characters',
   },
   INT_PHONE: {
-    regex: '^([0-9]){8,20}$',
+    regex: '^([0-9]){7,14}$',
     valFailureMsg: 'Please enter an International Format Phone Number',
   },
   EMAIL: {

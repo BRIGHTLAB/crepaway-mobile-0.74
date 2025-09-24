@@ -291,6 +291,7 @@ const TrackOrderScreen = () => {
         ) : (
           <FlatList
             data={memoizedOrderStatus?.status_history}
+            keyExtractor={(item) => item.key}
             renderItem={({ item }) => (
               <OrderItem
                 icon={getStatusIcon(item.key)}
