@@ -1,24 +1,25 @@
-import React, { useState, forwardRef, useEffect, JSX, useCallback } from 'react';
+import { useBottomSheetInternal } from '@gorhom/bottom-sheet';
+import React, { forwardRef, JSX, useCallback, useEffect, useState } from 'react';
 import {
+    NativeSyntheticEvent,
+    Platform,
     StyleSheet,
     Text,
     TextInput,
-    TextInputProps,
-    View,
-    TouchableOpacity,
-    NativeSyntheticEvent,
     TextInputFocusEventData,
+    TextInputProps,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import Animated, {
-    useSharedValue,
-    useAnimatedStyle,
-    withTiming,
     interpolate,
+    useAnimatedStyle,
+    useSharedValue,
+    withTiming,
 } from 'react-native-reanimated';
-import { useBottomSheetInternal } from '@gorhom/bottom-sheet';
-import { COLORS, INPUT_HEIGHT, TYPOGRAPHY } from '../../theme';
 import Icon_Eye from '../../../assets/SVG/Icon_Eye';
 import Icon_Eye_Line from '../../../assets/SVG/Icon_Eye_Line';
+import { COLORS, INPUT_HEIGHT, TYPOGRAPHY } from '../../theme';
 
 interface InputProps extends TextInputProps {
     iconLeft?: JSX.Element;
@@ -189,7 +190,7 @@ const styles = StyleSheet.create({
     },
     input: { borderWidth: 0, width: '100%', flex: 1, paddingVertical: 6, ...TYPOGRAPHY.BODY },
     placeholderContainer: { position: 'absolute', pointerEvents: 'none', paddingHorizontal: 5 },
-    placeholderBackground: { position: 'absolute', top: 0, left: 0, right: 0, height: '60%', zIndex: -1 },
+    placeholderBackground: { position: 'absolute', top: Platform.OS === 'ios' ? 3 : 0, left: 0, right: 0, height: '60%', zIndex: -1 },
     placeholder: { ...TYPOGRAPHY.BODY },
     requiredStar: { color: '#DB0032' },
     error: { ...TYPOGRAPHY.TAGS, color: COLORS.errorColor },

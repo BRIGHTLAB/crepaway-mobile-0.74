@@ -1,8 +1,9 @@
-import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import ServiceSelectionScreen from '../screens/ServiceSelectionScreen';
+import React from 'react';
+import CustomHeader from '../components/Header';
 import AddressesScreen from '../screens/AddressesScreen';
 import AddressMapScreen from '../screens/AddressMapScreen';
+import ServiceSelectionScreen from '../screens/ServiceSelectionScreen';
 
 export type ServiceSelectionStackParamList = {
   ServiceSelection: undefined;
@@ -27,9 +28,9 @@ const ServiceSelectionStack = () => {
         component={AddressesScreen}
         options={{
           title: 'Addresses',
+          headerBackVisible: false,
+          headerLeft: () => <CustomHeader />,
           headerTitleAlign: 'center',
-
-          // headerLeft: () => <BackButton />,
         }}
       />
 
@@ -38,9 +39,9 @@ const ServiceSelectionStack = () => {
         component={AddressMapScreen}
         options={{
           title: 'Enter Location',
+          headerBackVisible: false,
+          headerLeft: () => <CustomHeader />,
           headerTitleAlign: 'center',
-
-          // headerLeft: () => <BackButton />,
         }}
       />
       {/* <Stack.Screen

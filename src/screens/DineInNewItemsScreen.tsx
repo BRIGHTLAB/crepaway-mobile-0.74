@@ -16,7 +16,9 @@ const NewItemsScreen = () => {
 
   const { data: newItems, isLoading } = useNewItemsQuery({
     menuType: userState.menuType,
-    branch: userState.branchName,
+    branch: userState.branchTable
+      ? userState.branchTable.split('.')?.[0]?.toLowerCase()
+      : null,
   });
 
   const navigation = useNavigation<NavigationProp>();

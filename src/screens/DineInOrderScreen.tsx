@@ -58,6 +58,8 @@ const DineInOrderScreen = () => {
 
   const { top } = useSafeAreaInsets();
 
+  console.log('data', data?.new_items);
+
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>

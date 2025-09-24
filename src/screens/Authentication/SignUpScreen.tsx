@@ -45,6 +45,7 @@ const signUpSchema = z
     dob: z.date({
       required_error: 'Date of birth is required',
     }),
+    //   'password' => ['required|string|min:8|mixed_case|numbers|symbols'],
     password: z
       .string()
       .regex(new RegExp(REGEX.PASSWORD.regex), REGEX.PASSWORD.valFailureMsg),

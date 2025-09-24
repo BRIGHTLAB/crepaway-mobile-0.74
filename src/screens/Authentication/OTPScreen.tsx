@@ -1,26 +1,26 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useHeaderHeight } from '@react-navigation/elements';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import React, { useEffect, useRef, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { z } from 'zod';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { POST } from '../../api';
 import Button from '../../components/UI/Button';
 import DynamicPopup from '../../components/UI/DynamicPopup';
-import { COLORS } from '../../theme';
-import { POST } from '../../api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAppDispatch } from '../../store/store';
 import { autoLoginUser } from '../../store/slices/userSlice';
-import { useHeaderHeight } from '@react-navigation/elements';
+import { useAppDispatch } from '../../store/store';
+import { COLORS } from '../../theme';
 
 type LoginStackParamList = {
   Login: undefined;
@@ -61,17 +61,18 @@ const otpSchema = z.object({
 
 type OTPForm = z.infer<typeof otpSchema>;
 
-const RESEND_TIME = 5;
+const RESEND_TIME = 60;
 
 const OTPScreen: React.FC<Props> = ({ navigation, route }) => {
   const { phone_number, from } = route.params;
   const dispatch = useAppDispatch();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isResending, setIsResending] = useState(false);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [countdown, setCountdown] = useState(RESEND_TIME);
   const [canResend, setCanResend] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
 
   const {

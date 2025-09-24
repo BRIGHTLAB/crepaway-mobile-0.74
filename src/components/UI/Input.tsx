@@ -1,5 +1,6 @@
 import React, { forwardRef, JSX, useEffect, useState } from 'react';
 import {
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -242,7 +243,7 @@ const styles = StyleSheet.create({
   },
   placeholderBackground: {
     position: 'absolute',
-    top: 0,
+    top: Platform.OS === 'ios' ? 3 : 0,
     left: 0,
     right: 0,
     height: '60%',

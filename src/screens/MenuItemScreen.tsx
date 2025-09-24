@@ -460,13 +460,15 @@ const MenuItemScreen = ({ }: IProps) => {
                 gap: 30,
                 width: '50%',
                 marginHorizontal: 'auto',
-                marginTop: 20,
+                marginTop: 15,
               }}>
               <TouchableOpacity
                 onPress={handleDecreaseQuantity}
                 style={[styles.quantityButton]}
                 disabled={quantity < 2}>
                 <Icon_Decrease_Quantity
+                  width={14}
+                  height={2}
                   color={quantity < 2 ? '#8391A1' : COLORS.primaryColor}
                 />
               </TouchableOpacity>
@@ -474,7 +476,7 @@ const MenuItemScreen = ({ }: IProps) => {
               <TouchableOpacity
                 onPress={handleIncreaseQuantity}
                 style={styles.quantityButton}>
-                <Icon_Increase_Quantity />
+                <Icon_Increase_Quantity width={15} height={15} />
               </TouchableOpacity>
             </View>
 
@@ -484,6 +486,7 @@ const MenuItemScreen = ({ }: IProps) => {
               iconPosition="right"
               textSize="large"
               onPress={handleAddToCart}>
+
               {!!itemUuid ? 'Update Cart' : 'Add to Cart'} - {item?.symbol}{' '}
               {item
                 ? (item.price * quantity + calculateModifiersTotal()).toFixed(2)
@@ -591,7 +594,7 @@ const styles = StyleSheet.create({
   },
   quantityText: {
     fontFamily: 'Poppins-SemiBold',
-    fontSize: 24,
+    fontSize: 20,
     color: COLORS.primaryColor,
   },
   addToCartButton: {

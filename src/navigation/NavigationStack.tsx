@@ -8,6 +8,7 @@ import { View } from 'react-native';
 import { useSelector } from 'react-redux';
 import { RootState, useAppDispatch } from '../store/store';
 
+import CustomHeader from '../components/Header';
 import MenuItemScreen from '../screens/MenuItemScreen';
 import SplashScreen from '../screens/SplashScreen';
 import NotificationService from '../utils/NotificationService';
@@ -109,7 +110,9 @@ const NavigationStack = () => {
               options={{
                 headerTitle: '',
                 headerShown: true,
-                presentation: 'modal',
+                headerBackVisible: false,
+                headerLeft: () => <CustomHeader />,
+                headerTitleAlign: 'center',
               }}
             />
           </Stack.Navigator>
@@ -128,7 +131,9 @@ const NavigationStack = () => {
               options={{
                 headerTitle: '',
                 headerShown: true,
-                presentation: 'modal',
+                headerBackVisible: false,
+                headerLeft: () => <CustomHeader />,
+                headerTitleAlign: 'center',
               }}
             />
           </Stack.Navigator>

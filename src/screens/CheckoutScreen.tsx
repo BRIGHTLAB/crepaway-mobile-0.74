@@ -64,6 +64,7 @@ const CheckoutScreen = () => {
         switch (getCheckoutError.status) {
           case 488:
             setPromoError('Invalid Promo Code');
+            setDebouncedPromoCode('');
             break;
           default:
             setErrorMessage((getCheckoutError?.data as any)?.message || 'Failed to load checkout data');
@@ -94,6 +95,9 @@ const CheckoutScreen = () => {
   const debouncedApplyPromo = useCallback(
     debounce((code: string) => {
       setDebouncedPromoCode(code);
+      if (!code.trim()) {
+        setPromoError(null); 
+      }
       console.log('promo code', code);
     }, 500),
     [],
@@ -182,6 +186,11 @@ const CheckoutScreen = () => {
 
   const handlePromoCodeChange = (code: string) => {
     setPromoCode(code);
+
+    if (!code.trim() && promoError) {
+      setPromoError(null);
+    }
+
     debouncedApplyPromo(code);
   };
 
@@ -331,6 +340,26 @@ const CheckoutScreen = () => {
               </View>
             </View>
 
+
+
+            <TotalSection
+              orderType={user?.orderType ?? 'delivery'}
+              subtotal={`USD ${data?.summary?.original_sub_total ?? ''}`}
+              deliveryCharge={`LBP ${data?.delivery_charge ?? ''}`}
+              pointsRewarded={`+ ${data?.points_rewarded ?? ''} pts`}
+              promoCode={promoCode}
+              promoCodeError={promoError}
+              onPromoCodeChange={handlePromoCodeChange}
+              total={`USD ${data?.summary?.final_total ?? ''}`}
+              discount={
+                data?.summary?.total_discount
+                  ? `USD ${data?.summary?.total_discount}`
+                  : ''
+              }
+              isLoading={isLoading}
+              canEdit={true}
+            />
+
             {/* Delivery instructions  */}
             {(deliveryInstructions?.length > 0 || specialDeliveryInstructions) && (
               <View style={styles.boxContainer}>
@@ -355,24 +384,6 @@ const CheckoutScreen = () => {
                 </View>
               </View>
             )}
-
-            <TotalSection
-              orderType={user?.orderType ?? 'delivery'}
-              subtotal={`USD ${data?.summary?.original_sub_total ?? ''}`}
-              deliveryCharge={`LBP ${data?.delivery_charge ?? ''}`}
-              pointsRewarded={`+ ${data?.points_rewarded ?? ''} pts`}
-              promoCode={promoCode}
-              promoCodeError={promoError}
-              onPromoCodeChange={handlePromoCodeChange}
-              total={`USD ${data?.summary?.final_total ?? ''}`}
-              discount={
-                data?.summary?.total_discount
-                  ? `USD ${data?.summary?.total_discount}`
-                  : ''
-              }
-              isLoading={isLoading}
-              canEdit={true}
-            />
 
             <View style={{ gap: 12 }}>
               {user.orderType === 'delivery' && (

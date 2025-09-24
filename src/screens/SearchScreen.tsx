@@ -4,6 +4,7 @@ import { debounce } from 'lodash';
 import React, { useCallback, useState } from 'react';
 import {
   FlatList,
+  Keyboard,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -60,6 +61,10 @@ const SearchScreen = () => {
     setSearchDebounceValue(value);
   };
 
+  const handleSearchSubmit = () => {
+    Keyboard.dismiss();
+  };
+
   const renderItem = ({ item }: { item: Item }) => {
     return (
       <View style={styles.cardContainer}>
@@ -88,6 +93,8 @@ const SearchScreen = () => {
           iconLeft={<Icon_Search />}
           value={searchValue}
           onChangeText={val => handleChangeSearch(val)}
+          returnKeyType="done"
+          onSubmitEditing={handleSearchSubmit}
         />
       </View>
 

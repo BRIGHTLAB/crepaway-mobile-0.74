@@ -17,7 +17,9 @@ const DineInOffersScreen = () => {
   const { data, isLoading, error } = useGetOffersQuery({
     menuType: userState.menuType,
     // menu: 'mobile-app-delivery',
-    branch: userState.branchName,
+    branch: userState.branchTable
+      ? userState.branchTable.split('.')?.[0]?.toLowerCase()
+      : null,
   });
 
   const navigation = useNavigation<NavigationProp>();

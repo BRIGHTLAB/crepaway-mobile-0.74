@@ -5,8 +5,6 @@ import { addItem, clearCart, decreaseQuantity, increaseQuantity, removeItem, upd
 
 const syncCartWithServer = debounce(async (store) => {
   try {
-    store.dispatch(setCartSyncing(true));
-    
     const items = JSON.parse(JSON.stringify(store.getState().cart.items));
     const menuType = store.getState().user.menuType;
 
@@ -24,9 +22,10 @@ const syncCartWithServer = debounce(async (store) => {
   } catch (error) {
     console.error('Error syncing cart:', error);
   } finally {
+ 
     store.dispatch(setCartSyncing(false));
   }
-}, 800);
+}, 500);
 
 const cartMiddleware: Middleware = store => next => async action => {
   const result = next(action);
@@ -39,6 +38,7 @@ const cartMiddleware: Middleware = store => next => async action => {
     decreaseQuantity.match(action) ||
     removeItem.match(action)
   ) {
+    store.dispatch(setCartSyncing(true));
     syncCartWithServer(store);
   }
 

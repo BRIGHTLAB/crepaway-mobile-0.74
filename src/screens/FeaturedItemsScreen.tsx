@@ -36,10 +36,7 @@ const FeaturedItemsScreen = () => {
         isFavorite={item.is_favorite}
         style={{ width: '100%' }}
         onItemPress={id => {
-          navigation.navigate('HomeStack', {
-            screen: 'MenuItem',
-            params: { itemId: id },
-          });
+          navigation.navigate('MenuItem', { itemId: id });
         }}
       />
     </View>
