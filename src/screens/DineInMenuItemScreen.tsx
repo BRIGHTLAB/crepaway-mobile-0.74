@@ -478,21 +478,28 @@ const DineInMenuItemScreen = ({ }: IProps) => {
               </TouchableOpacity>
             </View>
 
-            <Button
-              style={styles.addToCartButton}
-              icon={<Icon_Cart />}
-              iconPosition="right"
-              textSize="large"
-              onPress={handleAddToOrder}>
-              {!!itemUuid ? 'Update Order' : 'Add to Order'} -{' '}
-              {itemData?.symbol}{' '}
-              {itemData
-                ? (
-                  itemData.price * quantity +
-                  calculateModifiersTotal()
-                ).toFixed(2)
-                : '0.00'}
-            </Button>
+
+
+            <View
+              style={styles.addToCartButton}>
+              <Button
+
+                icon={<Icon_Cart />}
+                iconPosition="right"
+                textSize="large"
+                onPress={handleAddToOrder}>
+                {!!itemUuid ? 'Update Order' : 'Add to Order'} -{' '}
+                {itemData?.symbol}{' '}
+                {itemData
+                  ? (
+                    itemData.price * quantity +
+                    calculateModifiersTotal()
+                  ).toFixed(2)
+                  : '0.00'}
+              </Button>
+
+            </View>
+
           </View>
         </View>
       )}
