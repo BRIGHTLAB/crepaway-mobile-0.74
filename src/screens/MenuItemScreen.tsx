@@ -479,19 +479,22 @@ const MenuItemScreen = ({ }: IProps) => {
                 <Icon_Increase_Quantity width={15} height={15} />
               </TouchableOpacity>
             </View>
+            <View
+              style={styles.addToCartButton}>
 
-            <Button
-              style={styles.addToCartButton}
-              icon={<Icon_Cart />}
-              iconPosition="right"
-              textSize="large"
-              onPress={handleAddToCart}>
+              <Button
 
-              {!!itemUuid ? 'Update Cart' : 'Add to Cart'} - {item?.symbol}{' '}
-              {item
-                ? (item.price * quantity + calculateModifiersTotal()).toFixed(2)
-                : '0.00'}
-            </Button>
+                icon={<Icon_Cart />}
+                iconPosition="right"
+                textSize="large"
+                onPress={handleAddToCart}>
+
+                {!!itemUuid ? 'Update Cart' : 'Add to Cart'} - {item?.symbol}{' '}
+                {item
+                  ? (item.price * quantity + calculateModifiersTotal()).toFixed(2)
+                  : '0.00'}
+              </Button>
+            </View>
           </View>
         </View>
 
@@ -602,8 +605,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 16,
     width: '100%',
+    gap: 16,
   },
   addToCartText: {
     color: '#FFFFFF',

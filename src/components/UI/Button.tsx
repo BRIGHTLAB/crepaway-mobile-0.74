@@ -1,16 +1,16 @@
 import React from 'react';
 import {
-  TouchableOpacity,
-  Text,
   ActivityIndicator,
   StyleSheet,
+  Text,
+  TextStyle,
+  TouchableOpacity,
+  TouchableOpacityProps,
   View,
   ViewStyle,
-  TextStyle,
-  TouchableOpacityProps,
 } from 'react-native';
-import { COLORS } from '../../theme';
 import LinearGradient from 'react-native-linear-gradient';
+import { COLORS } from '../../theme';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'accent';
 type ButtonSize = 'small' | 'medium' | 'large';
@@ -100,14 +100,14 @@ const Button: React.FC<ButtonProps> = ({
     <TouchableOpacity
       activeOpacity={0.8}
       disabled={disabled || isLoading}
-      style={[styles.buttonContainer, ]}
+      style={[styles.buttonContainer, style]}
       {...props}
     >
       {variant === 'primary' ? (
         <View
           style={[
             getSizeStyle(),
-            styles.button, style,
+            styles.button,
             (disabled || isLoading) && styles.disabled,
           ]}
         >
@@ -122,7 +122,7 @@ const Button: React.FC<ButtonProps> = ({
         <View
           style={[
             getSizeStyle(),
-            styles.button, style,
+            styles.button,
             getVariantStyle(),
             (disabled || isLoading) && styles.disabled,
           ]}
