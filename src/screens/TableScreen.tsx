@@ -293,7 +293,10 @@ const TableScreen = () => {
 
     // listen for kicking this user
     socketInstance.on('userKicked', (message) => {
-      setShowBannedPopup(true)
+      setShowWelcomePopup(false);
+      setShowBannedPopup(true);
+      dispatch(setSessionTableId(null));
+      dispatch(setBranchTable(null));
     })
 
     // listen for updates
@@ -302,10 +305,9 @@ const TableScreen = () => {
 
 
       if (message.users) {
-
         setTableUsers(message.users);
-
       }
+
       if (message.items) {
         setOrderedItems(message.items as Record<string, OrderedItem>);
       }
@@ -520,7 +522,6 @@ const TableScreen = () => {
               orderTypeAlias: null,
             }),
           );
-          dispatch(setSessionTableId(null));
         }}
       />
     </View>

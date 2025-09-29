@@ -40,6 +40,8 @@ const DineInStack = () => {
         component={DineInPendingScreen}
         options={{
           headerShown: false,
+          gestureEnabled: false,
+          headerBackVisible: false,
         }}
       />
       <Stack.Screen
@@ -47,6 +49,8 @@ const DineInStack = () => {
         component={TableScreen}
         options={{
           headerShown: false,
+          gestureEnabled: false,
+          headerBackVisible: false,
         }}
       />
       <Stack.Screen
