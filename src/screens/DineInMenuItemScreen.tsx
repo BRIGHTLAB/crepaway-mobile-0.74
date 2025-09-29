@@ -107,6 +107,7 @@ const DineInMenuItemScreen = ({ }: IProps) => {
   >([]);
   const [specialInstruction, setSpecialInstruction] = useState('');
   const userState = useSelector((state: RootState) => state.user);
+  const isTableLocked = useSelector((state: RootState) => state.dineIn.isTableLocked);
 
 
 
@@ -181,12 +182,23 @@ const DineInMenuItemScreen = ({ }: IProps) => {
     console.log('userState', userState);
     console.log('userState.branchTable', userState.branchTable);
     console.log('userState.tableSessionId', userState.tableSessionId);
+
+    // Check if table is locked
+    if (isTableLocked) {
+      console.log('Table is locked, cannot add items');
+      return;
+    }
+
     if (
       !itemData ||
       !userState ||
       !userState.branchTable ||
       !userState.tableSessionId
     ) {
+      console.log('itemData', itemData);
+      console.log('userState', userState);
+      console.log('userState.branchTable', userState.branchTable);
+      console.log('userState.tableSessionId', userState.tableSessionId);
       console.error('Missing required data to add item');
       return;
     }
@@ -483,19 +495,20 @@ const DineInMenuItemScreen = ({ }: IProps) => {
             <View
               style={styles.addToCartButton}>
               <Button
-
+                disabled={isTableLocked}
                 icon={<Icon_Cart />}
                 iconPosition="right"
                 textSize="large"
                 onPress={handleAddToOrder}>
-                {!!itemUuid ? 'Update Order' : 'Add to Order'} -{' '}
-                {itemData?.symbol}{' '}
-                {itemData
-                  ? (
-                    itemData.price * quantity +
-                    calculateModifiersTotal()
-                  ).toFixed(2)
-                  : '0.00'}
+                {isTableLocked
+                  ? 'Table is Locked'
+                  : `${!!itemUuid ? 'Update Order' : 'Add to Order'} - ${itemData?.symbol} ${itemData
+                    ? (
+                      itemData.price * quantity +
+                      calculateModifiersTotal()
+                    ).toFixed(2)
+                    : '0.00'}`
+                }
               </Button>
 
             </View>

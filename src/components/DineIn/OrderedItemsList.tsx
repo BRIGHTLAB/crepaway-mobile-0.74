@@ -4,7 +4,7 @@ import React from 'react';
 import { FlatList, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { useSelector } from 'react-redux';
 import { DineInStackParamList } from '../../navigation/DineInStack';
-import { OrderedItem, OrderedItems, TableUsers } from '../../screens/TableScreen';
+import { OrderedItem, OrderedItems, TableUsers, TableWaiters } from '../../screens/TableScreen';
 import { RootState } from '../../store/store';
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../../theme';
 import SocketService from '../../utils/SocketService';
@@ -13,16 +13,17 @@ import OrderedItemCmp from './OrderedItem';
 type Props = {
   items: OrderedItems;
   users: TableUsers;
+  waiters: TableWaiters;
   contentContainerStyle?: ViewStyle;
-  isTableLocked: boolean;
 };
 
 type NavigationProp = NativeStackNavigationProp<DineInStackParamList>;
 
-const OrderedItemsList = ({ items, users, contentContainerStyle, isTableLocked }: Props) => {
+const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Props) => {
   const navigation = useNavigation<NavigationProp>();
   const socketInstance = SocketService.getInstance();
   const userState = useSelector((state: RootState) => state.user);
+  const isTableLocked = useSelector((state: RootState) => state.dineIn.isTableLocked);
 
   // TODO ask chris if we can rely on the key of users (eza kenit hiye zeta l user id li ana 3ende yeha bel userState)
   const isCurrentUserKing = users?.[userState.id ?? '']?.isKing
@@ -102,11 +103,15 @@ const OrderedItemsList = ({ items, users, contentContainerStyle, isTableLocked }
           const orderedByUser = Object.values(users).find(
             user => user.id === item.added_by.id,
           );
-          const isItemDisabled = isTableLocked || item.is_disabled || (orderedByUser?.id !== userState.id && !isCurrentUserKing)
+          const orderedByWaiter = item.added_by.type === 'waiter'
+            ? Object.values(waiters).find(waiter => waiter.id === item.added_by.id)
+            : undefined;
+          const isItemDisabled = isTableLocked || item.is_disabled || (orderedByUser?.id !== userState.id && !isCurrentUserKing) || item.added_by.type === 'waiter'
           return (
             <OrderedItemCmp
               item={item}
               orderedByUser={orderedByUser}
+              orderedByWaiter={orderedByWaiter}
               isDisabled={isItemDisabled}
               onQuantityDecrease={
                 !isItemDisabled

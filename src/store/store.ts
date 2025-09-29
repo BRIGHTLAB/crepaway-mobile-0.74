@@ -1,14 +1,15 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { configureStore } from '@reduxjs/toolkit';
 import { useDispatch } from 'react-redux';
-import userReducer from './slices/userSlice';
-import cartReducer from './slices/cartSlice';
-import notificationsReducer from './slices/notificationsSlice';
-import { baseApi } from '../api/baseApi';
-import cartMiddleware from './middleware/cartMiddleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { persistReducer } from 'redux-persist';
 import persistStore from 'redux-persist/es/persistStore';
+import { baseApi } from '../api/baseApi';
 import { s3BaseApi } from '../api/s3UploaderApi';
+import cartMiddleware from './middleware/cartMiddleware';
+import cartReducer from './slices/cartSlice';
+import dineInReducer from './slices/dineInSlice';
+import notificationsReducer from './slices/notificationsSlice';
+import userReducer from './slices/userSlice';
 
 
 
@@ -34,6 +35,7 @@ const store = configureStore({
     user: persistedUserReducer,
     cart: persistedCartReducer,
     notifications: notificationsReducer,
+    dineIn: dineInReducer,
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({

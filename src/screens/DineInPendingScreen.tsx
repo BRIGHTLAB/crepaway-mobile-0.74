@@ -180,8 +180,6 @@ const DineInPendingScreen = () => {
             },
             response => {
                 console.log('join table response ', response);
-                console.log('tableSessionId', userState.tableSessionId);
-                console.log('server Session', response.session_table);
 
                 if (response.success) {
                     dispatch(setSessionTableId(response.session_table));
@@ -201,8 +199,8 @@ const DineInPendingScreen = () => {
         socketInstance.on('joinRequestApproval', (message) => {
             console.log('join request approval message', message)
             if (message.approved) {
+                console.log('join request approved', message);
                 dispatch(setSessionTableId(message.session_table));
-                console.log('join request approved');
                 navigation.navigate('Table')
             } else {
                 setInfoPopup({

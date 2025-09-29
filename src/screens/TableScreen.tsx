@@ -29,6 +29,7 @@ import KingActionsSheet, {
 import WaiterInstructionsSheet from '../components/Sheets/DineIn/WaiterInstructionsSheet';
 import Button from '../components/UI/Button';
 import { DineInStackParamList } from '../navigation/DineInStack';
+import { setIsTableLocked } from '../store/slices/dineInSlice';
 import {
   setBranchTable,
   setOrderType,
@@ -152,8 +153,9 @@ const TableScreen = () => {
   const [orderedItems, setOrderedItems] = useState<OrderedItems>({});
   const [tableUsers, setTableUsers] = useState<TableUsers>({});
   const [tableWaiters, setTableWaiters] = useState<TableWaiters>({});
-  const [isTableLocked, setIsTableLocked] = useState(false);
   const [showBannedPopup, setShowBannedPopup] = useState(false);
+
+  const isTableLocked = useSelector((state: RootState) => state.dineIn.isTableLocked);
 
   const [pendingJoinRequests, setPendingJoinRequests] = useState<PendingJoinRequests>({});
 
@@ -308,7 +310,7 @@ const TableScreen = () => {
         setOrderedItems(message.items as Record<string, OrderedItem>);
       }
 
-      setIsTableLocked(message.isLocked)
+      dispatch(setIsTableLocked(message.isLocked))
 
       if (message.waiters) {
         setTableWaiters(message.waiters);
@@ -474,7 +476,7 @@ const TableScreen = () => {
             onRejectUser={handleRejectUser}
           />
         </View>
-        <OrderedItemsList items={filteredOrderedItems} users={tableUsers} isTableLocked={isTableLocked} />
+        <OrderedItemsList items={filteredOrderedItems} users={tableUsers} waiters={tableWaiters} />
         <View style={styles.orderButtonContainer}>
           <Button onPress={handleOrderPress} disabled={isTableLocked}>Order</Button>
         </View>

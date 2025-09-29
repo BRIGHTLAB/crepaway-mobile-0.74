@@ -1,16 +1,15 @@
+import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { CartItem } from '../../store/slices/cartSlice';
-import { COLORS } from '../../theme';
 import FastImage from 'react-native-fast-image';
 import Icon_Decrease_Quantity from '../../../assets/SVG/Icon_Decrease_Quantity';
 import Icon_Increase_Quantity from '../../../assets/SVG/Icon_Increase_Quantity';
-import { OrderItem } from '../../api/ordersApi';
-import { OrderedItem, TableUser } from '../../screens/TableScreen';
-import React from 'react';
+import { OrderedItem, TableUser, TableWaiter } from '../../screens/TableScreen';
+import { COLORS } from '../../theme';
 
 const OrderedItemCmp = ({
   item,
   orderedByUser,
+  orderedByWaiter,
   onQuantityIncrease,
   onQuantityDecrease,
   onItemImageClick,
@@ -18,6 +17,7 @@ const OrderedItemCmp = ({
 }: {
   item: OrderedItem & { uuid: string };
   orderedByUser?: TableUser;
+  orderedByWaiter?: TableWaiter;
   onQuantityIncrease?: () => void;
   onQuantityDecrease?: () => void;
   onItemImageClick?: () => void;
@@ -90,8 +90,8 @@ const OrderedItemCmp = ({
             {item.symbol} {calculateItemTotal().toFixed(2)}
           </Text>
 
-          {/* Ordered By User Info */}
-          {orderedByUser && (
+          {/* Ordered By User/Waiter Info */}
+          {(orderedByUser || orderedByWaiter) && (
             <View
               style={{
                 flexDirection: 'row',
@@ -110,7 +110,7 @@ const OrderedItemCmp = ({
               <FastImage
                 source={{
                   uri:
-                    orderedByUser.image_url ||
+                    (orderedByWaiter?.image_url || orderedByUser?.image_url) ||
                     'https://placehold.co/200x200/png',
                   priority: FastImage.priority.normal,
                 }}
@@ -121,9 +121,9 @@ const OrderedItemCmp = ({
                 style={{
                   fontFamily: 'Poppins-Regular',
                   fontSize: 10,
-                  color: COLORS.foregroundColor,
+                  color: orderedByWaiter ? COLORS.primaryColor : COLORS.foregroundColor,
                 }}>
-                {orderedByUser.name}
+                {orderedByWaiter ? `${orderedByWaiter.name} (Waiter)` : orderedByUser?.name}
               </Text>
             </View>
           )}
