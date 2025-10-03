@@ -1,13 +1,12 @@
+import BottomSheet, { BottomSheetFooter, BottomSheetFooterProps, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import React, { forwardRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
-import { COLORS, TYPOGRAPHY, SCREEN_PADDING } from '../../../theme';
+import { TableUser } from '../../../screens/TableScreen';
+import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../../../theme';
 import Button from '../../UI/Button';
 import DynamicSheet from '../DynamicSheet';
-import BottomSheet, { BottomSheetScrollView, BottomSheetView, BottomSheetFooter, BottomSheetFooterProps } from '@gorhom/bottom-sheet';
-import { TableUser } from '../../../screens/TableScreen';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 
 export type Action = {
   id: number;
@@ -24,7 +23,14 @@ type Props = {
 const KingActionsSheet = forwardRef<BottomSheet, Props>(
   ({ actions, onSelectAction, user }, ref) => {
 
-    if (!user) return <></>
+    // Always render the sheet but with no content when no user
+    if (!user) {
+      return (
+        <DynamicSheet ref={ref} snapPoints={['50%']}>
+          <View />
+        </DynamicSheet>
+      );
+    }
 
     const Footer = ({ animatedFooterPosition }: BottomSheetFooterProps) => (
       <BottomSheetFooter

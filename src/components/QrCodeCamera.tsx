@@ -1,6 +1,13 @@
 'use client';
-import { StyleSheet, Text, View } from 'react-native';
 import React, { useEffect } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import {
   Camera,
   Code,
@@ -10,13 +17,6 @@ import {
 } from 'react-native-vision-camera';
 import { TYPOGRAPHY } from '../constants/typography';
 import { COLORS } from '../theme';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
 
 type Props = {
   text?: string;

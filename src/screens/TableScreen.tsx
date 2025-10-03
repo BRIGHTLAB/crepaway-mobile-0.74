@@ -114,12 +114,15 @@ export type TableWaiter = {
 
 export type TableWaiters = Record<string, TableWaiter>;
 
+export type TableBannedUsers = Record<string, Pick<TableUser, 'id' | 'name' | 'image_url'>>;
+
 type TableUpdateMessage = {
   users: TableUsers,
   waiters: TableWaiters,
   pendingJoinRequests: PendingJoinRequests,
   items: OrderedItems,
   isLocked: boolean,
+  bannedUsers: TableBannedUsers;
 }
 
 type TableScreenNavigationProp = NativeStackNavigationProp<
@@ -293,10 +296,11 @@ const TableScreen = () => {
 
     // listen for kicking this user
     socketInstance.on('userKicked', (message) => {
-      setShowWelcomePopup(false);
-      setShowBannedPopup(true);
+      console.log('userKicked ', message);
       dispatch(setSessionTableId(null));
       dispatch(setBranchTable(null));
+      setShowWelcomePopup(false);
+      setShowBannedPopup(true);
     })
 
     // listen for updates
@@ -342,7 +346,7 @@ const TableScreen = () => {
 
   const handleUserPress = (user: TableUser) => {
     setSelectedUserForKingActions(user);
-    kingActionsSheetRef.current?.snapToIndex(0);
+    kingActionsSheetRef.current?.expand();
   };
 
   const handleKingActionSelect = (action: Action) => {

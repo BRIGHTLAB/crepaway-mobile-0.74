@@ -93,7 +93,6 @@ export type TableUser = {
 
 export type TableUsers = Record<string, TableUser>;
 
-export type TableBannedUsers = Record<string, TableUser>;
 
 export type TableWaiter = {
     id: number;
@@ -103,14 +102,6 @@ export type TableWaiter = {
 };
 
 export type TableWaiters = Record<string, TableWaiter>;
-
-type TableUpdateMessage = {
-    users: TableUsers,
-    waiters: TableWaiters,
-    bannedUsers: TableBannedUsers,
-    items: OrderedItems,
-    isLocked: boolean,
-}
 
 type DineInPendingScreenNavigationProp = NativeStackNavigationProp<
     DineInStackParamList,
@@ -162,8 +153,6 @@ const DineInPendingScreen = () => {
     const joinTable = () => {
         if (!userState) return;
         const socketInstance = SocketService.getInstance();
-        console.log('sending table session', userState.tableSessionId);
-        console.log('sending table name', userState.branchTable);
         socketInstance.emit(
             'message',
             {
@@ -184,14 +173,16 @@ const DineInPendingScreen = () => {
                 if (response.success) {
                     dispatch(setSessionTableId(response.session_table));
                 } else {
-
+                    console.log('before branch_table', store.getState().user.branchTable);
+                    dispatch(setSessionTableId(null));
+                    dispatch(setBranchTable(null));
                     setInfoPopup({
                         visible: true,
                         title: '',
                         message: response?.message ?? 'Something went wrong!'
                     });
 
-                    console.log('cant join the table:', response);
+                    console.log('after branch_table', store.getState().user.branchTable);
                 }
             },
 
@@ -203,13 +194,13 @@ const DineInPendingScreen = () => {
                 dispatch(setSessionTableId(message.session_table));
                 navigation.navigate('Table')
             } else {
+                dispatch(setSessionTableId(null));
+                dispatch(setBranchTable(null));
                 setInfoPopup({
                     visible: true,
                     title: 'Request Denied',
                     message: 'Your request to join the table was not approved.'
                 });
-                dispatch(setSessionTableId(null));
-                dispatch(setBranchTable(null));
             }
         })
     };

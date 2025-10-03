@@ -1,6 +1,6 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BackHandler, StyleSheet, View } from 'react-native';
 import { Code } from 'react-native-vision-camera';
 import { useDispatch, useSelector } from 'react-redux';
@@ -21,6 +21,8 @@ const ScanTableScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const userState = useSelector((state: RootState) => state.user);
   const dispatch = useDispatch();
+
+  const [mounted, setMounted] = useState(false);
 
   // useEffect(() => {
   //   setTimeout(() => {
@@ -48,6 +50,10 @@ const ScanTableScreen = () => {
     }, [dispatch]),
   );
 
+  useFocusEffect(React.useCallback(() => {
+    setMounted(true);
+  }, []))
+
   useEffect(() => {
     // if the user already was on a branch table
     if (userState.branchTable)
@@ -71,6 +77,7 @@ const ScanTableScreen = () => {
         // setTimeout(() => {
         //   navigation.navigate('Pending');
         // }, 200);
+        setMounted(false);
         try {
           console.log('branchTable', branchTable);
         } catch (error) {
@@ -81,12 +88,18 @@ const ScanTableScreen = () => {
   };
 
   return (
-    <View>
-      <QrCodeCamera onScan={handleScan} text="Scan the QR code" />
+    <View
+      style={styles.container}
+    >
+      {mounted && <QrCodeCamera onScan={handleScan} text="Scan the QR code" />}
     </View>
   );
 };
 
 export default ScanTableScreen;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: 'black',
+  }
+});

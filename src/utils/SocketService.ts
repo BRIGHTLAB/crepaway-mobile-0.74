@@ -1,10 +1,10 @@
-import {io, Socket} from 'socket.io-client';
+import { io, Socket } from 'socket.io-client';
 
 class SocketService {
   private static instance: SocketService;
   private socket: Socket | null = null;
 
-  private constructor() {}
+  private constructor() { }
 
   // Singleton instance getter
   static getInstance(): SocketService {
@@ -36,9 +36,7 @@ class SocketService {
         //   console.log('trying to join table');
         // });
 
-        // this.socket.on('disconnect', () => {
-        //   console.log('Disconnected from socket server');
-        // });
+
 
         // this.socket.on('reconnect_attempt', () => {
         //   console.log('Attempting to reconnect...');
@@ -46,6 +44,9 @@ class SocketService {
       });
       this.socket.on('connect_error', err => {
         console.log('Connection error:', err.message);
+      });
+      this.socket.on('disconnect', () => {
+        console.log('Disconnected from socket server');
       });
     }
   }
