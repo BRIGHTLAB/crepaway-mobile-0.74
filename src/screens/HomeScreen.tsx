@@ -1,6 +1,6 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useLayoutEffect, useMemo } from 'react';
+import React, { useLayoutEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BackHandler,
@@ -19,6 +19,7 @@ import CartCounter from '../components/Menu/CartCounter';
 import CategoryList from '../components/Menu/CategoryList';
 import ItemsList from '../components/Menu/ItemsList';
 import OffersList from '../components/Menu/OffersList';
+import InfoPopup from '../components/Popups/InfoPopup';
 import { RootStackParamList } from '../navigation/NavigationStack';
 import { setOrderType } from '../store/slices/userSlice';
 import { RootState, useAppDispatch } from '../store/store';
@@ -53,6 +54,7 @@ const HomeScreen = () => {
   const state = useSelector((state: RootState) => state.user);
   const { bottom, top } = useSafeAreaInsets();
   const { data: content } = useGetContentQuery();
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
 
   // Get banner data based on order type
   const bannerData = useMemo(() => {
@@ -98,6 +100,22 @@ const HomeScreen = () => {
     branch: state.branchName,
     addressId: state.addressId,
   });
+
+  // Handle error from useGetHomepageQuery
+  React.useEffect(() => {
+    if (error) {
+      setShowErrorPopup(true);
+    }
+  }, [error]);
+
+  // Handle popup close - navigate to ServiceSelectionScreen
+  const handleErrorPopupClose = () => {
+    setShowErrorPopup(false);
+    dispatch(setOrderType({
+      menuType: null,
+      orderTypeAlias: null,
+    }));
+  };
 
   const categories = data?.categories;
   const newItems = data?.new_items;
@@ -189,10 +207,6 @@ const HomeScreen = () => {
         backgroundColor: `rgba(255,255,255,${opacity})`,
       },
       headerTitle: opacity > 0.7 ? "" : "",
-      headerTitleStyle: {
-        opacity,
-      },
-
     });
 
     return {};
@@ -311,6 +325,14 @@ const HomeScreen = () => {
         duration={400}
         color="black"
         onFadeComplete={() => console.log("Fade done")}
+      />
+
+      {/* Error Popup */}
+      <InfoPopup
+        visible={showErrorPopup}
+        title="Not Available"
+        message="The selected branch or menu is not available for this address. Please select a different address to continue."
+        onClose={handleErrorPopupClose}
       />
     </View>
   );

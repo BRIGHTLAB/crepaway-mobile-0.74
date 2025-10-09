@@ -21,6 +21,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import Icon_Sign_Out from '../../assets/SVG/Icon_Sign_Out';
 import BannedPopup from '../components/DineIn/BannedPopup';
 import OrderedItemsList from '../components/DineIn/OrderedItemsList';
+import TableClosedPopup from '../components/DineIn/TableClosedPopup';
 import TableUsersList from '../components/DineIn/TableUsersList';
 import WelcomePopup from '../components/DineIn/WelcomePopup';
 import KingActionsSheet, {
@@ -156,7 +157,9 @@ const TableScreen = () => {
   const [orderedItems, setOrderedItems] = useState<OrderedItems>({});
   const [tableUsers, setTableUsers] = useState<TableUsers>({});
   const [tableWaiters, setTableWaiters] = useState<TableWaiters>({});
+  const [bannedUsers, setBannedUsers] = useState<TableBannedUsers>({});
   const [showBannedPopup, setShowBannedPopup] = useState(false);
+  const [showTableClosedPopup, setShowTableClosedPopup] = useState(false);
 
   const isTableLocked = useSelector((state: RootState) => state.dineIn.isTableLocked);
 
@@ -325,6 +328,18 @@ const TableScreen = () => {
       if (message.pendingJoinRequests) {
         setPendingJoinRequests(message.pendingJoinRequests);
       }
+
+      if (message.bannedUsers) {
+        setBannedUsers(message.bannedUsers);
+      }
+    });
+
+    socketInstance.on('tableClosed', () => {
+      dispatch(setSessionTableId(null));
+      dispatch(setBranchTable(null));
+      setShowWelcomePopup(false);
+      setShowBannedPopup(false);
+      setShowTableClosedPopup(true);
     });
 
     // return () => {
@@ -439,6 +454,35 @@ const TableScreen = () => {
       },)
   }
 
+  const handleUnkickUser = (user: Pick<TableUser, 'id' | 'name' | 'image_url'>) => {
+    console.log('unKicking user', user);
+    socketInstance.emit(
+      'message',
+      {
+        type: 'unKickUser',
+        data: {
+          tableName: userState.branchTable,
+          userToUnKick: {
+            id: user.id
+          }
+        },
+      },)
+  }
+
+  const handleTableClosedPopupClose = () => {
+    setShowTableClosedPopup(false);
+    // Reset the order type and session after user acknowledges
+    dispatch(
+      setOrderType({
+        menuType: null,
+        orderTypeAlias: null,
+      }),
+    );
+  };
+
+
+
+
   return (
     <View style={[styles.container, {
       paddingTop: top
@@ -474,12 +518,14 @@ const TableScreen = () => {
               )
             )}
             users={tableUsers}
+            bannedUsers={bannedUsers}
             currentUser={
               currentUser.id ? tableUsers?.[currentUser.id] : undefined
             } // current user to determine if the y re king
             onUserPress={handleUserPress}
             onApproveUser={handleApproveUser}
             onRejectUser={handleRejectUser}
+            onUnkickUser={handleUnkickUser}
           />
         </View>
         <OrderedItemsList items={filteredOrderedItems} users={tableUsers} waiters={tableWaiters} />
@@ -527,6 +573,12 @@ const TableScreen = () => {
             }),
           );
         }}
+      />
+
+      {/* Table Closed Popup */}
+      <TableClosedPopup
+        visible={showTableClosedPopup}
+        onClose={handleTableClosedPopupClose}
       />
     </View>
   );

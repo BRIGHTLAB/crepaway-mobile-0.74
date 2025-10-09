@@ -9,30 +9,66 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-import { TableUser, TableUsers } from '../../screens/TableScreen';
+import { TableBannedUsers, TableUser, TableUsers } from '../../screens/TableScreen';
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../../theme';
 import DynamicPopup from '../UI/DynamicPopup';
+
+// Helper component for user images with placeholder
+const UserImage = ({
+  imageUrl,
+  name,
+  style,
+  isBanned = false
+}: {
+  imageUrl: string | null;
+  name: string;
+  style: any;
+  isBanned?: boolean;
+}) => {
+  if (!imageUrl) {
+    return (
+      <View style={[style, styles.placeholderContainer, isBanned && styles.bannedPlaceholderContainer]}>
+        <Text style={[styles.placeholderText, isBanned && styles.bannedPlaceholderText]}>
+          {name.split(' ').map(str => str.charAt(0)).join('')}
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <FastImage
+      style={style}
+      source={{ uri: imageUrl }}
+    />
+  );
+};
 
 type Props = {
   users: TableUsers;
   pendingUsers: TableUsers;
+  bannedUsers: TableBannedUsers;
   currentUser?: TableUser;
   onUserPress?: (user: TableUser) => void;
   onApproveUser?: (user: TableUser) => void;
   onRejectUser?: (user: TableUser) => void;
+  onUnkickUser?: (user: Pick<TableUser, 'id' | 'name' | 'image_url'>) => void;
 };
 
 const TableUsersList = ({
   users,
   pendingUsers,
+  bannedUsers,
   currentUser,
   onUserPress,
   onApproveUser,
-  onRejectUser
+  onRejectUser,
+  onUnkickUser
 }: Props) => {
   const isCurrentUserKing = currentUser?.isKing;
   const [selectedPendingUser, setSelectedPendingUser] = useState<TableUser | null>(null);
   const [showApprovalPopup, setShowApprovalPopup] = useState(false);
+  const [selectedBannedUser, setSelectedBannedUser] = useState<Pick<TableUser, 'id' | 'name' | 'image_url'> | null>(null);
+  const [showUnkickPopup, setShowUnkickPopup] = useState(false);
 
   const handleUserPress = (user: TableUser) => {
     if (pendingUsers?.[user.id]) {
@@ -40,6 +76,13 @@ const TableUsersList = ({
       setShowApprovalPopup(true);
     } else if (isCurrentUserKing && !user.isKing && onUserPress) {
       onUserPress(user);
+    }
+  };
+
+  const handleBannedUserPress = (bannedUser: Pick<TableUser, 'id' | 'name' | 'image_url'>) => {
+    if (isCurrentUserKing && onUnkickUser) {
+      setSelectedBannedUser(bannedUser);
+      setShowUnkickPopup(true);
     }
   };
 
@@ -59,6 +102,19 @@ const TableUsersList = ({
     setSelectedPendingUser(null);
   };
 
+  const handleUnkick = () => {
+    if (selectedBannedUser && onUnkickUser) {
+      onUnkickUser(selectedBannedUser);
+    }
+    setShowUnkickPopup(false);
+    setSelectedBannedUser(null);
+  };
+
+  const closeUnkickPopup = () => {
+    setShowUnkickPopup(false);
+    setSelectedBannedUser(null);
+  };
+
   const closePopup = () => {
     setShowApprovalPopup(false);
     setSelectedPendingUser(null);
@@ -69,30 +125,47 @@ const TableUsersList = ({
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Table Users</Text>
       <FlatList
-        data={[...Object.values(users), ...Object.values(pendingUsers)]}
+        data={[
+          ...Object.values(users).map(user => ({ ...user, type: 'user' as const })),
+          ...Object.values(pendingUsers).map(user => ({ ...user, type: 'pending' as const })),
+          ...Object.values(bannedUsers).map(user => ({ ...user, type: 'banned' as const }))
+        ]}
         horizontal
         showsHorizontalScrollIndicator={false}
         keyExtractor={(_, idx) => idx.toString()}
         contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => (
-          <UserItem
-            user={item}
-            isUserPending={pendingUsers?.[item.id] !== undefined}
-            isCurrentUserKing={isCurrentUserKing}
-            onPress={() => handleUserPress(item)}
-          />
-        )}
+        renderItem={({ item }) => {
+          if (item.type === 'banned') {
+            return (
+              <BannedUserItem
+                user={item}
+                isCurrentUserKing={isCurrentUserKing}
+                onPress={() => handleBannedUserPress(item)}
+              />
+            );
+          }
+
+          const isUserPending = item.type === 'pending';
+
+          return (
+            <UserItem
+              user={item}
+              isUserPending={isUserPending}
+              isCurrentUserKing={isCurrentUserKing}
+              onPress={() => handleUserPress(item)}
+            />
+          );
+        }}
       />
 
       {/* Approval Popup */}
       <DynamicPopup visible={showApprovalPopup} onClose={closePopup}>
         <View style={styles.approvalContent}>
           <View style={styles.userPreview}>
-            <FastImage
+            <UserImage
+              imageUrl={selectedPendingUser?.image_url || null}
+              name={selectedPendingUser?.name || ''}
               style={styles.previewImage}
-              source={{
-                uri: selectedPendingUser?.image_url || 'https://placehold.co/200x200/png',
-              }}
             />
             <Text style={styles.previewName}>{selectedPendingUser?.name}</Text>
           </View>
@@ -109,6 +182,35 @@ const TableUsersList = ({
 
             <TouchableOpacity style={styles.approveButton} onPress={handleApprove}>
               <Text style={styles.approveButtonText}>Approve</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </DynamicPopup>
+
+      {/* Unkick Popup */}
+      <DynamicPopup visible={showUnkickPopup} onClose={closeUnkickPopup}>
+        <View style={styles.approvalContent}>
+          <View style={styles.userPreview}>
+            <UserImage
+              imageUrl={selectedBannedUser?.image_url || null}
+              name={selectedBannedUser?.name || ''}
+              style={styles.previewImage}
+            />
+            <Text style={styles.previewName}>{selectedBannedUser?.name}</Text>
+          </View>
+
+          <Text style={styles.approvalTitle}>Unkick User</Text>
+          <Text style={styles.approvalSubtitle}>
+            Do you want to allow {selectedBannedUser?.name} back to the table?
+          </Text>
+
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.rejectButton} onPress={closeUnkickPopup}>
+              <Text style={styles.rejectButtonText}>Close</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.approveButton} onPress={handleUnkick}>
+              <Text style={styles.approveButtonText}>Unkick User</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -140,14 +242,14 @@ const UserItem = ({ isUserPending, user, isCurrentUserKing, onPress }: {
       <Animated.View
         style={[
           styles.userImageContainer,
+          {
+            overflow: 'visible',
+          }
         ]}>
-        <FastImage
-          style={[
-            styles.userImage,
-          ]}
-          source={{
-            uri: user.image_url || 'https://placehold.co/200x200/png',
-          }}
+        <UserImage
+          imageUrl={user.image_url}
+          name={user.name}
+          style={styles.userImage}
         />
 
         {/* Status indicator (online/offline) */}
@@ -174,6 +276,51 @@ const UserItem = ({ isUserPending, user, isCurrentUserKing, onPress }: {
       <Text style={[
         styles.userName,
         isUserPending && styles.pendingUserName
+      ]} numberOfLines={2}>
+        {user.name}
+      </Text>
+    </TouchableOpacity>
+  );
+};
+
+// Banned user item component with X overlay
+const BannedUserItem = ({ user, isCurrentUserKing, onPress }: {
+  user: Pick<TableUser, 'id' | 'name' | 'image_url'>;
+  isCurrentUserKing?: boolean;
+  onPress: () => void;
+}) => {
+  const isDisabled = !isCurrentUserKing;
+
+  return (
+    <TouchableOpacity
+      style={[
+        styles.userContainer,
+        styles.bannedUserContainer
+      ]}
+      onPress={onPress}
+      disabled={isDisabled}>
+      <Animated.View
+        style={[
+          styles.userImageContainer,
+        ]}>
+        <View style={styles.bannedImageWrapper}>
+          <UserImage
+            imageUrl={user.image_url}
+            name={user.name}
+            style={[styles.userImage, styles.bannedUserImage]}
+            isBanned={true}
+          />
+
+          {/* Banned overlay */}
+          <View style={styles.bannedOverlay}>
+            <Text style={styles.bannedText}>BANNED</Text>
+          </View>
+        </View>
+      </Animated.View>
+
+      <Text style={[
+        styles.userName,
+        styles.bannedUserName
       ]} numberOfLines={2}>
         {user.name}
       </Text>
@@ -367,5 +514,60 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     fontSize: 16,
+  },
+  // Placeholder styles
+  placeholderContainer: {
+    backgroundColor: COLORS.darkColor,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  placeholderText: {
+    color: COLORS.white,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  bannedPlaceholderContainer: {
+    backgroundColor: '#666',
+  },
+  bannedPlaceholderText: {
+    color: '#999',
+  },
+  // Banned user styles
+  bannedUserContainer: {
+    opacity: 0.7,
+  },
+  bannedUserImage: {
+    opacity: 0.4,
+  },
+  bannedUserName: {
+    color: '#999',
+    textDecorationLine: 'line-through',
+    opacity: 0.8,
+  },
+  bannedImageWrapper: {
+    position: 'relative',
+    width: 50,
+    height: 50,
+  },
+  bannedOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 68, 68, 0.3)',
+    borderRadius: 25,
+  },
+  bannedText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: COLORS.white,
+    textAlign: 'center',
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 });
