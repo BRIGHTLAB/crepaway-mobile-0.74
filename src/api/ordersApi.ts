@@ -1,5 +1,5 @@
-import {DeliveryInstructions} from '../components/Checkout/DeliveryInstructionsSheet';
-import {baseApi} from './baseApi';
+import { DeliveryInstructions } from '../components/Checkout/DeliveryInstructionsSheet';
+import { baseApi } from './baseApi';
 interface OrderItemModifierItem {
   id: number;
   name: string;
@@ -92,6 +92,12 @@ export type OrderStatusResponse = {
     update_reason: string | null;
   }[];
   estimated_delivery_time: string;
+  driver: {
+    id: number;
+    full_name: string;
+    image_url: string | null;
+    phone_number: string | null;
+  } | null;
 };
 
 export const ordersApi = baseApi.injectEndpoints({
@@ -108,12 +114,12 @@ export const ordersApi = baseApi.injectEndpoints({
     }),
     getOrder: builder.query<Order, number>({
       query: id => `/orders/${id}`,
-      providesTags: (_result, _error, id) => (id ? [{type: 'Order', id}] : []), // Return an empty array if id is null or undefined
+      providesTags: (_result, _error, id) => (id ? [{ type: 'Order', id }] : []), // Return an empty array if id is null or undefined
     }),
     getOrderStatus: builder.query<OrderStatusResponse, number>({
       query: id => `/orders/${id}/status`,
       providesTags: (_result, _error, id) =>
-        id ? [{type: 'orderStatus', id}] : [], // Return an empty array if id is null or undefined
+        id ? [{ type: 'orderStatus', id }] : [], // Return an empty array if id is null or undefined
     }),
   }),
   overrideExisting: true,

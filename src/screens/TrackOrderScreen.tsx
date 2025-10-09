@@ -1,13 +1,14 @@
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, FlatList, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import MapView, { LatLng, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useDispatch } from 'react-redux';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
 import Icon_Order_Accepted from '../../assets/SVG/Icon_Order_Accepted';
 import Icon_Spine from '../../assets/SVG/Icon_Spine';
-import { useGetOrderStatusQuery } from '../api/ordersApi';
+import { OrderStatusResponse, useGetOrderStatusQuery } from '../api/ordersApi';
 import {
   OrdersStackParamList
 } from '../navigation/DeliveryTakeawayStack';
@@ -94,6 +95,53 @@ const OrderItemSkeleton = () => {
           }}
         />
       </View>
+    </View>
+  );
+};
+
+const DriverHeader = ({ driver }: { driver: OrderStatusResponse['driver'] | null | undefined }) => {
+
+  if (!driver) return null;
+
+  return (
+    <View style={styles.driverHeader}>
+      <View style={styles.driverInfo}>
+        {driver.image_url ? (
+          <FastImage
+            source={{
+              uri: driver.image_url,
+              priority: FastImage.priority.normal,
+            }}
+            resizeMode={FastImage.resizeMode.cover}
+            style={styles.driverImage}
+          />
+        ) : (
+          <View
+            style={[
+              styles.driverImage,
+              {
+                backgroundColor: COLORS.darkColor,
+                alignItems: 'center',
+                justifyContent: 'center',
+              },
+            ]}>
+            <Text style={styles.driverImageAltText}>
+              {driver.full_name.split(' ').map((str: string) => str.charAt(0)).join('')}
+            </Text>
+          </View>
+        )}
+        <View style={styles.driverTextContainer}>
+          <Text style={styles.driverName}>{driver.full_name}</Text>
+          <Text style={styles.driverDescription}>Is on their way to you</Text>
+        </View>
+      </View>
+      <TouchableOpacity
+        style={styles.callButton}
+        onPress={() => { console.log('driver.phone_number', driver.phone_number) }}
+      >
+        <Text style={{ fontSize: 12, fontWeight: 'bold' }}>📞</Text>
+        {/* <Icon_Phone width={20} height={20} color={COLORS.darkColor} /> */}
+      </TouchableOpacity>
     </View>
   );
 };
@@ -299,6 +347,9 @@ const TrackOrderScreen = () => {
                 status={item.name}
               />
             )}
+            ListHeaderComponent={
+              <DriverHeader driver={memoizedOrderStatus?.driver} />
+            }
             ListFooterComponent={
               <Text
                 style={{
@@ -374,5 +425,47 @@ const styles = StyleSheet.create({
   markerText: {
     color: '#FFF',
     fontWeight: 'bold',
+  },
+  driverHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    marginBottom: 16,
+  },
+  driverInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  driverImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  driverImageAltText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  driverTextContainer: {
+    gap: 2,
+  },
+  driverName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.foregroundColor,
+  },
+  driverDescription: {
+    fontSize: 12,
+    color: COLORS.darkColor,
+    opacity: 0.7,
+  },
+  callButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: `${COLORS.primaryColor}20`,
   },
 });
