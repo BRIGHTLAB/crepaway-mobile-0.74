@@ -45,12 +45,14 @@ export type RootStackParamList = {
   AddressMap: undefined;
 };
 
+import * as Sentry from '@sentry/react-native';
+
 const Stack = createNativeStackNavigator();
 
 const NavigationStack = () => {
   const [isSplashAnimationFinished, setIsSplashAnimationFinished] =
     useState(false);
-  const { isLoggedIn, orderType } = useSelector((state: RootState) => state.user);
+  const { isLoggedIn, orderType, id, name } = useSelector((state: RootState) => state.user);
   const dispatch = useAppDispatch();
   const notificationInstance = NotificationService.getInstance();
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
@@ -59,6 +61,21 @@ const NavigationStack = () => {
     if (!isLoggedIn || !navigationRef.current) return;
     notificationInstance.init(navigationRef.current);
   }, [isLoggedIn, navigationRef]);
+
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      Sentry.setUser({
+        id: id?.toString() || '',
+        name: name,
+      })
+    } else {
+      Sentry.setUser({
+        id: undefined,
+        name: undefined,
+      });
+    }
+  }, [isLoggedIn, id, name]);
 
   const renderStack = () => {
     if (!isSplashAnimationFinished) {

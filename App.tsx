@@ -1,24 +1,47 @@
-import 'react-native-get-random-values';
-import { Alert, PermissionsAndroid, Platform, StyleSheet } from 'react-native';
+import { PortalProvider } from '@gorhom/portal';
 import React, { useEffect, useState } from 'react';
+import { I18nextProvider } from 'react-i18next';
+import { PermissionsAndroid, Platform, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import 'react-native-get-random-values';
 import { Provider } from 'react-redux';
 import DeleteAnimation from './assets/lotties/Delete.json';
-import store, { persistor } from './src/store/store';
-import NavigationStack from './src/navigation/NavigationStack';
-import { I18nextProvider } from 'react-i18next';
 import i18n from './src/i18n';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { PortalProvider } from '@gorhom/portal';
+import NavigationStack from './src/navigation/NavigationStack';
+import store, { persistor } from './src/store/store';
 
-import ConfirmationPopup from './src/components/Popups/ConfirmationPopup';
+import * as Sentry from '@sentry/react-native';
 import { PersistGate } from 'redux-persist/integration/react';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import ConfirmationPopup from './src/components/Popups/ConfirmationPopup';
+
+
 
 const initialPopupDetails = {
   isVisible: false,
   title: '',
   message: '',
 };
+
+Sentry.init({
+  dsn: 'https://a30c42d668d1a61831ae4fd56cf37dcf@o4510163872120832.ingest.us.sentry.io/4510163879591936',
+
+  // Adds more context data to events (IP address, cookies, user, etc.)
+  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
+  // sendDefaultPii: true,
+
+  // include user session 
+
+  // // Enable Logs
+  // enableLogs: true,
+
+  // // Configure Session Replay
+  // replaysSessionSampleRate: 0.1,
+  // replaysOnErrorSampleRate: 1,
+  // integrations: [Sentry.mobileReplayIntegration()],
+
+  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+  // spotlight: __DEV__,
+});
 
 const App = () => {
   // firebase push notifications
@@ -90,6 +113,5 @@ const App = () => {
   );
 };
 
-export default App;
-
+export default Sentry.wrap(App);
 const styles = StyleSheet.create({});
