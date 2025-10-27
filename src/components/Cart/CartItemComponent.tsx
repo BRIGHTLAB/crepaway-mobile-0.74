@@ -1,10 +1,10 @@
-import {Pressable, Text, TouchableOpacity, View} from 'react-native';
-import {CartItem} from '../../store/slices/cartSlice';
-import {COLORS} from '../../theme';
+import { Text, TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import Icon_Decrease_Quantity from '../../../assets/SVG/Icon_Decrease_Quantity';
 import Icon_Increase_Quantity from '../../../assets/SVG/Icon_Increase_Quantity';
-import {OrderItem} from '../../api/ordersApi';
+import { OrderItem } from '../../api/ordersApi';
+import { CartItem } from '../../store/slices/cartSlice';
+import { COLORS } from '../../theme';
 
 // Cart Item
 const CartItemComponent = ({
@@ -49,6 +49,7 @@ const CartItemComponent = ({
       }}>
       <TouchableOpacity
         onPress={onItemPress}
+        disabled={!onItemPress}
         style={{
           flex: 1,
           flexDirection: 'row',
@@ -60,11 +61,11 @@ const CartItemComponent = ({
             uri: item?.image_url || 'https://placehold.co/600x400/png',
             priority: FastImage.priority.normal,
           }}
-          style={{width: 80, height: 88, borderRadius: 8}}
+          style={{ width: 80, height: 88, borderRadius: 8 }}
           resizeMode={FastImage.resizeMode.cover}
         />
 
-        <View style={{flex: 1}}>
+        <View style={{ flex: 1 }}>
           <Text
             numberOfLines={2}
             style={{
@@ -96,7 +97,7 @@ const CartItemComponent = ({
 
           {/* Modifier Groups */}
           {item.modifier_groups && item.modifier_groups.length > 0 && (
-            <View style={{marginTop: 4}}>
+            <View style={{ marginTop: 4 }}>
               {item.modifier_groups.map(group => (
                 <View key={group.id}>
                   <Text
