@@ -203,7 +203,7 @@ const TrackOrderScreen = () => {
   // Memoize orderStatus to prevent unnecessary re-renders when data hasn't changed
   const memoizedOrderStatus = useMemo(() => {
     return orderStatus;
-  }, [orderStatus?.status_history, orderStatus?.estimated_delivery_time]);
+  }, [orderStatus?.status_history, orderStatus?.estimated_delivery_time, orderStatus?.driver]);
 
   // This effect will run when address coordinates change
   useEffect(() => {
