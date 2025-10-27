@@ -1,9 +1,9 @@
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import dayjs from 'dayjs';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
-import MapView, { LatLng, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { AnimatedRegion, LatLng, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useDispatch } from 'react-redux';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
 import Icon_Order_Accepted from '../../assets/SVG/Icon_Order_Accepted';
@@ -188,6 +188,19 @@ const TrackOrderScreen = () => {
   const userState = store.getState().user;
   const mapRef = useRef<MapView>(null);
 
+  // AnimatedRegion ref for smooth driver movement (prevents remount flicker)
+  const driverRegionRef = useRef<any>(
+    new AnimatedRegion({
+      latitude: INITIAL_REGION.latitude,
+      longitude: INITIAL_REGION.longitude,
+      latitudeDelta: 0,
+      longitudeDelta: 0,
+    })
+  );
+
+  // Debounce timer ref for driver location updates
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const isTakeaway = order_type
     ? order_type === 'takeaway'
     : userState.orderType === 'takeaway';
@@ -196,9 +209,48 @@ const TrackOrderScreen = () => {
     pollingInterval: 2000,
   });
 
+  // Debounced function to update driver location
+  const updateDriverLocation = useCallback((coordinates: { lat: number; long: number }) => {
+    // Clear existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
 
+    // Set new timer to update location after 500ms of no new updates
+    debounceTimerRef.current = setTimeout(() => {
+      setDriverLocation({
+        latitude: coordinates.lat,
+        longitude: coordinates.long,
+      });
+      console.log('newDriverLocation', {
+        latitude: coordinates.lat,
+        longitude: coordinates.long,
+      });
+    }, 1000);
+  }, []);
 
+  // Animate AnimatedRegion when driverLocation changes (smooth movement, prevents flicker)
+  useEffect(() => {
+    if (!driverLocation || !driverRegionRef.current) return;
 
+    try {
+      if (driverRegionRef.current.timing) {
+        driverRegionRef.current.timing({
+          latitude: driverLocation.latitude,
+          longitude: driverLocation.longitude,
+          duration: 600,
+          useNativeDriver: false,
+        }).start();
+      } else if (driverRegionRef.current.setValue) {
+        driverRegionRef.current.setValue({
+          latitude: driverLocation.latitude,
+          longitude: driverLocation.longitude,
+        });
+      }
+    } catch (e) {
+      console.warn('AnimatedRegion update failed', e);
+    }
+  }, [driverLocation]);
 
   // Memoize orderStatus to prevent unnecessary re-renders when data hasn't changed
   const memoizedOrderStatus = useMemo(() => {
@@ -266,20 +318,19 @@ const TrackOrderScreen = () => {
       // Subscribe to location updates
       socketInstance.on('onLocationUpdate', coordinates => {
         if (coordinates && coordinates.lat && coordinates.long) {
-          setDriverLocation({
-            latitude: coordinates.lat,
-            longitude: coordinates.long,
-          });
-          console.log('newDriverLocation', {
-            latitude: coordinates.lat,
-            longitude: coordinates.long,
-          });
+          updateDriverLocation(coordinates);
         }
       });
 
-      return () => socketInstance.disconnect();
+      return () => {
+        socketInstance.disconnect();
+        // Clear debounce timer on cleanup
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+        }
+      };
     }
-  }, [orderId]);
+  }, [orderId, updateDriverLocation]);
 
 
   // zoom out so we can see both the driver and address at the same time
@@ -306,6 +357,24 @@ const TrackOrderScreen = () => {
     }
   }, [driverLocation, addressLocation, hasFittedOnce]);
 
+  // Memoize driver marker to prevent unnecessary re-renders
+  const driverMarker = useMemo(() => {
+    const coordinate = driverRegionRef.current;
+    if (!coordinate || !driverLocation) return null;
+
+    return (
+      <Marker.Animated
+        coordinate={coordinate}
+        title="Driver Location"
+        tracksViewChanges={false}
+      >
+        <View style={styles.driverMarker}>
+          <Icon_Motorcycle width={20} height={20} />
+        </View>
+      </Marker.Animated>
+    );
+  }, [driverLocation]);
+
   return (
     <View style={styles.container}>
       {/* Map View */}
@@ -325,7 +394,9 @@ const TrackOrderScreen = () => {
         >
           {/* User Marker */}
           {addressLocation && (
-            <Marker coordinate={addressLocation} title="Your Location">
+            <Marker coordinate={addressLocation} title="Your Location" tracksViewChanges={false}
+              identifier='user-marker'
+            >
               <View style={styles.userMarker}>
                 <Text style={styles.markerText}>You</Text>
               </View>
@@ -333,13 +404,7 @@ const TrackOrderScreen = () => {
           )}
 
           {/* Driver Marker */}
-          {driverLocation && (
-            <Marker coordinate={driverLocation} title="Driver Location">
-              <View style={styles.driverMarker}>
-                <Icon_Motorcycle width={20} height={20} />
-              </View>
-            </Marker>
-          )}
+          {driverMarker}
         </MapView>
 
         {isTakeaway && (
