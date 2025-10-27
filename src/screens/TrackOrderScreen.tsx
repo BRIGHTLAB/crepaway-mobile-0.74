@@ -1,7 +1,7 @@
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import MapView, { LatLng, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useDispatch } from 'react-redux';
@@ -99,6 +99,30 @@ const OrderItemSkeleton = () => {
   );
 };
 
+const openWhatsApp = async (phoneNumber: string) => {
+  try {
+    // Remove any non-numeric characters and ensure it starts with country code
+    const cleanNumber = phoneNumber.replace(/\D/g, '');
+
+    // If the number doesn't start with a country code, you might need to add your default country code
+    // For example, if your app is for a specific country, you could prepend the country code here
+
+    const whatsappUrl = `whatsapp://send?phone=${cleanNumber}`;
+    const canOpen = await Linking.canOpenURL(whatsappUrl);
+
+    if (canOpen) {
+      await Linking.openURL(whatsappUrl);
+    } else {
+      // Fallback to WhatsApp web if the app is not installed
+      const whatsappWebUrl = `https://wa.me/${cleanNumber}`;
+      await Linking.openURL(whatsappWebUrl);
+    }
+  } catch (error) {
+    console.error('Error opening WhatsApp:', error);
+    // You could show an alert to the user here
+  }
+};
+
 const DriverHeader = ({ driver }: { driver: OrderStatusResponse['driver'] | null | undefined }) => {
 
   if (!driver) return null;
@@ -137,7 +161,11 @@ const DriverHeader = ({ driver }: { driver: OrderStatusResponse['driver'] | null
       </View>
       <TouchableOpacity
         style={styles.callButton}
-        onPress={() => { console.log('driver.phone_number', driver.phone_number) }}
+        onPress={() => {
+          if (driver.phone_number) {
+            openWhatsApp(driver.phone_number);
+          }
+        }}
       >
         <Text style={{ fontSize: 12, fontWeight: 'bold' }}>📞</Text>
         {/* <Icon_Phone width={20} height={20} color={COLORS.darkColor} /> */}

@@ -27,10 +27,10 @@ export const SCREEN_PADDING = {
 export const INPUT_HEIGHT = 53;
 
 // export const BASE_URL = 'https://17dc1dd6f6aa.ngrok-free.app/api/app';
-export const BASE_URL = 'https://crepaway.staging-api.thenewexperience.app/api/app';
+export const BASE_URL = 'https://dev.staging-api.thenewexperience.app/api/app';
 
 export const API_MAP_KEY = 'AIzaSyA0IxviANpXAl-sTNcYjH1zU5cjgXimKuk';
-export const DRIVER_SOCKET_URL = 'wss://crepaway-driver-websocket.onrender.com';
+export const DRIVER_SOCKET_URL = 'wss://dev.realtime.driver-tracking.com';
 export const DINEIN_SOCKET_URL =
   'wss://crepaway-dinein-websocket-ts-hgga.onrender.com';
 
