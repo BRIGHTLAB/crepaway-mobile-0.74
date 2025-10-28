@@ -114,13 +114,14 @@ const CartItemComponent = ({
                       style={{
                         flexDirection: 'row',
                         alignItems: 'flex-start',
-                        justifyContent: 'space-between',
+                        gap: 5,
                       }}>
                       <Text
                         style={{
                           fontFamily: 'Poppins-Regular',
                           fontSize: 10,
                           color: COLORS.foregroundColor,
+                          flex: 1,
                         }}>
                         {modItem.name}{' '}
                         {modItem.quantity > 1 ? `x${modItem.quantity}` : ''}
@@ -131,6 +132,7 @@ const CartItemComponent = ({
                             fontFamily: 'Poppins-Regular',
                             fontSize: 10,
                             color: COLORS.secondaryColor,
+                            textAlign: 'right',
                           }}>
                           {modItem.symbol || item.symbol} {modItem.price}
                         </Text>

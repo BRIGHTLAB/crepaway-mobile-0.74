@@ -24,9 +24,9 @@ const ModifierGroup: React.FC<ModifierGroupProps> = ({
   console.log('group123', group);
 
 
-  // This effect syncs the selectedModifiers from the parent with the local selectedItems state
+  // Combined effect to handle both syncing from parent and setting defaults
   useEffect(() => {
-    // Find if this group has selected modifiers
+    // First, check if this group has selected modifiers from parent
     const existingGroup = selectedModifiers.find(
       m => m.modifier_groups_id === group.modifier_groups_id,
     );
@@ -38,14 +38,10 @@ const ModifierGroup: React.FC<ModifierGroupProps> = ({
         existingGroup.modifier_items,
       );
       setSelectedItems(existingGroup.modifier_items);
+      return; // Exit early if we have selections from parent
     }
-  }, [selectedModifiers, group.modifier_groups_id]);
 
-  // Original effect for handling default items
-  useEffect(() => {
-    // Only set defaults if no items are already selected
-    if (selectedItems.length > 0) return;
-
+    // If no selections from parent, check for default items
     const defaultItems = group.modifier_items.filter(item => item.is_default);
 
     if (defaultItems.length > 0) {
@@ -79,7 +75,7 @@ const ModifierGroup: React.FC<ModifierGroupProps> = ({
       setSelectedItems(initialSelections);
       updateParentState(initialSelections);
     }
-  }, [group.modifier_items]);
+  }, [selectedModifiers, group.modifier_groups_id, group.modifier_items]);
 
   const updateParentState = (items: SelectedModifierItem[]) => {
     if (items.length === 0) {
