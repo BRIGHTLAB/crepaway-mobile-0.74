@@ -398,9 +398,8 @@ const MenuItemScreen = ({ }: IProps) => {
                 <View style={{ marginTop: 16, gap: 16 }}>
                   {item?.modifier_groups.map((group, idx) => {
                     return (
-                      <>
+                      <React.Fragment key={idx}>
                         <ModifierGroup
-                          key={idx}
                           group={group}
                           selectedModifiers={selectedModifiers}
                           setSelectedModifiers={setSelectedModifiers}
@@ -411,7 +410,7 @@ const MenuItemScreen = ({ }: IProps) => {
                           opacity: 0.03,
                         }} />
 
-                      </>
+                      </React.Fragment>
                     );
                   })}
                 </View>
