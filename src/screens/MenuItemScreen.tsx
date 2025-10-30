@@ -145,7 +145,12 @@ const MenuItemScreen = ({ }: IProps) => {
       const cartItem = cartState.items[itemUuid];
       setQuantity(cartItem.quantity);
       setSpecialInstruction(cartItem.special_instruction || '');
-      if (cartItem.modifier_groups) {
+      
+      // Always initialize with an empty array first to ensure we're tracking edit mode
+      setSelectedModifiers([]);
+      
+      // Then add any modifier groups that exist in the cart item
+      if (cartItem.modifier_groups && cartItem.modifier_groups.length > 0) {
         const formattedModifiers = cartItem.modifier_groups.map(group => ({
           id: group.id,
           modifier_groups_id: group.modifier_groups_id,
@@ -403,6 +408,7 @@ const MenuItemScreen = ({ }: IProps) => {
                           group={group}
                           selectedModifiers={selectedModifiers}
                           setSelectedModifiers={setSelectedModifiers}
+                          isEditMode={!!itemUuid}
                         />
                         <View style={{
                           height: 10,

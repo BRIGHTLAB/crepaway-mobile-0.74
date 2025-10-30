@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Text, View } from 'react-native';
 import { COLORS } from '../../theme';
 import Checkbox from '../UI/Checkbox';
@@ -10,40 +10,52 @@ interface ModifierGroupProps {
   setSelectedModifiers: React.Dispatch<
     React.SetStateAction<SelectedModifierGroup[]>
   >;
+  isEditMode: boolean;
 }
 
 const ModifierGroup: React.FC<ModifierGroupProps> = ({
   group,
   selectedModifiers,
   setSelectedModifiers,
+  isEditMode,
 }) => {
   const [selectedItems, setSelectedItems] = useState<SelectedModifierItem[]>(
     [],
   );
 
-  console.log('group123', group);
 
 
-  // Combined effect to handle both syncing from parent and setting defaults
+  // Effect to handle syncing from parent and setting defaults only on first render
   useEffect(() => {
-    // First, check if this group has selected modifiers from parent
     const existingGroup = selectedModifiers.find(
       m => m.modifier_groups_id === group.modifier_groups_id,
     );
 
     if (existingGroup && existingGroup.modifier_items.length > 0) {
-      console.log(
-        'Found selected modifiers for group:',
-        group.name,
-        existingGroup.modifier_items,
-      );
       setSelectedItems(existingGroup.modifier_items);
-      return; // Exit early if we have selections from parent
+      return; 
     }
 
-    // If no selections from parent, check for default items
+ 
+  }, [selectedModifiers, group.modifier_groups_id]);
+  
+  const defaultsApplied = useRef(false);
+  
+  useEffect(() => {
+    if (defaultsApplied.current || isEditMode) return;
+    
+    const existingGroup = selectedModifiers.find(
+      m => m.modifier_groups_id === group.modifier_groups_id,
+    );
+    
+    if (existingGroup && existingGroup.modifier_items.length > 0) {
+      defaultsApplied.current = true;
+      return;
+    }
+    
+    // Apply defaults only once when not in edit mode
     const defaultItems = group.modifier_items.filter(item => item.is_default);
-
+    
     if (defaultItems.length > 0) {
       let initialSelections: SelectedModifierItem[] = [];
 
@@ -75,7 +87,9 @@ const ModifierGroup: React.FC<ModifierGroupProps> = ({
       setSelectedItems(initialSelections);
       updateParentState(initialSelections);
     }
-  }, [selectedModifiers, group.modifier_groups_id, group.modifier_items]);
+    
+    defaultsApplied.current = true;
+  }, [isEditMode]);
 
   const updateParentState = (items: SelectedModifierItem[]) => {
     if (items.length === 0) {
