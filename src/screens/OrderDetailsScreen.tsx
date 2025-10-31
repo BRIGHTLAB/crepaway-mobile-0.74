@@ -117,7 +117,7 @@ const OrderDetailsScreen = () => {
           <InfoDisplay
             icon={<Icon_Location />}
             title={order.address.title}
-            description={`${order.address.city} | ${order.address.building} ${order.address.floor} | ${order.address.additional_info}`}
+            description={`${order.address.city} | ${order.address.building} ${order.address.floor} ${order.address.additional_info ? `| ${order.address.additional_info}` : ''}`}
           />
         )}
         {order.driver?.name && (
