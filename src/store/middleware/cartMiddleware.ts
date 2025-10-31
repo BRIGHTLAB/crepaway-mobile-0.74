@@ -1,7 +1,10 @@
 import { Middleware } from "@reduxjs/toolkit";
 import { debounce } from "lodash";
 import { cartApi } from "../../api/cartApi";
-import { addItem, clearCart, decreaseQuantity, increaseQuantity, removeItem, updateItem, setCartSyncing } from "../slices/cartSlice";
+import { addItem, clearCart, decreaseQuantity, increaseQuantity, removeItem, updateItem, setCartSyncing, setCartFromFetch } from "../slices/cartSlice";
+
+// TODO Re add types
+let lastSuccessfulItems: any | null = null;
 
 const syncCartWithServer = debounce(async (store) => {
   try {
@@ -13,14 +16,15 @@ const syncCartWithServer = debounce(async (store) => {
         items,
         menu_type: menuType
       })
-    );
-    // await POST({
-    //   endpoint: `/cart?branch=ashrafieh`,
-    //   formData: { items, order_type: orderType }
-    // });
-    console.log('Cart synced with server');
+    ).unwrap();
+    lastSuccessfulItems = items;
   } catch (error) {
     console.error('Error syncing cart:', error);
+    if (lastSuccessfulItems) {
+      store.dispatch(setCartFromFetch({ items: lastSuccessfulItems }));
+    } else {
+      store.dispatch(setCartFromFetch({ items: {} }));
+    }
   } finally {
  
     store.dispatch(setCartSyncing(false));
@@ -28,16 +32,18 @@ const syncCartWithServer = debounce(async (store) => {
 }, 500);
 
 const cartMiddleware: Middleware = store => next => async action => {
-  const result = next(action);
-
-  if (
+  const shouldSync = (
     addItem.match(action) ||
     updateItem.match(action) ||
     clearCart.match(action) ||
     increaseQuantity.match(action) ||
     decreaseQuantity.match(action) ||
     removeItem.match(action)
-  ) {
+  );
+
+  const result = next(action);
+
+  if (shouldSync) {
     store.dispatch(setCartSyncing(true));
     syncCartWithServer(store);
   }
