@@ -282,7 +282,7 @@ const ModifierGroup: React.FC<ModifierGroupProps> = ({
                   maxCount={item.max_quantity}
                   onIncrement={isItemDisabled ? () => { } : handleIncrement}
                   onReset={isItemDisabled ? () => { } : handleReset}
-                  title={`${item.name} ${group.has_additional_charge ? `$${item.price}` : ''
+                  title={`${item.name} ${group.has_additional_charge && item?.price && item?.price > 0 ? `$${item.price}` : ''
                     }`}
                 />
               ) : (
@@ -290,7 +290,7 @@ const ModifierGroup: React.FC<ModifierGroupProps> = ({
                   checked={selectedItems.some(i => i.id === item.id)}
                   onCheck={isItemDisabled ? () => { } : (isChecked => handleSelectItem(item.id, isChecked))}
                   isRadio={group.max_quantity === 1}
-                  title={`${item.name} ${group.has_additional_charge && item?.price
+                  title={`${item.name} ${group.has_additional_charge && item?.price && item?.price > 0
                     ? `$${item.price}`
                     : ''
                     }`}
