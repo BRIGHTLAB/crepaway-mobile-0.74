@@ -12,7 +12,9 @@ import store, { persistor } from './src/store/store';
 
 import * as Sentry from '@sentry/react-native';
 import { PersistGate } from 'redux-persist/integration/react';
+import { useGetPendingRatingQuery } from './src/api/ordersApi';
 import ConfirmationPopup from './src/components/Popups/ConfirmationPopup';
+import OrderRatingPopup from './src/components/Popups/OrderRatingPopup';
 
 
 
@@ -42,6 +44,48 @@ Sentry.init({
   // uncomment the line below to enable Spotlight (https://spotlightjs.com)
   // spotlight: __DEV__,
 });
+
+const AppContent = () => {
+  const [popupDetails, setPopupDetails] = useState(initialPopupDetails);
+  const [showRatingSheet, setShowRatingSheet] = useState(false);
+  const [isSplashFinished, setIsSplashFinished] = useState(false);
+
+  const { data: pendingOrderToRate } = useGetPendingRatingQuery(undefined, {
+    skip: showRatingSheet || !isSplashFinished, // Skip query if rating sheet is already shown or splash hasn't finished
+  });
+
+  useEffect(() => {
+    if (pendingOrderToRate?.id && isSplashFinished) {
+      setShowRatingSheet(true);
+    }
+  }, [pendingOrderToRate, isSplashFinished]);
+
+  const handleRatingClose = () => {
+    setShowRatingSheet(false);
+  };
+
+  return (
+    <>
+      <NavigationStack onSplashFinish={() => setIsSplashFinished(true)} />
+      <ConfirmationPopup
+        visible={popupDetails.isVisible}
+        title={popupDetails.title}
+        lottieSrc={DeleteAnimation}
+        onClose={() => setPopupDetails(initialPopupDetails)}
+        onConfirm={() => setPopupDetails(initialPopupDetails)}
+        message={popupDetails.message}
+      />
+      {pendingOrderToRate && (
+        <OrderRatingPopup
+          visible={showRatingSheet}
+          onClose={handleRatingClose}
+          orderId={pendingOrderToRate.id}
+          title="Rate your last order"
+        />
+      )}
+    </>
+  );
+};
 
 const App = () => {
   // firebase push notifications
@@ -95,15 +139,7 @@ const App = () => {
           {/* <SafeAreaProvider> */}
           <GestureHandlerRootView>
             <PortalProvider>
-              <NavigationStack />
-              <ConfirmationPopup
-                visible={popupDetails.isVisible}
-                title={popupDetails.title}
-                lottieSrc={DeleteAnimation}
-                onClose={() => setPopupDetails(initialPopupDetails)}
-                onConfirm={() => setPopupDetails(initialPopupDetails)}
-                message={popupDetails.message}
-              />
+              <AppContent />
             </PortalProvider>
           </GestureHandlerRootView>
           {/* </SafeAreaProvider> */}

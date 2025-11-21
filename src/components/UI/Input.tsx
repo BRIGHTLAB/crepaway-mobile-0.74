@@ -27,6 +27,8 @@ interface InputProps extends TextInputProps {
   returnKeyType?: 'done' | 'next';
   onSubmitEditing?: () => void;
   secureTextEntry?: boolean;
+  multiline?: boolean;
+  lines?: number;
 }
 
 const Input = forwardRef<TextInput, InputProps>(
@@ -40,6 +42,8 @@ const Input = forwardRef<TextInput, InputProps>(
       onBlur,
       required,
       disabled,
+      multiline,
+      lines,
       secureTextEntry,
       ...rest
     },
@@ -151,6 +155,8 @@ const Input = forwardRef<TextInput, InputProps>(
               blurOnSubmit={false}
               editable={!disabled}
               secureTextEntry={secureTextEntry && !isPasswordVisible}
+              multiline={multiline}
+              numberOfLines={lines}
               {...rest}
             />
           </View>

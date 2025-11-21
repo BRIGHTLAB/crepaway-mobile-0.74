@@ -43,13 +43,18 @@ export type RootStackParamList = {
     params?: ProfileStackParamList[keyof ProfileStackParamList];
   };
   AddressMap: undefined;
+  Test: undefined;
 };
 
 import * as Sentry from '@sentry/react-native';
 
 const Stack = createNativeStackNavigator();
 
-const NavigationStack = () => {
+type NavigationStackProps = {
+  onSplashFinish?: () => void;
+};
+
+const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
   const [isSplashAnimationFinished, setIsSplashAnimationFinished] =
     useState(false);
   const { isLoggedIn, orderType, id, name } = useSelector((state: RootState) => state.user);
@@ -91,7 +96,10 @@ const NavigationStack = () => {
             }}>
             {() => (
               <SplashScreen
-                onAnimationFinish={() => setIsSplashAnimationFinished(true)}
+                onAnimationFinish={() => {
+                  setIsSplashAnimationFinished(true);
+                  onSplashFinish?.();
+                }}
               />
             )}
           </Stack.Screen>
@@ -132,6 +140,7 @@ const NavigationStack = () => {
                 headerTitleAlign: 'center',
               }}
             />
+
           </Stack.Navigator>
         );
       case 'dine-in':
@@ -153,6 +162,7 @@ const NavigationStack = () => {
                 headerTitleAlign: 'center',
               }}
             />
+
           </Stack.Navigator>
         );
       default:

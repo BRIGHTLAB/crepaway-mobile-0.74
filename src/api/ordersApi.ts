@@ -100,6 +100,13 @@ export type OrderStatusResponse = {
   } | null;
 };
 
+export interface OrderRatingPayload {
+  food_rating: number;
+  experience_rating: number;
+  service_rating: number;
+  review_comment?: string | null;
+}
+
 export const ordersApi = baseApi.injectEndpoints({
   endpoints: builder => ({
     getOrders: builder.query<OrdersResponse | null, void>({
@@ -121,6 +128,23 @@ export const ordersApi = baseApi.injectEndpoints({
       providesTags: (_result, _error, id) =>
         id ? [{ type: 'orderStatus', id }] : [], // Return an empty array if id is null or undefined
     }),
+    rateOrder: builder.mutation<{ message: string }, { orderId: number; payload: OrderRatingPayload }>({
+      query: ({ orderId, payload }) => ({
+        url: `/orders/${orderId}/ratings`,
+        method: 'POST',
+        body: payload,
+      }),
+      invalidatesTags: (_result, _error, { orderId }) => [
+        { type: 'Order', id: orderId },
+      ],
+    }),
+    getPendingRating: builder.query<Order | null, void>({
+      query: () => ({
+        url: '/orders/pending-rating',
+        method: 'GET',
+      }),
+      providesTags: ['Order'],
+    }),
   }),
   overrideExisting: true,
 });
@@ -130,4 +154,6 @@ export const {
   useGetOrderTypesQuery,
   useGetOrderQuery,
   useGetOrderStatusQuery,
+  useRateOrderMutation,
+  useGetPendingRatingQuery,
 } = ordersApi;

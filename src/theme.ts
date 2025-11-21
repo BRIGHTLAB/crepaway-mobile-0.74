@@ -9,7 +9,8 @@ export const COLORS = {
   foregroundColor: '#8391A1',
   borderColor: '#D9D9D9',
   card: '#FFFFFF',
-  yellow: '#F2CA45',
+  yellow: '#F9CA03',
+  yellowLight: '#F9CA0356',
   accentColor: '#D9D9D9',
   tertiaryColor: '#BABABA',
   errorColor: '#DB0032',
@@ -59,6 +60,7 @@ export const TYPOGRAPHY = {
     LineHeight: 36,
     fontWeight: '500' as TextStyle['fontWeight'],
   },
+
   HEADLINE: {
     fontFamily: 'Poppins-Regular',
     fontSize: normalizeFont(20),
