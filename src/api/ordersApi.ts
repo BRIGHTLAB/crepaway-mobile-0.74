@@ -77,6 +77,11 @@ export interface Order {
   estimated_arrival: string;
   schedule_order: number;
   schedule_date: string | null;
+  food_rating: number | null;
+  experience_rating: number | null;
+  service_rating: number | null;
+  review_comment: string | null;
+
 }
 
 export type OrdersResponse = {

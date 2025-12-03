@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -14,9 +14,11 @@ import Icon_Arrow_Right from '../../assets/SVG/Icon_Arrow_Right';
 import Icon_Location from '../../assets/SVG/Icon_Location';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
 import Icon_Spine from '../../assets/SVG/Icon_Spine';
+import Icon_Star from '../../assets/SVG/Icon_Star';
 import { Order, OrderItem, useGetOrdersQuery } from '../api/ordersApi';
 import HeaderShadow from '../components/HeaderShadow';
 import Item from '../components/Order/Item';
+import OrderRatingPopup from '../components/Popups/OrderRatingPopup';
 import Button from '../components/UI/Button';
 import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
 import { COLORS, SCREEN_PADDING } from '../theme';
@@ -25,11 +27,13 @@ const OrderComponent = React.memo(
   ({
     item,
     onTrackOrder,
+    onRateOrder,
     // onReorder,
     sectionTitle,
   }: {
     item: Order;
     onTrackOrder: (order: Order) => void;
+    onRateOrder: (order: Order) => void;
     // onReorder: (order: Order) => void;
     sectionTitle: string;
   }) => {
@@ -95,15 +99,14 @@ const OrderComponent = React.memo(
           initialNumToRender={5}
         />
 
-        {/* Reorder button temporarily disabled
-        {sectionTitle === 'Past Orders' ? (
+        {sectionTitle === 'Past Orders' && (
           <Button
             iconPosition="left"
-            icon={<Icon_Refresh color={'#FFF'} />}
-            onPress={() => onReorder(item)}>
-            Re-order
+            icon={<Icon_Star width={20} height={20} color={COLORS.white} />}
+            onPress={() => onRateOrder(item)}>
+            {item.rating ? 'View Rating' : 'Rate Order'}
           </Button>
-        ) : ( */}
+        )}
         {sectionTitle === 'Ongoing Orders' && item?.status?.key !== 'delivered' && (
           <Button
             iconPosition="left"
@@ -112,7 +115,6 @@ const OrderComponent = React.memo(
             Track Order
           </Button>
         )}
-        {/* )} */}
       </View>
     );
   },
@@ -144,11 +146,24 @@ const OrdersScreen = () => {
     pollingInterval: 2000,
   });
 
+  const [ratingPopupVisible, setRatingPopupVisible] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
   const handleTrackOrder = useCallback((order: Order) => {
     navigation.navigate('TrackOrder', {
       orderId: order.id,
       order_type: order.order_type,
     });
+  }, []);
+
+  const handleRateOrder = useCallback((order: Order) => {
+    setSelectedOrder(order);
+    setRatingPopupVisible(true);
+  }, []);
+
+  const handleCloseRatingPopup = useCallback(() => {
+    setRatingPopupVisible(false);
+    setSelectedOrder(null);
   }, []);
 
   // const handleReorder = useCallback((order: Order) => {
@@ -161,12 +176,13 @@ const OrdersScreen = () => {
         <OrderComponent
           item={item}
           onTrackOrder={handleTrackOrder}
+          onRateOrder={handleRateOrder}
           // onReorder={handleReorder}
           sectionTitle={section.title}
         />
       );
     },
-    [handleTrackOrder],
+    [handleTrackOrder, handleRateOrder],
   );
 
   const keyExtractor = useCallback((item: Order) => item.id.toString(), []);
@@ -285,6 +301,16 @@ const OrdersScreen = () => {
       <View style={{ paddingHorizontal: SCREEN_PADDING.horizontal, flex: 1 }}>
         {renderContent()}
       </View>
+
+      {selectedOrder && (
+        <OrderRatingPopup
+          visible={ratingPopupVisible}
+          onClose={handleCloseRatingPopup}
+          orderId={selectedOrder.id}
+          rating={selectedOrder.rating || null}
+          disabled={!!selectedOrder.rating}
+        />
+      )}
     </View>
   );
 };

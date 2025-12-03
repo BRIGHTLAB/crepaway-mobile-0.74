@@ -294,6 +294,7 @@ const TrackOrderScreen = () => {
   useEffect(() => {
     if (userState.orderType === 'delivery') {
       const socketInstance = SocketService.getInstance();
+
       socketInstance.connect(DRIVER_SOCKET_URL, {
         auth: userState.jwt || '',
       });
@@ -374,6 +375,7 @@ const TrackOrderScreen = () => {
       </Marker.Animated>
     );
   }, [driverLocation]);
+
 
   return (
     <View style={styles.container}>
