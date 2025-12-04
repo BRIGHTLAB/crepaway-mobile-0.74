@@ -156,7 +156,14 @@ const TableScreen = () => {
 
   const [orderedItems, setOrderedItems] = useState<OrderedItems>({});
   const [tableUsers, setTableUsers] = useState<TableUsers>({});
-  const [tableWaiters, setTableWaiters] = useState<TableWaiters>({});
+  const [tableWaiters, setTableWaiters] = useState<TableWaiters>({
+    1: {
+      id: 1,
+      name: 'Waiter 1',
+      image_url: 'https://placehold.co/200x200/png',
+      isOnline: true,
+    }
+  });
   const [bannedUsers, setBannedUsers] = useState<TableBannedUsers>({});
   const [showBannedPopup, setShowBannedPopup] = useState(false);
   const [showTableClosedPopup, setShowTableClosedPopup] = useState(false);
@@ -497,9 +504,17 @@ const TableScreen = () => {
           contentContainerStyle={styles.waitersList}
           ItemSeparatorComponent={() => <View style={styles.waiterSeparator} />}
         />
-        <TouchableOpacity onPress={handleLeaveTable}>
-          <Icon_Sign_Out color={COLORS.white} />
-        </TouchableOpacity>
+        <View style={styles.roundedButtonContainer}>
+          <TouchableOpacity style={styles.roundedButton} onPress={handleLeaveTable}>
+            <Icon_Sign_Out />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.roundedButton} onPress={handleLeaveTable}>
+            <Icon_Sign_Out />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.roundedButton} onPress={handleLeaveTable}>
+            <Icon_Sign_Out />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Main Content View */}
@@ -599,6 +614,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: SCREEN_PADDING.horizontal,
     gap: 10,
   },
+  roundedButtonContainer: {
+    gap: 6,
+    flexDirection: 'row',
+  },
+  roundedButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    padding: 10,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   headerTitle: {
     ...TYPOGRAPHY.HEADLINE,
     color: COLORS.white,
@@ -612,16 +640,17 @@ const styles = StyleSheet.create({
   waiterContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
     paddingVertical: 4,
   },
   waiterImage: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    marginRight: 12,
   },
   waiterText: {
-    ...TYPOGRAPHY.BODY,
+    ...TYPOGRAPHY.SUB_HEADLINE,
+    fontFamily: 'Poppins-Medium',
     color: 'white',
   },
   mainContent: {
@@ -631,6 +660,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     paddingBottom: 70, // Space for the order button
     overflow: 'hidden', // Ensure content doesn't overflow the rounded corners
+    gap: 30,
   },
   usersListWrapper: {
     backgroundColor: COLORS.white,

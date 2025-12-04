@@ -92,7 +92,7 @@ const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Prop
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Ordered Items</Text>
+      <Text style={styles.sectionTitle}>Ordered items</Text>
       <FlatList
         data={Object.entries(items).map(([key, value]) => ({
           ...value,
@@ -150,9 +150,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
   },
   sectionTitle: {
-    ...TYPOGRAPHY.HEADLINE,
+    ...TYPOGRAPHY.SUB_HEADLINE,
     paddingHorizontal: SCREEN_PADDING.horizontal,
-    paddingVertical: 8,
+    fontFamily: 'Poppins-Medium',
+    color: COLORS.black,
     backgroundColor: COLORS.white,
   },
   contentContainer: {

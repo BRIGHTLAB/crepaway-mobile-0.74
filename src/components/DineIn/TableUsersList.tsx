@@ -9,8 +9,10 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
+import Icon_Crown from '../../../assets/SVG/Icon_Crown';
 import { TableBannedUsers, TableUser, TableUsers } from '../../screens/TableScreen';
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../../theme';
+import { normalizeFont } from '../../utils/normalizeFonts';
 import DynamicPopup from '../UI/DynamicPopup';
 
 // Helper component for user images with placeholder
@@ -123,7 +125,7 @@ const TableUsersList = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Table Users</Text>
+      <Text style={styles.sectionTitle}>People at the same table</Text>
       <FlatList
         data={[
           ...Object.values(users).map(user => ({ ...user, type: 'user' as const })),
@@ -244,41 +246,46 @@ const UserItem = ({ isUserPending, user, isCurrentUserKing, onPress }: {
           styles.userImageContainer,
           {
             overflow: 'visible',
-          }
+          },
         ]}>
-        <UserImage
-          imageUrl={user.image_url}
-          name={user.name}
-          style={styles.userImage}
-        />
-
-        {/* Status indicator (online/offline) */}
-        <View
-          style={[
-            styles.statusIndicator,
-            user.isOnline ? styles.onlineStatus : styles.offlineStatus,
-          ]}
-        />
-
-        {/* Crown for king/admin user */}
+        {/* Crown for king/admin user (normal flow, centered, with 5px gap) */}
         {user.isKing && (
           <View style={styles.crownContainer}>
-            <Text style={styles.crownIcon}>👑</Text>
+            <Icon_Crown />
           </View>
         )}
 
-        {/* Ping animation for pending users */}
-        {isUserPending && (
-          <PingAnimation />
-        )}
+        {/* Avatar and ping animation */}
+        <View style={styles.avatarWrapper}>
+          {isUserPending && (
+            <PingAnimation />
+          )}
+          <UserImage
+            imageUrl={user.image_url}
+            name={user.name}
+            style={[
+              styles.userImage,
+              {
+                borderColor: user.isOnline ? '#5EB524' : '#C7C7C7',
+              },
+            ]}
+          />
+        </View>
       </Animated.View>
 
-      <Text style={[
-        styles.userName,
-        isUserPending && styles.pendingUserName
-      ]} numberOfLines={2}>
-        {user.name}
-      </Text>
+      {/* Single-line name: truncates with ellipsis if wider than 90px */}
+      <View style={styles.userNameWrapper}>
+        <Text
+          style={[
+            styles.userName,
+            isUserPending && styles.pendingUserName
+          ]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {user.name}
+        </Text>
+      </View>
     </TouchableOpacity>
   );
 };
@@ -376,19 +383,23 @@ export default TableUsersList;
 const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.white,
+    gap: 5,
   },
   sectionTitle: {
-    ...TYPOGRAPHY.HEADLINE,
+    ...TYPOGRAPHY.SUB_HEADLINE,
+    fontFamily: 'Poppins-Medium',
+    color: COLORS.black,
     paddingHorizontal: SCREEN_PADDING.horizontal,
-    paddingVertical: 16,
+    marginTop: 30
   },
   listContent: {
     paddingHorizontal: SCREEN_PADDING.horizontal,
   },
   userContainer: {
     alignItems: 'center',
-    marginRight: 20,
-    width: 70,
+    marginRight: 30,
+    // Max width for each user item
+    width: 90,
     // Ensure no overflow clipping
     overflow: 'visible',
   },
@@ -400,34 +411,39 @@ const styles = StyleSheet.create({
     position: 'relative',
     // Ensure badges and animations are visible
     overflow: 'visible',
-    // Add some padding to accommodate the scaling animation
-    padding: 8,
+    // Add extra top padding to make room for the crown inside the container
+    paddingTop: 8,
+    paddingHorizontal: 8,
+    paddingBottom: 8,
+    alignItems: 'center',
   },
   userImage: {
     width: 50,
     aspectRatio: 1 / 1,
     borderRadius: 25,
+    borderWidth: 3,
+    borderColor: 'transparent',
   },
-  statusIndicator: {
-    position: 'absolute',
-    bottom: 8, // Adjusted for the new padding
-    right: 8,  // Adjusted for the new padding
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: COLORS.borderColor,
-  },
-  onlineStatus: {
-    backgroundColor: '#4CAF50', // Green for online
-  },
-  offlineStatus: {
-    backgroundColor: '#9E9E9E', // Grey for offline
+  avatarWrapper: {
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+    // Keep avatar in the same vertical position whether or not there is a crown
+    marginTop: 5,
   },
   userName: {
-    ...TYPOGRAPHY.TAGS,
+    fontSize: normalizeFont(12),
     textAlign: 'center',
-    marginTop: 8,
+    fontFamily: 'Poppins-Medium',
+    fontWeight: '500',
+    color: '#555B62',
+    // Make the text span the full available width
+    width: '100%',
+  },
+  userNameWrapper: {
+    // Constrain the name area to a maximum of 90px
+    width: 90,
+    alignItems: 'center',
   },
   pendingUserName: {
     color: COLORS.primaryColor, // Orange text for pending users
@@ -435,8 +451,11 @@ const styles = StyleSheet.create({
   },
   crownContainer: {
     position: 'absolute',
-    top: 3,  // Adjusted for the new padding
-    left: 3, // Adjusted for the new padding
+    top: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: 'transparent',
   },
   crownIcon: {
