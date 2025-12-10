@@ -1,12 +1,8 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Icon_Spine from '../../../assets/SVG/Icon_Spine';
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../../theme';
-
-interface TabType {
-  label: string;
-  value: string;
-}
+import SegmentedControl, { TabType } from '../UI/SegmentedControl';
 
 interface PointsData {
   id: number;
@@ -41,41 +37,11 @@ const TrackYourPoints: React.FC<TrackYourPointsProps> = ({
       <Text style={styles.title}>Track your points</Text>
 
       {/* Segmented Control */}
-      <View style={styles.segmentedControlContainer}>
-        {tabs.map((tab, index) => {
-          const isSelected = selectedTab.value === tab.value;
-          const isFirst = index === 0;
-          const isLast = index === tabs.length - 1;
-
-          return (
-            <>
-              <TouchableOpacity
-                key={tab.value}
-                style={[
-                  styles.segmentButton,
-                  isSelected && styles.segmentButtonSelected,
-                  isFirst && { borderTopLeftRadius: 5, borderBottomLeftRadius: 5 },
-                  isLast && { borderTopRightRadius: 5, borderBottomRightRadius: 5 }
-                ]}
-                activeOpacity={0.9}
-                onPress={() => setSelectedTab(tab)}
-              >
-                <Text style={[
-                  styles.segmentButtonText,
-                  isSelected && styles.segmentButtonTextSelected
-                ]}>
-                  {tab.label}
-                </Text>
-              </TouchableOpacity>
-              {!isLast && <View style={{
-                width: 1,
-                height: '100%',
-                backgroundColor: COLORS.borderColor,
-              }} />}
-            </>
-          );
-        })}
-      </View>
+      <SegmentedControl
+        tabs={tabs}
+        selectedTab={selectedTab}
+        onTabChange={setSelectedTab}
+      />
 
       {/* Three Lists Container */}
       <View style={styles.listsContainer}>
@@ -144,30 +110,6 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.TITLE,
     color: COLORS.white,
     textAlign: 'center',
-  },
-  segmentedControlContainer: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.white,
-    borderRadius: 5,
-    overflow: 'hidden',
-  },
-  segmentButton: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.white,
-  },
-  segmentButtonSelected: {
-    backgroundColor: COLORS.primaryColor,
-  },
-  segmentButtonText: {
-    ...TYPOGRAPHY.BODY,
-    color: COLORS.darkColor,
-    fontFamily: 'Poppins-Medium',
-  },
-  segmentButtonTextSelected: {
-    color: COLORS.white,
   },
   listsContainer: {
     flexDirection: 'row',
