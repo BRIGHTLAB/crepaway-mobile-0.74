@@ -34,7 +34,8 @@ import Animated, {
   useSharedValue
 } from "react-native-reanimated";
 import CustomHeader from '../components/Header';
-import { COLORS } from '../theme';
+import LoyaltyProgressCard from '../components/Loyalty/LoyaltyProgressCard';
+import { COLORS, SCREEN_PADDING } from '../theme';
 
 const { width } = Dimensions.get("window");
 const BANNER_HEIGHT = 350;
@@ -253,6 +254,31 @@ const HomeScreen = () => {
             }}
           />
 
+          {/* Loyalty  Tier Progress */}
+
+
+          <View style={{
+            paddingHorizontal: SCREEN_PADDING.horizontal,
+
+          }}>
+            <LoyaltyProgressCard
+              tierName="Gold"
+              totalDashes={10}
+              filledDashes={5}
+              progressColor="#FFD700"
+              description="Complete 9 more orders this month maintain Gold in November"
+              pointsCount="372K"
+              pointsUnit="Pts"
+              scrollY={scrollY}
+              onPress={() => {
+                navigation.navigate('Loyalty');
+              }}
+            />
+          </View>
+
+
+
+          {/* Featured Items */}
           <ItemsList
             isLoading={isLoading}
             title="Featured Items"
