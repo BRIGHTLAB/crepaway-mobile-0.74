@@ -1,5 +1,5 @@
 import React from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import Animated, { interpolate, SharedValue, useAnimatedStyle } from 'react-native-reanimated'
 import Icon_Arrow_Right from '../../../assets/SVG/Icon_Arrow_Right'
 import Icon_Handbag from '../../../assets/SVG/Icon_Handbag'
@@ -14,6 +14,7 @@ interface RewardTierCardProps {
     orders: number
     color: string
     scrollY?: SharedValue<number>
+    onPress?: () => void
 }
 
 const RewardTierCard: React.FC<RewardTierCardProps> = ({
@@ -22,6 +23,7 @@ const RewardTierCard: React.FC<RewardTierCardProps> = ({
     orders,
     color,
     scrollY,
+    onPress,
 }) => {
     // Animated style for first right spine - rotate clockwise
     const rightSpine1Style = useAnimatedStyle(() => {
@@ -55,8 +57,8 @@ const RewardTierCard: React.FC<RewardTierCardProps> = ({
         }
     })
 
-    return (
-        <View style={styles.container}>
+    const CardContent = (
+        <>
             {/* absolute spines with rotation animation on the right side */}
             <Animated.View style={[styles.spineRight1Container, rightSpine1Style]}>
                 <Icon_Spine width={400} height={400} opacity={1} color={'#EAEAEA'} />
@@ -73,6 +75,24 @@ const RewardTierCard: React.FC<RewardTierCardProps> = ({
                 <RewardTierLabelValue label="Orders" value={orders.toString()} icon={<Icon_Handbag />} />
                 <Icon_Arrow_Right width={24} height={24} color={COLORS.black} style={{ marginLeft: 'auto' }} />
             </View>
+        </>
+    )
+
+    if (onPress) {
+        return (
+            <TouchableOpacity
+                style={styles.container}
+                onPress={onPress}
+                activeOpacity={0.8}
+            >
+                {CardContent}
+            </TouchableOpacity>
+        )
+    }
+
+    return (
+        <View style={styles.container}>
+            {CardContent}
         </View>
     )
 }

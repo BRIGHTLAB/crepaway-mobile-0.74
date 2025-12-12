@@ -4,11 +4,26 @@ import { COLORS, TYPOGRAPHY } from '../../theme'
 
 type Props = {
     label: string
-    value: string
+    value: string | string[]
     icon: React.ReactNode
 }
 
 const RewardTierLabelValue = ({ label, value, icon }: Props) => {
+    const renderValue = () => {
+        if (Array.isArray(value)) {
+            return (
+                <View style={styles.arrayContainer}>
+                    {value.map((item, index) => (
+                        <Text key={index} style={[styles.value, styles.bulletPoint]}>
+                            • {item}
+                        </Text>
+                    ))}
+                </View>
+            )
+        }
+        return <Text style={styles.value}>{value}</Text>
+    }
+
     return (
         <View style={styles.container}>
             <View style={{
@@ -18,7 +33,7 @@ const RewardTierLabelValue = ({ label, value, icon }: Props) => {
             </View>
             <View style={styles.textContainer}>
                 <Text style={styles.label}>{label}</Text>
-                <Text style={styles.value}>{value}</Text>
+                {renderValue()}
             </View>
         </View>
     )
@@ -45,5 +60,11 @@ const styles = StyleSheet.create({
     value: {
         ...TYPOGRAPHY.BODY,
         color: COLORS.black,
+    },
+    arrayContainer: {
+        gap: 4,
+    },
+    bulletPoint: {
+        marginTop: 2,
     },
 })

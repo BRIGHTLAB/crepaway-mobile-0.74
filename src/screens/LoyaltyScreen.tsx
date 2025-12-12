@@ -1,11 +1,12 @@
 import { useNavigation } from '@react-navigation/native';
-import React from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View, ViewToken } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import LoyaltyProgressCard from '../components/Loyalty/LoyaltyProgressCard';
 import RedeemPointsComponent from '../components/Loyalty/RedeemPointsComponent';
 import RewardTierCard from '../components/Loyalty/RewardTierCard';
+import RewardTierPopup from '../components/Loyalty/RewardTierPopup';
 import TrackYourPoints from '../components/Loyalty/TrackYourPoints';
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
 import { normalizeFont } from '../utils/normalizeFonts';
@@ -13,13 +14,28 @@ import { normalizeFont } from '../utils/normalizeFonts';
 const LoyaltyScreen = () => {
   const navigation = useNavigation<any>();
   const rewardTiers = [
-    { id: 1, tierName: 'Bronze', earnedPoints: 500, orders: 100, color: '#CD9302' },
-    { id: 2, tierName: 'Silver', earnedPoints: 1000, orders: 200, color: '#C0C0C0' },
-    { id: 3, tierName: 'Gold', earnedPoints: 2500, orders: 500, color: '#FFD700' },
-    { id: 4, tierName: 'Platinum', earnedPoints: 5000, orders: 1000, color: '#E5E4E2' },
+    { id: 1, tierName: 'Bronze', earnedPoints: 500, orders: 100, pointsRedemption: "Available", color: '#CD9302', benefits: ["Free Half Appetizer from selected section with every order", "Free returns", "Free shipping"] },
+    { id: 2, tierName: 'Silver', earnedPoints: 1000, orders: 200, pointsRedemption: "Available", color: '#C0C0C0', benefits: ["Free delivery", "Free returns", "Free shipping"] },
+    { id: 3, tierName: 'Gold', earnedPoints: 2500, orders: 500, pointsRedemption: "Available", color: '#FFD700', benefits: ["Free delivery", "Free returns", "Free shipping"] },
+    { id: 4, tierName: 'Platinum', earnedPoints: 5000, orders: 1000, pointsRedemption: "Available", color: '#E5E4E2', benefits: ["Free delivery", "Free returns", "Free shipping"] },
   ];
 
+  const [selectedTier, setSelectedTier] = useState<typeof rewardTiers[0] | null>(null);
+  const [activeTierIndex, setActiveTierIndex] = useState(0);
+
   const scrollY = useSharedValue(0);
+
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: Array<ViewToken> }) => {
+      if (viewableItems && viewableItems.length > 0 && viewableItems[0].index != null) {
+        setActiveTierIndex(viewableItems[0].index);
+      }
+    },
+  );
+
+  const viewabilityConfig = useRef({
+    viewAreaCoveragePercentThreshold: 60,
+  });
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       scrollY.value = event.contentOffset.y;
@@ -100,6 +116,9 @@ const LoyaltyScreen = () => {
               earnedPoints={item.earnedPoints}
               orders={item.orders}
               color={item.color}
+              onPress={() => {
+                setSelectedTier(item);
+              }}
             />
           )}
           horizontal
@@ -112,7 +131,22 @@ const LoyaltyScreen = () => {
             gap: 20,
             paddingHorizontal: SCREEN_PADDING.horizontal,
           }}
+          onViewableItemsChanged={onViewableItemsChanged.current}
+          viewabilityConfig={viewabilityConfig.current}
         />
+
+        {/* Pagination dots */}
+        <View style={styles.paginationContainer}>
+          {rewardTiers.map((tier, index) => (
+            <View
+              key={tier.id}
+              style={[
+                styles.paginationDot,
+                index === activeTierIndex && styles.paginationDotActive,
+              ]}
+            />
+          ))}
+        </View>
 
         {/*  Track your points  */}
         <TrackYourPoints
@@ -137,6 +171,22 @@ const LoyaltyScreen = () => {
         </View>
 
       </View>
+
+      {/* Reward Tier Popup */}
+      {selectedTier && (
+        <RewardTierPopup
+          visible={!!selectedTier}
+          onClose={() => {
+            setSelectedTier(null);
+          }}
+          tierName={selectedTier.tierName}
+          earnedPoints={selectedTier.earnedPoints}
+          orders={selectedTier.orders}
+          pointsRedemption={selectedTier.pointsRedemption}
+          benefits={selectedTier.benefits}
+          color={selectedTier.color}
+        />
+      )}
     </Animated.ScrollView>
   );
 };
@@ -192,5 +242,24 @@ const styles = StyleSheet.create({
     fontSize: normalizeFont(24),
     textAlign: 'center',
     color: COLORS.white,
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 18,
+  },
+  paginationDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.borderColor,
+  },
+  paginationDotActive: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: COLORS.primaryColor,
   },
 });
