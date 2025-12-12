@@ -29,6 +29,7 @@ export const INPUT_HEIGHT = 53;
 
 // export const BASE_URL = 'https://17dc1dd6f6aa.ngrok-free.app/api/app';
 export const BASE_URL = 'https://dev.staging-api.thenewexperience.app/api/app';
+export const LOYALTY_BASE_URL = 'https://crepaway.api.grantloyalty.com/api/';
 
 export const API_MAP_KEY = 'AIzaSyA0IxviANpXAl-sTNcYjH1zU5cjgXimKuk';
 export const DRIVER_SOCKET_URL = 'wss://dev.realtime.driver-tracking.com';
