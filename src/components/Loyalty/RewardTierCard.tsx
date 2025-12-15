@@ -71,8 +71,8 @@ const RewardTierCard: React.FC<RewardTierCardProps> = ({
                 {tierName}
             </Text>
             <View style={styles.labelValueContainer}>
-                <RewardTierLabelValue label="Earned points" value={earnedPoints.toString()} icon={<Icon_Wavy />} />
-                <RewardTierLabelValue label="Orders" value={orders.toString()} icon={<Icon_Handbag />} />
+                <RewardTierLabelValue label="Earned points" value={earnedPoints?.toString()} icon={<Icon_Wavy />} />
+                <RewardTierLabelValue label="Orders" value={orders?.toString()} icon={<Icon_Handbag />} />
                 <Icon_Arrow_Right width={24} height={24} color={COLORS.black} style={{ marginLeft: 'auto' }} />
             </View>
         </>

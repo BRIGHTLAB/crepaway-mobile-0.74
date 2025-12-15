@@ -3,7 +3,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { useDispatch } from 'react-redux';
 import { persistReducer } from 'redux-persist';
 import persistStore from 'redux-persist/es/persistStore';
-import { baseApi } from '../api/baseApi';
+import { baseApi, loyaltyBaseApi } from '../api/baseApi';
 import { s3BaseApi } from '../api/s3UploaderApi';
 import cartMiddleware from './middleware/cartMiddleware';
 import cartReducer from './slices/cartSlice';
@@ -31,6 +31,7 @@ const persistedCartReducer = persistReducer(cartPersistConfig, cartReducer);
 const store = configureStore({
   reducer: {
     [baseApi.reducerPath]: baseApi.reducer,
+    [loyaltyBaseApi.reducerPath]: loyaltyBaseApi.reducer,
     [s3BaseApi.reducerPath]: s3BaseApi.reducer,
     user: persistedUserReducer,
     cart: persistedCartReducer,
@@ -41,7 +42,7 @@ const store = configureStore({
     getDefaultMiddleware({
       immutableCheck: false,
       serializableCheck: false,
-    }).concat(baseApi.middleware, cartMiddleware),
+    }).concat(baseApi.middleware, loyaltyBaseApi.middleware, cartMiddleware),
 });
 
 export const persistor = persistStore(store);

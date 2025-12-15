@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View, ViewToken } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import { useGetTiersQuery } from '../api/loyaltyApi';
 import LoyaltyProgressCard from '../components/Loyalty/LoyaltyProgressCard';
 import RedeemPointsComponent from '../components/Loyalty/RedeemPointsComponent';
 import RewardTierCard from '../components/Loyalty/RewardTierCard';
@@ -13,14 +14,9 @@ import { normalizeFont } from '../utils/normalizeFonts';
 
 const LoyaltyScreen = () => {
   const navigation = useNavigation<any>();
-  const rewardTiers = [
-    { id: 1, tierName: 'Bronze', earnedPoints: 500, orders: 100, pointsRedemption: "Available", color: '#CD9302', benefits: ["Free Half Appetizer from selected section with every order", "Free returns", "Free shipping"] },
-    { id: 2, tierName: 'Silver', earnedPoints: 1000, orders: 200, pointsRedemption: "Available", color: '#C0C0C0', benefits: ["Free delivery", "Free returns", "Free shipping"] },
-    { id: 3, tierName: 'Gold', earnedPoints: 2500, orders: 500, pointsRedemption: "Available", color: '#FFD700', benefits: ["Free delivery", "Free returns", "Free shipping"] },
-    { id: 4, tierName: 'Platinum', earnedPoints: 5000, orders: 1000, pointsRedemption: "Available", color: '#E5E4E2', benefits: ["Free delivery", "Free returns", "Free shipping"] },
-  ];
+  const { data: rewardTiers = [], isLoading, error } = useGetTiersQuery();
 
-  const [selectedTier, setSelectedTier] = useState<typeof rewardTiers[0] | null>(null);
+  const [selectedTier, setSelectedTier] = useState<LoyaltyTier | null>(null);
   const [activeTierIndex, setActiveTierIndex] = useState(0);
 
   const scrollY = useSharedValue(0);
@@ -42,6 +38,8 @@ const LoyaltyScreen = () => {
     },
   });
 
+  console.log('rewardTiers', rewardTiers);
+
   return (
     <Animated.ScrollView
       showsVerticalScrollIndicator={false}
@@ -55,7 +53,6 @@ const LoyaltyScreen = () => {
             activeOpacity={0.8}
             onPress={() => {
               navigation.navigate('LoyaltyInfo')
-              console.log('weiaewaekwoewakoewakoewakoewkoekoako')
             }}
           >
             <Text style={styles.infoButtonText}>i</Text>
@@ -107,46 +104,50 @@ const LoyaltyScreen = () => {
 
         </View>
         {/* Reward tiers list */}
-        <FlatList
-          data={rewardTiers}
-          renderItem={({ item }) => (
-            <RewardTierCard
-              scrollY={scrollY}
-              tierName={item.tierName}
-              earnedPoints={item.earnedPoints}
-              orders={item.orders}
-              color={item.color}
-              onPress={() => {
-                setSelectedTier(item);
+        {!isLoading && rewardTiers.length > 0 && (
+          <>
+            <FlatList
+              data={rewardTiers}
+              renderItem={({ item }) => (
+                <RewardTierCard
+                  scrollY={scrollY}
+                  tierName={item.name}
+                  earnedPoints={item.extras.earned_points}
+                  orders={item.extras.orders}
+                  color={item.extras.color}
+                  onPress={() => {
+                    setSelectedTier(item);
+                  }}
+                />
+              )}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id.toString()}
+              style={{
+                marginTop: 22
               }}
+              contentContainerStyle={{
+                gap: 20,
+                paddingHorizontal: SCREEN_PADDING.horizontal,
+              }}
+              onViewableItemsChanged={onViewableItemsChanged.current}
+              viewabilityConfig={viewabilityConfig.current}
             />
-          )}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.id.toString()}
-          style={{
-            marginTop: 22
-          }}
-          contentContainerStyle={{
-            gap: 20,
-            paddingHorizontal: SCREEN_PADDING.horizontal,
-          }}
-          onViewableItemsChanged={onViewableItemsChanged.current}
-          viewabilityConfig={viewabilityConfig.current}
-        />
 
-        {/* Pagination dots */}
-        <View style={styles.paginationContainer}>
-          {rewardTiers.map((tier, index) => (
-            <View
-              key={tier.id}
-              style={[
-                styles.paginationDot,
-                index === activeTierIndex && styles.paginationDotActive,
-              ]}
-            />
-          ))}
-        </View>
+            {/* Pagination dots */}
+            <View style={styles.paginationContainer}>
+              {rewardTiers.map((tier, index) => (
+                <View
+                  key={tier.id}
+                  style={[
+                    styles.paginationDot,
+                    index === activeTierIndex && styles.paginationDotActive,
+                  ]}
+                />
+              ))}
+            </View>
+          </>
+        )}
 
         {/*  Track your points  */}
         <TrackYourPoints
@@ -179,12 +180,12 @@ const LoyaltyScreen = () => {
           onClose={() => {
             setSelectedTier(null);
           }}
-          tierName={selectedTier.tierName}
-          earnedPoints={selectedTier.earnedPoints}
-          orders={selectedTier.orders}
-          pointsRedemption={selectedTier.pointsRedemption}
-          benefits={selectedTier.benefits}
-          color={selectedTier.color}
+          tierName={selectedTier.name}
+          earnedPoints={selectedTier.extras.earned_points}
+          orders={selectedTier.extras.orders}
+          pointsRedemption={selectedTier.extras.points_redemption}
+          benefits={selectedTier.extras.benefits}
+          color={selectedTier.extras.color}
         />
       )}
     </Animated.ScrollView>

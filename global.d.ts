@@ -258,3 +258,18 @@ interface Content {
   description: string | null;
 }
 
+// Loyalty
+
+interface LoyaltyTier {
+  id: number;
+  name: string;
+  threshold: number;
+  extras: {
+    earned_points: number;
+    orders: number;
+    points_redemption: string;
+    benefits: string[];
+    color: string;
+  }
+}
+
