@@ -201,9 +201,10 @@ const TrackOrderScreen = () => {
   // Debounce timer ref for driver location updates
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const isTakeaway = order_type
-    ? order_type === 'takeaway'
-    : userState.orderType === 'takeaway';
+  const isTakeaway = order_type === 'takeaway';
+  console.log('isTakeaway', isTakeaway);
+  console.log('userState.orderType', userState.orderType);
+  console.log('order_type', order_type);
 
   const { data: orderStatus, isLoading } = useGetOrderStatusQuery(orderId, {
     pollingInterval: 2000,
@@ -292,7 +293,7 @@ const TrackOrderScreen = () => {
   }, [userState.addressLatitude, userState.addressLongitude, initialMapLoad]);
 
   useEffect(() => {
-    if (userState.orderType === 'delivery') {
+    if (order_type === 'delivery') {
       const socketInstance = SocketService.getInstance();
 
       socketInstance.connect(DRIVER_SOCKET_URL, {
@@ -450,7 +451,7 @@ const TrackOrderScreen = () => {
                 style={{
                   marginTop: 12,
                 }}>
-                Estimated {userState.orderType === 'delivery' ? 'arrival' : 'preparation time'}: {memoizedOrderStatus?.estimated_delivery_time} min
+                Estimated {order_type === 'delivery' ? 'arrival' : 'preparation time'}: {memoizedOrderStatus?.estimated_delivery_time} min
               </Text>
             }
           />
