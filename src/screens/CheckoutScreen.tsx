@@ -21,7 +21,7 @@ import DateInput from '../components/UI/DateInput';
 import DynamicPopup from '../components/UI/DynamicPopup';
 import RadioButton from '../components/UI/RadioButton';
 import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
-import { clearCart, setPromoCode as setPromoCodeAction } from '../store/slices/cartSlice';
+import { clearCart, setDeliveryInstructions as setDeliveryInstructionsAction, setPromoCode as setPromoCodeAction, setScheduleOrder as setScheduleOrderAction, setScheduledDateTime as setScheduledDateTimeAction, setSendCutlery as setSendCutleryAction } from '../store/slices/cartSlice';
 import { RootState, useAppDispatch } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
 
@@ -34,20 +34,24 @@ const CheckoutScreen = () => {
   const dispatch = useAppDispatch();
   const user = useSelector((state: RootState) => state.user);
   const cart = useSelector((state: RootState) => state.cart);
-  const [scheduleOrder, setScheduleOrder] = React.useState<string | null>('no');
-  const [scheduledDateTime, setScheduledDateTime] = React.useState<
-    Date | undefined
-  >(undefined);
+
+  // Use Redux state for persisted values
+  const scheduleOrder = cart.scheduleOrder || 'no';
+  const scheduledDateTime = cart.scheduledDateTime ? new Date(cart.scheduledDateTime) : undefined;
+
+  // Handler to update scheduledDateTime in Redux
+  const handleScheduledDateTimeChange = (date: Date) => {
+    dispatch(setScheduledDateTimeAction(date));
+  };
   const [promoCode, setPromoCode] = useState<string>(cart.promoCode || '');
   const [promoError, setPromoError] = useState<string | null>(null);
   const [debouncedPromoCode, setDebouncedPromoCode] = useState<string>(cart.promoCode || '');
-  const [deliveryInstructions, setDeliveryInstructions] = useState<
-    { id: number; title: string }[]
-  >([]);
-  const [specialDeliveryInstructions, setSpecialDeliveryInstructions] =
-    useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [sendCutlery, setSendCutlery] = useState<string>('no');
+
+  // Use Redux state for persisted values
+  const deliveryInstructions = cart.deliveryInstructions;
+  const specialDeliveryInstructions = cart.specialDeliveryInstructions;
+  const sendCutlery = cart.sendCutlery;
 
   const { bottom } = useSafeAreaInsets();
 
@@ -193,9 +197,10 @@ const CheckoutScreen = () => {
     instructions: { id: number; title: string }[],
     specialNotes: string,
   ) => {
-
-    setDeliveryInstructions(instructions);
-    setSpecialDeliveryInstructions(specialNotes);
+    dispatch(setDeliveryInstructionsAction({
+      instructions,
+      specialNotes,
+    }));
   };
 
   const handlePromoCodeChange = (code: string) => {
@@ -299,7 +304,7 @@ const CheckoutScreen = () => {
               <View style={{ gap: 16 }}>
                 <RadioButton
                   checked={scheduleOrder === 'no'}
-                  onPress={() => setScheduleOrder('no')}
+                  onPress={() => dispatch(setScheduleOrderAction('no'))}
                   title="No"
                   description={`Estimated ${user?.orderType === 'delivery' ? 'delivery' : 'pickup'
                     } time 00:30 Min`}
@@ -315,7 +320,7 @@ const CheckoutScreen = () => {
                     checked={scheduleOrder === 'yes'}
                     onPress={() => {
                       scheduleOrderRef?.current?.expand();
-                      setScheduleOrder('yes')
+                      dispatch(setScheduleOrderAction('yes'));
                     }}
                     title="Yes"
                     description={
@@ -343,14 +348,14 @@ const CheckoutScreen = () => {
                 <RadioButton
                   checked={sendCutlery === 'no'}
                   onPress={() => {
-                    setSendCutlery('no');
+                    dispatch(setSendCutleryAction('no'));
                   }}
                   title="No"
                 />
                 <RadioButton
                   checked={sendCutlery === 'yes'}
                   onPress={() => {
-                    setSendCutlery('yes');
+                    dispatch(setSendCutleryAction('yes'));
                   }}
                   title="Yes"
                 />
@@ -438,7 +443,7 @@ const CheckoutScreen = () => {
           <View style={styles.scheduleInputsContainer}>
             <DateInput
               value={scheduledDateTime}
-              onChange={setScheduledDateTime}
+              onChange={handleScheduledDateTimeChange}
               mode="datetime"
               placeholder="Select Date and Time"
               minimumDate={getMinimumDate()}

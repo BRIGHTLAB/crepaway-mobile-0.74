@@ -39,11 +39,21 @@ interface ModifierItem {
   symbol?: string;
 }
 
+export interface DeliveryInstruction {
+  id: number;
+  title: string;
+}
+
 interface ICart {
   items: { [uuid: string]: CartItem };
   orderType: OrderType['alias'] | null;
   branchName: string | null;
   promoCode: string | null;
+  deliveryInstructions: DeliveryInstruction[];
+  specialDeliveryInstructions: string;
+  sendCutlery: string;
+  scheduleOrder: string | null;
+  scheduledDateTime: string | null; // Stored as ISO string for serialization
   loading: boolean;
   error: string | null;
   isSyncing: boolean;
@@ -78,6 +88,11 @@ const initialState: ICart = {
   orderType: null,
   branchName: null,
   promoCode: null,
+  deliveryInstructions: [],
+  specialDeliveryInstructions: '',
+  sendCutlery: 'no',
+  scheduleOrder: 'no',
+  scheduledDateTime: null,
   isSyncing: false,
 };
 
@@ -153,6 +168,11 @@ const cartSlice = createSlice({
         ...state,
         items: {},
         promoCode: null,
+        deliveryInstructions: [],
+        specialDeliveryInstructions: '',
+        sendCutlery: 'no',
+        scheduleOrder: 'no',
+        scheduledDateTime: null,
       };
     },
     setCartFromFetch: (
@@ -190,6 +210,37 @@ const cartSlice = createSlice({
       return {
         ...state,
         promoCode: action.payload,
+      };
+    },
+    setDeliveryInstructions: (
+      state,
+      action: PayloadAction<{
+        instructions: DeliveryInstruction[];
+        specialNotes: string;
+      }>,
+    ) => {
+      return {
+        ...state,
+        deliveryInstructions: action.payload.instructions,
+        specialDeliveryInstructions: action.payload.specialNotes,
+      };
+    },
+    setSendCutlery: (state, action: PayloadAction<string>) => {
+      return {
+        ...state,
+        sendCutlery: action.payload,
+      };
+    },
+    setScheduleOrder: (state, action: PayloadAction<string | null>) => {
+      return {
+        ...state,
+        scheduleOrder: action.payload,
+      };
+    },
+    setScheduledDateTime: (state, action: PayloadAction<Date | null>) => {
+      return {
+        ...state,
+        scheduledDateTime: action.payload ? action.payload.toISOString() : null,
       };
     },
   },
@@ -236,5 +287,9 @@ export const {
   setCartBranchName,
   setCartSyncing,
   setPromoCode,
+  setDeliveryInstructions,
+  setSendCutlery,
+  setScheduleOrder,
+  setScheduledDateTime,
 } = cartSlice.actions;
 export default cartSlice.reducer;
