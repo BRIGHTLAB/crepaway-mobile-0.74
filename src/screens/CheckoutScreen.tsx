@@ -313,7 +313,10 @@ const CheckoutScreen = () => {
                   }}>
                   <RadioButton
                     checked={scheduleOrder === 'yes'}
-                    onPress={() => setScheduleOrder('yes')}
+                    onPress={() => {
+                      scheduleOrderRef?.current?.expand();
+                      setScheduleOrder('yes')
+                    }}
                     title="Yes"
                     description={
                       scheduledDateTime
