@@ -153,8 +153,12 @@ const OrdersScreen = () => {
     navigation.navigate('TrackOrder', {
       orderId: order.id,
       order_type: order.order_type,
+      addressLatitude: order.address?.latitude,
+      addressLongitude: order.address?.longitude,
     });
   }, []);
+
+  console.log('ordersasd', orders);
 
   const handleRateOrder = useCallback((order: Order) => {
     setSelectedOrder(order);

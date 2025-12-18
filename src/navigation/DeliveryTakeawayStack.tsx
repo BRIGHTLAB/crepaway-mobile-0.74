@@ -60,7 +60,7 @@ export type DeliveryTakeawayStackParamList = {
   Notifications: undefined;
   Checkout: undefined;
   AddressMap: undefined;
-  TrackOrder: { orderId: number; order_type: string };
+  TrackOrder: { orderId: number; order_type: string; addressLatitude?: number; addressLongitude?: number };
   Profile: undefined;
   ProfileSettings: undefined;
   Addresses: undefined;
@@ -540,6 +540,8 @@ export type OrdersStackParamList = {
   TrackOrder: {
     orderId: number;
     order_type: string;
+    addressLatitude?: number;
+    addressLongitude?: number;
   };
 };
 

@@ -73,10 +73,13 @@ const OrderDetailsScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<DeliveryTakeawayStackParamList>>();
 
+  console.log('order.address?.latitude', order);
   const handleTrackOrder = useCallback((order: Order) => {
     navigation.navigate('TrackOrder', {
       orderId: order.id,
       order_type: order.order_type,
+      addressLatitude: order.address?.latitude,
+      addressLongitude: order.address?.longitude,
     });
   }, []);
 

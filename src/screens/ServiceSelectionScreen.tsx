@@ -24,7 +24,6 @@ import { useGetContentQuery } from '../api/dataApi';
 import { useGetOrderTypesQuery } from '../api/ordersApi';
 import SelectSheet from '../components/Sheets/SelectSheet';
 import DeliverySheet from '../components/Sheets/ServiceSelection/DeliverySheet';
-import TakeawaySheet from '../components/Sheets/ServiceSelection/TakeawaySheet';
 import Button from '../components/UI/Button';
 import Tabs from '../components/UI/Tabs';
 import { RootStackParamList } from '../navigation/NavigationStack';
@@ -120,7 +119,6 @@ const ServiceSelectionScreen = () => {
   const currentBackgroundRef = useRef<any>(null);
 
   const addressSheetRef = useRef<BottomSheet>(null);
-  const takeawaySheetRef = useRef<BottomSheet>(null);
   const branchesSheetRef = useRef<BottomSheet>(null);
 
   const navigation = useNavigation<NavigationProp>();
@@ -373,7 +371,7 @@ const ServiceSelectionScreen = () => {
           addressSheetRef.current?.expand();
           break;
         case 'takeaway':
-          takeawaySheetRef.current?.expand();
+          branchesSheetRef.current?.expand();
           break;
         case 'dine-in':
           dispatch(
@@ -409,13 +407,6 @@ const ServiceSelectionScreen = () => {
     },
     [dispatch, orderTypes, selectedIdx],
   );
-
-  const handleSelectPress = () => {
-    takeawaySheetRef.current?.close();
-    setTimeout(() => {
-      branchesSheetRef.current?.expand();
-    }, 200);
-  };
 
   return (
     <>
@@ -490,11 +481,6 @@ const ServiceSelectionScreen = () => {
       {showSheets && (
         <>
           <DeliverySheet ref={addressSheetRef} />
-          <TakeawaySheet
-            selectedBranch={userState.branchName}
-            ref={takeawaySheetRef}
-            onSelectPress={handleSelectPress}
-          />
           <SelectSheet
             ref={branchesSheetRef}
             value={selectedBranchId}

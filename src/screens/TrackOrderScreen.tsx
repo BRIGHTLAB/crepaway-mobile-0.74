@@ -177,7 +177,7 @@ const DriverHeader = ({ driver }: { driver: OrderStatusResponse['driver'] | null
 const TrackOrderScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const { orderId, order_type } = useRoute<OrderScreenRouteProps>().params;
+  const { orderId, order_type, addressLatitude, addressLongitude } = useRoute<OrderScreenRouteProps>().params;
 
   const [region, setRegion] = useState(INITIAL_REGION);
   const [driverLocation, setDriverLocation] = useState<LatLng | null>(null);
@@ -258,26 +258,30 @@ const TrackOrderScreen = () => {
     return orderStatus;
   }, [orderStatus?.status_history, orderStatus?.estimated_delivery_time, orderStatus?.driver]);
 
+
+  console.log('addressLatitude', addressLatitude);
+  console.log('addressLongitude', addressLongitude);
   // This effect will run when address coordinates change
   useEffect(() => {
-    // Only proceed if we have valid coordinates
+    // Only proceed if we have valid coordinates from props
     if (
-      userState.addressLatitude != null &&
-      userState.addressLongitude != null
+      addressLatitude != null &&
+      addressLongitude != null
     ) {
       // Create the new location
       const newAddressLocation = {
-        latitude: Number(userState.addressLatitude),
-        longitude: Number(userState.addressLongitude),
+        latitude: Number(addressLatitude),
+        longitude: Number(addressLongitude),
       };
 
       // Update address location state
       setAddressLocation(newAddressLocation);
 
+
       // Also update region with the new coordinates
       const newRegion = {
-        latitude: Number(userState.addressLatitude),
-        longitude: Number(userState.addressLongitude),
+        latitude: Number(addressLatitude),
+        longitude: Number(addressLongitude),
         latitudeDelta: 0.015,
         longitudeDelta: 0.0121,
       };
@@ -290,10 +294,10 @@ const TrackOrderScreen = () => {
         setRegion(newRegion);
       }
     }
-  }, [userState.addressLatitude, userState.addressLongitude, initialMapLoad]);
+  }, [addressLatitude, addressLongitude, initialMapLoad]);
 
   useEffect(() => {
-    if (order_type === 'delivery') {
+    if (!isTakeaway) {
       const socketInstance = SocketService.getInstance();
 
       socketInstance.connect(DRIVER_SOCKET_URL, {
