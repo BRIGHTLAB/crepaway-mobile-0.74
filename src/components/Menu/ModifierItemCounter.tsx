@@ -61,7 +61,6 @@ const styles = StyleSheet.create({
   pressable: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
   },
   checkbox: {
     width: 24,
