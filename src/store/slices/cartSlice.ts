@@ -43,6 +43,7 @@ interface ICart {
   items: { [uuid: string]: CartItem };
   orderType: OrderType['alias'] | null;
   branchName: string | null;
+  promoCode: string | null;
   loading: boolean;
   error: string | null;
   isSyncing: boolean;
@@ -76,6 +77,7 @@ const initialState: ICart = {
   error: null,
   orderType: null,
   branchName: null,
+  promoCode: null,
   isSyncing: false,
 };
 
@@ -150,6 +152,7 @@ const cartSlice = createSlice({
       return {
         ...state,
         items: {},
+        promoCode: null,
       };
     },
     setCartFromFetch: (
@@ -181,6 +184,12 @@ const cartSlice = createSlice({
       return {
         ...state,
         isSyncing: action.payload,
+      };
+    },
+    setPromoCode: (state, action: PayloadAction<string | null>) => {
+      return {
+        ...state,
+        promoCode: action.payload,
       };
     },
   },
@@ -226,5 +235,6 @@ export const {
   setCartOrderType,
   setCartBranchName,
   setCartSyncing,
+  setPromoCode,
 } = cartSlice.actions;
 export default cartSlice.reducer;

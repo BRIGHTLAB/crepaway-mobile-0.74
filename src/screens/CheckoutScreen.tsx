@@ -21,7 +21,7 @@ import DateInput from '../components/UI/DateInput';
 import DynamicPopup from '../components/UI/DynamicPopup';
 import RadioButton from '../components/UI/RadioButton';
 import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
-import { clearCart } from '../store/slices/cartSlice';
+import { clearCart, setPromoCode as setPromoCodeAction } from '../store/slices/cartSlice';
 import { RootState, useAppDispatch } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
 
@@ -31,20 +31,21 @@ const CheckoutScreen = () => {
 
   const deliveryInstructionRef = useRef<BottomSheetMethods | null>(null);
   const scheduleOrderRef = useRef<BottomSheetMethods | null>(null);
+  const dispatch = useAppDispatch();
+  const user = useSelector((state: RootState) => state.user);
+  const cart = useSelector((state: RootState) => state.cart);
   const [scheduleOrder, setScheduleOrder] = React.useState<string | null>('no');
   const [scheduledDateTime, setScheduledDateTime] = React.useState<
     Date | undefined
   >(undefined);
-  const [promoCode, setPromoCode] = useState<string>('');
+  const [promoCode, setPromoCode] = useState<string>(cart.promoCode || '');
   const [promoError, setPromoError] = useState<string | null>(null);
-  const [debouncedPromoCode, setDebouncedPromoCode] = useState<string>('');
+  const [debouncedPromoCode, setDebouncedPromoCode] = useState<string>(cart.promoCode || '');
   const [deliveryInstructions, setDeliveryInstructions] = useState<
     { id: number; title: string }[]
   >([]);
   const [specialDeliveryInstructions, setSpecialDeliveryInstructions] =
     useState<string>('');
-  const dispatch = useAppDispatch();
-  const user = useSelector((state: RootState) => state.user);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [sendCutlery, setSendCutlery] = useState<string>('no');
 
@@ -57,6 +58,14 @@ const CheckoutScreen = () => {
   const [placeOrder, { isLoading: isSubmitLoading, error: placeOrderError }] =
     usePlaceOrderMutation();
 
+  // Initialize promo code from persisted state on mount
+  useEffect(() => {
+    if (cart.promoCode) {
+      setPromoCode(cart.promoCode);
+      setDebouncedPromoCode(cart.promoCode);
+    }
+  }, []); // Only run on mount
+
   // Handle API errors from useGetCheckoutQuery
   useEffect(() => {
     if (getCheckoutError) {
@@ -65,6 +74,8 @@ const CheckoutScreen = () => {
           case 488:
             setPromoError('Invalid Promo Code');
             setDebouncedPromoCode('');
+            setPromoCode('');
+            dispatch(setPromoCodeAction(null));
             break;
           default:
             setErrorMessage((getCheckoutError?.data as any)?.message || 'Failed to load checkout data');
@@ -94,13 +105,16 @@ const CheckoutScreen = () => {
 
   const debouncedApplyPromo = useCallback(
     debounce((code: string) => {
-      setDebouncedPromoCode(code);
-      if (!code.trim()) {
-        setPromoError(null); 
+      const trimmedCode = code.trim();
+      setDebouncedPromoCode(trimmedCode);
+      const promoCodeValue: string | null = trimmedCode || null;
+      dispatch(setPromoCodeAction(promoCodeValue));
+      if (!trimmedCode) {
+        setPromoError(null);
       }
       console.log('promo code', code);
     }, 500),
-    [],
+    [dispatch],
   );
 
 
@@ -142,7 +156,7 @@ const CheckoutScreen = () => {
 
     try {
       const resp = await placeOrder(formData).unwrap();
-      dispatch(clearCart());
+      dispatch(clearCart()); // This will also clear promoCode
       refetch();
 
       navigation.reset({
