@@ -76,10 +76,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   };
 
   const handleLogin = async (data: LoginForm) => {
-    const formattedPhoneNumber = `+${callingCode} ${data.phone_number}`;
+    const formattedPhoneNumber = `+${callingCode}${data.phone_number}`;
     const resultAction = await dispatch(
       loginUserThunk({ ...data, phone_number: formattedPhoneNumber }),
     );
+
 
     if (loginUserThunk.rejected.match(resultAction)) {
       setShowErrorPopup(true);

@@ -10,10 +10,8 @@ const baseQueryWithAuth = fetchBaseQuery({
     headers.set('Content-Type', 'application/json');
     headers.set('Accept-Language', 'en');
     const state = getState() as RootState;
-    const token = state.user.token;
-    // const token = realmInstance
-    //   .objects('User')
-    //   .filtered('TRUEPREDICATE LIMIT(1)')[0]?.token;
+    const token = state.user.access_token;
+    console.log('we have a token ', token)
     if (token) {
       headers.set('Authorization', `Bearer ${token}`);
     }

@@ -3,12 +3,17 @@ import { POST } from '../../api';
 import NotificationService from '../../utils/NotificationService';
 
 interface LoginResponse {
-  id: number;
-  token: string;
-  jwt: string;
-  phone_number: string;
-  image_url: string | null;
-  name: string;
+  data: {
+    user: {
+      id: number;
+      name: string;
+      email: string;
+      phone_number: string;
+      image_url: string | null;
+      dob: string;
+    }
+    access_token: string;
+  }
 }
 
 interface LoginCredentials {
@@ -20,8 +25,7 @@ interface IUser {
   phoneNumber: string;
   id: number | null;
   email: string;
-  token: string | null;
-  jwt: string | null;
+  access_token: string | null;
   status: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   orderType: OrderType['alias'] | null;
   menuType: OrderType['menu_type'] | null;
@@ -42,9 +46,7 @@ const initialState: IUser = {
   phoneNumber: '',
   id: null,
   email: '',
-  token: null,
-  jwt: null,
-  // token: "653|CpLEoxZL0Tr51biH9ad0tYVRmQO9zvdMJzrBd6Q017d9620c",
+  access_token: null,
   status: 'idle',
   isLoggedIn: false,
   orderType: null,
@@ -82,14 +84,16 @@ export const loginUserThunk = createAsyncThunk(
   async (credentials: LoginCredentials, { rejectWithValue }) => {
     console.log('credentials', credentials);
     const response = await POST<LoginResponse>({
-      endpoint: '/login',
+      endpoint: '/auth/login',
       formData: credentials,
       requiresAuth: false,
     });
 
-    if (response.status < 400 && response.data) {
-      return response.data;
+    if (response.status < 400 && response.data?.data) {
+      console.log('login user thunk response', response.data?.data);
+      return response.data?.data;
     } else {
+      console.log('response', response);
       return rejectWithValue(
         response?.message || 'Invalid credentials. Please try again',
       );
@@ -156,11 +160,10 @@ const userSlice = createSlice({
     autoLoginUser: (state, action: PayloadAction<LoginResponse>) => {
       return {
         ...state,
-        id: action.payload.id,
-        token: action.payload.token,
-        jwt: action.payload.jwt,
-        name: action.payload.name,
-        image_url: action.payload.image_url,
+        id: action.payload.data?.user?.id,
+        access_token: action.payload.data?.access_token,
+        name: action.payload.data?.user?.name,
+        image_url: action.payload.data?.user?.image_url,
         isLoggedIn: true,
       };
     },
@@ -173,11 +176,10 @@ const userSlice = createSlice({
       })
       .addCase(loginUserThunk.fulfilled, (state, action) => {
         state.status = 'fulfilled';
-        state.token = action.payload.token;
-        state.jwt = action.payload.jwt;
-        state.id = action.payload.id;
-        state.name = action.payload.name;
-        state.image_url = action.payload.image_url;
+        state.access_token = action.payload.access_token;
+        state.id = action.payload.user.id;
+        state.name = action.payload.user.name;
+        state.image_url = action.payload.user.image_url;
         // state.email = action.payload.user.email;
         state.isLoggedIn = true;
         state.error = null;

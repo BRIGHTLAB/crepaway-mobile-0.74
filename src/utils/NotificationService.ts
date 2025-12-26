@@ -1,8 +1,8 @@
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
-import {NavigationContainerRef} from '@react-navigation/native';
-import {Platform} from 'react-native';
-import PushNotification, {Importance} from 'react-native-push-notification';
-import {POST} from '../api';
+import { NavigationContainerRef } from '@react-navigation/native';
+import { Platform } from 'react-native';
+import PushNotification, { Importance } from 'react-native-push-notification';
+import { POST } from '../api';
 
 // Type definitions
 interface NotificationOptions {
@@ -31,7 +31,7 @@ class NotificationService {
   private token: string | null = null;
   private static instance: NotificationService | null = null;
 
-  private constructor() {}
+  private constructor() { }
 
   static getInstance(): NotificationService {
     if (!NotificationService.instance) {
@@ -44,7 +44,7 @@ class NotificationService {
     // Configure the notification service
     PushNotification.configure({
       // Called when registered for remote notifications
-      onRegister: (tokenData: {token: string}): void => {
+      onRegister: (tokenData: { token: string }): void => {
         console.log('Device TOKEN:', tokenData);
         this.token = tokenData.token;
 
@@ -61,9 +61,9 @@ class NotificationService {
           Platform.OS === 'android'
             ? (notification.data as NotificationData) || {}
             : ((notification.data as Record<string, unknown>)
-                ?.data as NotificationData) ||
-              (notification.data as NotificationData) ||
-              {};
+              ?.data as NotificationData) ||
+            (notification.data as NotificationData) ||
+            {};
 
         // Handle navigation from notification
         if (notificationData.screen && navigationRef.isReady()) {

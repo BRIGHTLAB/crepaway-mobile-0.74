@@ -40,8 +40,7 @@ type Props = NativeStackScreenProps<LoginStackParamList, 'OTP'>;
 
 type VerifyResponse = {
   id: number;
-  token: string;
-  jwt: string;
+  access_token: string;
   phone_number: string;
   image_url: string | null;
   name: string;
@@ -143,12 +142,12 @@ const OTPScreen: React.FC<Props> = ({ navigation, route }) => {
             otp: otpString,
           });
         } else {
-          console.log('response', JSON.stringify(response.data?.token));
-          // Handle successful registration verification
-          if (response.data?.token) {
+          console.log('response', JSON.stringify(response.data?.access_token));
+          // Handle successful registration verification    
+          if (response.data?.access_token) {
             try {
               // Save token to AsyncStorage
-              await AsyncStorage.setItem('userToken', response.data.token);
+              await AsyncStorage.setItem('userToken', response.data.access_token);
 
               // Update Redux state
               dispatch(autoLoginUser(response.data));

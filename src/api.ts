@@ -1,6 +1,6 @@
-import axios, {isAxiosError} from 'axios';
+import axios, { isAxiosError } from 'axios';
 import store from './store/store';
-import {BASE_URL} from './theme';
+import { BASE_URL } from './theme';
 
 type APIResponse<T> = {
   data: T | null;
@@ -27,7 +27,7 @@ const authFetch = axios.create({
 authFetch.interceptors.request.use(
   config => {
     const state = store.getState();
-    const token = state.user.token;
+    const token = state.user.access_token;
 
     if (token) {
       config.headers = config.headers || {};
@@ -56,7 +56,7 @@ authFetch.interceptors.response.use(
 
 type GET = {
   endpoint: string;
-  params?: {[key: string]: string | number | Array<number>};
+  params?: { [key: string]: string | number | Array<number> };
   requiresAuth?: boolean;
 };
 
@@ -98,7 +98,7 @@ export const GET = async <T>({
 
 type POST = {
   endpoint: string;
-  formData?: {[key: string]: any} | FormData;
+  formData?: { [key: string]: any } | FormData;
   requiresAuth?: boolean;
 };
 
