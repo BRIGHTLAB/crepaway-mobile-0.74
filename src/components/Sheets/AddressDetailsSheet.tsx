@@ -1,26 +1,22 @@
 import BottomSheet, {
   BottomSheetFooter,
   BottomSheetFooterProps,
-  BottomSheetScrollView,
-  BottomSheetView,
+  BottomSheetScrollView
 } from '@gorhom/bottom-sheet';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { forwardRef, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { View, Text, Keyboard, Platform, StyleSheet } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { z } from 'zod';
 import Icon_Add from '../../../assets/SVG/Icon_Add';
+import { useAddAddressesMutation } from '../../api/addressesApi';
 import { ServiceSelectionStackParamList } from '../../navigation/ServiceSelectionStack';
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../../theme';
-import Button from '../UI/Button';
-import Input from '../UI/Input';
-import SelectButton from '../UI/SelectButton';
-import DynamicSheet from './DynamicSheet';
-import { useAddAddressesMutation } from '../../api/addressesApi';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomSheetInput from '../UI/BottomSheetInput';
+import Button from '../UI/Button';
+import DynamicSheet from './DynamicSheet';
 
 type Coordinates = {
   latitude: number;
@@ -29,15 +25,12 @@ type Coordinates = {
 
 type Props = {
   coordinates: Coordinates;
-  onSelectCityPress: () => void;
-  selectedCity: { id: number; city: string } | null;
 };
 
 type AddressForm = z.infer<typeof addressSchema>;
 
 const inputs = [
   { name: 'title', placeholder: 'Address Title (Home,Work,etc.)' },
-  { name: 'cities_id', placeholder: 'City' },
   { name: 'street_address', placeholder: 'Street Address' },
   { name: 'building', placeholder: 'Bldg' },
   { name: 'floor', placeholder: 'Floor' },
@@ -46,7 +39,6 @@ const inputs = [
 
 const addressSchema = z.object({
   title: z.string().nonempty('Address Title is required'),
-  cities_id: z.number().min(1, 'City is required'),
   street_address: z.string().nonempty('Street Address is required'),
   building: z.string().nonempty('Building is required'),
   floor: z.string().nonempty('Floor is required'),
@@ -61,7 +53,7 @@ type NavigationProp = NativeStackNavigationProp<
 >;
 
 const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
-  ({ coordinates, onSelectCityPress, selectedCity }, ref) => {
+  ({ coordinates }, ref) => {
     const {
       control,
       handleSubmit,
@@ -78,16 +70,6 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
 
     const [addAddresses, { isLoading: addAddressesLoading }] = useAddAddressesMutation();
     const navigation = useNavigation<NavigationProp>();
-
-    useEffect(() => {
-      if (selectedCity) {
-        setValue('cities_id', selectedCity.id);
-        trigger('cities_id');
-        setTimeout(() => {
-          inputRefs.street_address.current?.focus();
-        }, 1500);
-      }
-    }, [selectedCity]);
 
     useEffect(() => {
       setValue('latitude', coordinates.latitude);
@@ -115,10 +97,7 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
       const names = Object.keys(inputRefs);
       const idx = names.indexOf(currentInput);
 
-      if (currentInput === 'title') {
-        Keyboard.dismiss();
-        onSelectCityPress();
-      } else if (currentInput === 'additional_info') {
+      if (currentInput === 'additional_info') {
         handleSubmit(onSubmit)();
       } else {
         const next = names[idx + 1];
@@ -165,26 +144,18 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
                 key={inp.name}
                 control={control}
                 name={inp.name as keyof AddressForm}
-                render={({ field: { onBlur, onChange, value } }) =>
-                  inp.name === 'cities_id' ? (
-                    <SelectButton
-                      onPress={onSelectCityPress}
-                      title={selectedCity?.city ?? 'Select City'}
-                      error={errors.cities_id?.message}
-                    />
-                  ) : (
-                    <BottomSheetInput
-                      ref={inputRefs[inp.name as keyof typeof inputRefs]}
-                      placeholder={inp.placeholder}
-                      value={value?.toString()}
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      error={errors[inp.name as keyof AddressForm]?.message}
-                      returnKeyType={inp.name === 'additional_info' ? 'done' : 'next'}
-                      onSubmitEditing={() => handleInputSubmit(inp.name)}
-                    />
-                  )
-                }
+                render={({ field: { onBlur, onChange, value } }) => (
+                  <BottomSheetInput
+                    ref={inputRefs[inp.name as keyof typeof inputRefs]}
+                    placeholder={inp.placeholder}
+                    value={value?.toString()}
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    error={errors[inp.name as keyof AddressForm]?.message}
+                    returnKeyType={inp.name === 'additional_info' ? 'done' : 'next'}
+                    onSubmitEditing={() => handleInputSubmit(inp.name)}
+                  />
+                )}
               />
             ))}
 

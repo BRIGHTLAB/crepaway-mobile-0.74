@@ -95,7 +95,7 @@ const AddressScreen = () => {
           </TouchableOpacity>
         </View>
         <Text style={[styles.itemDescription]}>
-          {item.city} | {item.building} {item.floor} | {item.additional_info}
+          {item.building} {item.floor} {item.additional_info ? `| ${item.additional_info}` : ''}
         </Text>
       </TouchableOpacity>
     );

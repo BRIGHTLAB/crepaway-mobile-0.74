@@ -27,8 +27,9 @@ export const SCREEN_PADDING = {
 
 export const INPUT_HEIGHT = 53;
 
-// export const BASE_URL = 'https://17dc1dd6f6aa.ngrok-free.app/api/app';
-export const BASE_URL = 'https://dev.staging-api.thenewexperience.app/api/app';
+export const BASE_URL = 'https://907896e07b13.ngrok-free.app/api/app';
+// export const BASE_URL = 'https://cc9099b8927d.ngrok-free.app/api/app';
+// export const BASE_URL = 'https://dev.staging-api.thenewexperience.app/api/app';
 
 export const API_MAP_KEY = 'AIzaSyA0IxviANpXAl-sTNcYjH1zU5cjgXimKuk';
 export const DRIVER_SOCKET_URL = 'wss://dev.realtime.driver-tracking.com';
