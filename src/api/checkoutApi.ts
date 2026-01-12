@@ -9,6 +9,7 @@ export interface Checkout {
   };
   delivery_charge: string;
   points_rewarded: number;
+  currency: Currency;
 }
 
 export interface OrderFormData {

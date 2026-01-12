@@ -101,7 +101,7 @@ const OrderComponent = React.memo(
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total</Text>
           <Text style={styles.totalValue}>
-            {item.total}
+            {item.currency?.symbol ?? ''} {item.total}
           </Text>
         </View>
 

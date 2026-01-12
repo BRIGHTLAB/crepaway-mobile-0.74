@@ -1,11 +1,13 @@
+import BottomSheet from '@gorhom/bottom-sheet';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import { useDispatch } from 'react-redux';
 import DeleteAnimation from '../../assets/lotties/Delete.json';
 import Icon_Delete from '../../assets/SVG/Icon_Delete';
+import Icon_Edit from '../../assets/SVG/Icon_Edit';
 import Icon_Location from '../../assets/SVG/Icon_Location';
 import {
   useDeleteAddressMutation,
@@ -13,6 +15,7 @@ import {
 } from '../api/addressesApi';
 import AddAddressButton from '../components/Address/AddAddressButton';
 import ConfirmationPopup from '../components/Popups/ConfirmationPopup';
+import AddressDetailsSheet from '../components/Sheets/AddressDetailsSheet';
 import { ServiceSelectionStackParamList } from '../navigation/ServiceSelectionStack';
 import {
   setAddress,
@@ -34,10 +37,15 @@ const initialModalState = {
   visible: false,
   addressTitle: '',
 };
+
 const AddressScreen = () => {
   // State for confirmation modal
   const [confirmModal, setConfirmModal] =
     useState<ModalState>(initialModalState);
+
+  // State for edit address
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const editSheetRef = useRef<BottomSheet>(null);
 
   const [deleteAddress, { isLoading: deleteAddressLoading, error }] =
     useDeleteAddressMutation();
@@ -55,6 +63,7 @@ const AddressScreen = () => {
       console.error('Failed to delete address:', err);
     }
   };
+
   const handleSelectAddress = (address: Address) => {
     dispatch(
       setAddress({
@@ -74,6 +83,11 @@ const AddressScreen = () => {
     );
   };
 
+  const handleEditAddress = (address: Address) => {
+    setEditingAddress(address);
+    editSheetRef.current?.expand();
+  };
+
   const renderAddressItem = (item: Address) => {
     return (
       <TouchableOpacity
@@ -82,17 +96,27 @@ const AddressScreen = () => {
         <View style={styles.itemHeader}>
           <Icon_Location color={COLORS.black} />
           <Text style={[styles.itemName]}>{item.title}</Text>
-          <TouchableOpacity
-            style={{ marginLeft: 'auto', paddingBottom: 5, paddingLeft: 10 }}
-            onPress={() =>
-              setConfirmModal({
-                id: item.id,
-                visible: true,
-                addressTitle: item.title,
-              })
-            }>
-            <Icon_Delete />
-          </TouchableOpacity>
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => handleEditAddress(item)}>
+              <Icon_Edit color={COLORS.black} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() =>
+                setConfirmModal({
+                  id: item.id,
+                  visible: true,
+                  addressTitle: item.title,
+                })
+              }>
+              <Icon_Delete />
+            </TouchableOpacity>
+          </View>
         </View>
         <Text style={[styles.itemDescription]}>
           {item.building} {item.floor} {item.additional_info ? `| ${item.additional_info}` : ''}
@@ -133,6 +157,14 @@ const AddressScreen = () => {
         onConfirm={() => handleConfirmDelete(confirmModal.id)}
         message={`Are you sure you want to delete ${confirmModal.addressTitle} ?`}
         btnLoading={deleteAddressLoading}
+      />
+      <AddressDetailsSheet
+        ref={editSheetRef}
+        coordinates={{
+          latitude: editingAddress?.latitude ?? 0,
+          longitude: editingAddress?.longitude ?? 0,
+        }}
+        editAddress={editingAddress}
       />
     </View>
   );
@@ -214,5 +246,9 @@ const styles = StyleSheet.create({
   itemDescription: {
     ...TYPOGRAPHY.TAGS,
     color: COLORS.black,
+  },
+  iconButton: {
+    paddingBottom: 5,
+    paddingLeft: 10,
   },
 });

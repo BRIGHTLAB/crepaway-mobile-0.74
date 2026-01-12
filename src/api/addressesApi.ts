@@ -24,6 +24,17 @@ export const addresses = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['addresses'],
     }),
+    updateAddress: builder.mutation<
+      { message: string },
+      { id: number; address: Partial<Address> }
+    >({
+      query: ({ id, address }) => ({
+        url: `/addresses/${id}`,
+        method: 'POST',
+        body: address,
+      }),
+      invalidatesTags: ['addresses'],
+    }),
   }),
 
   overrideExisting: true,
@@ -33,4 +44,5 @@ export const {
   useGetAddressesQuery,
   useDeleteAddressMutation,
   useAddAddressesMutation,
+  useUpdateAddressMutation,
 } = addresses;

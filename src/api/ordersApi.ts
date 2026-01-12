@@ -104,6 +104,7 @@ export interface OrderListItem {
   delivery_charge: string;
   total: string;
   pos_total: string;
+  currency: Currency;
   rating: number | null;
   experience_rating: number | null;
   food_rating: number | null;

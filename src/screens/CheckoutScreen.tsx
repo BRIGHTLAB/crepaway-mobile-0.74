@@ -366,16 +366,16 @@ const CheckoutScreen = () => {
 
             <TotalSection
               orderType={user?.orderType ?? 'delivery'}
-              subtotal={`USD ${data?.summary?.original_sub_total ?? ''}`}
-              deliveryCharge={`LBP ${data?.delivery_charge ?? ''}`}
+              subtotal={`${data?.currency?.symbol ?? ''} ${data?.summary?.original_sub_total ?? ''}`}
+              deliveryCharge={`${data?.currency?.symbol ?? ''} ${data?.delivery_charge ?? ''}`}
               pointsRewarded={`+ ${data?.points_rewarded ?? ''} pts`}
               promoCode={promoCode}
               promoCodeError={promoError}
               onPromoCodeChange={handlePromoCodeChange}
-              total={`USD ${data?.summary?.final_total ?? ''}`}
+              total={`${data?.currency?.symbol ?? ''} ${data?.summary?.final_total ?? ''}`}
               discount={
                 data?.summary?.total_discount
-                  ? `USD ${data?.summary?.total_discount}`
+                  ? `${data?.currency?.symbol ?? ''} ${data?.summary?.total_discount}`
                   : ''
               }
               isLoading={isLoading}
