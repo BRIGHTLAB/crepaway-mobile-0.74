@@ -1,4 +1,4 @@
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -8,12 +8,13 @@ import { useDispatch } from 'react-redux';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
 import Icon_Order_Accepted from '../../assets/SVG/Icon_Order_Accepted';
 import Icon_Spine from '../../assets/SVG/Icon_Spine';
-import { OrderStatusResponse, useGetOrderStatusQuery } from '../api/ordersApi';
+import { OrderStatusResponse, useGetOrderQuery, useGetOrderStatusQuery } from '../api/ordersApi';
 import {
   OrdersStackParamList
 } from '../navigation/DeliveryTakeawayStack';
 import store from '../store/store';
 import { COLORS, DRIVER_SOCKET_URL, SCREEN_PADDING } from '../theme';
+import { formatNumberWithCommas } from '../utils/formatNumberWithCommas';
 import SocketService from '../utils/SocketService';
 
 type OrderScreenRouteProps = RouteProp<OrdersStackParamList, 'TrackOrder'>;
@@ -205,10 +206,12 @@ const TrackOrderScreen = () => {
   console.log('isTakeaway', isTakeaway);
   console.log('userState.orderType', userState.orderType);
   console.log('order_type', order_type);
-
+  const isFocused = useIsFocused();
   const { data: orderStatus, isLoading } = useGetOrderStatusQuery(orderId, {
-    pollingInterval: 2000,
+    pollingInterval: isFocused ? 2000 : undefined,
   });
+
+  const { data: orderData } = useGetOrderQuery(orderId);
 
   // Debounced function to update driver location
   const updateDriverLocation = useCallback((coordinates: { lat: number; long: number }) => {
@@ -451,12 +454,19 @@ const TrackOrderScreen = () => {
               <DriverHeader driver={memoizedOrderStatus?.driver} />
             }
             ListFooterComponent={
-              <Text
-                style={{
-                  marginTop: 12,
-                }}>
-                Estimated {order_type === 'delivery' ? 'arrival' : 'preparation time'}: {memoizedOrderStatus?.estimated_delivery_time} min
-              </Text>
+              <View style={{ marginTop: 12 }}>
+                <Text style={{ color: COLORS.darkColor, fontSize: 14 }}>
+                  Estimated {order_type === 'delivery' ? 'arrival' : 'preparation time'}: {memoizedOrderStatus?.estimated_delivery_time} min
+                </Text>
+                {orderData && (
+                  <View style={styles.totalContainer}>
+                    <Text style={styles.totalLabel}>Total</Text>
+                    <Text style={styles.totalValue}>
+                      {orderData.currency?.symbol} {formatNumberWithCommas(Number(orderData.total?.default_currency))}
+                    </Text>
+                  </View>
+                )}
+              </View>
             }
           />
         )}
@@ -567,5 +577,24 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 20,
     backgroundColor: `${COLORS.primaryColor}20`,
+  },
+  totalContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  totalLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.darkColor,
+  },
+  totalValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.primaryColor,
   },
 });

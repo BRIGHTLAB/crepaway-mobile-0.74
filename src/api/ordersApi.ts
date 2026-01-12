@@ -81,12 +81,40 @@ export interface Order {
   experience_rating: number | null;
   service_rating: number | null;
   review_comment: string | null;
+  cutleries?: boolean | null; // Optional - requires backend support
+  rating?: OrderRatingPayload | null; // Order rating if already rated
+  delivered_at?: string | null; // Timestamp when order was delivered
 
 }
 
+// Simplified order type for list responses (history/ongoing)
+export interface OrderListItem {
+  id: number;
+  order_number: string;
+  order_date: string;
+  menu_type: string;
+  order_type: string;
+  status: string;
+  status_id: number;
+  payment_method_type: string;
+  address: Partial<Address>;
+  items: OrderItem[];
+  cutleries: number; // 0 or 1
+  sub_total: string;
+  delivery_charge: string;
+  total: string;
+  pos_total: string;
+  rating: number | null;
+  experience_rating: number | null;
+  food_rating: number | null;
+  service_rating: number | null;
+  review_comment: string | null;
+  delivered_at: string | null;
+}
+
 export type OrdersResponse = {
-  ongoing: Order[];
-  history: Order[];
+  ongoing: OrderListItem[];
+  history: OrderListItem[];
 };
 
 export type OrderStatusResponse = {
