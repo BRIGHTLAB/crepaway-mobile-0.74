@@ -156,6 +156,7 @@ export const ordersApi = baseApi.injectEndpoints({
     getOrder: builder.query<Order, number>({
       query: id => `/orders/${id}`,
       providesTags: (_result, _error, id) => (id ? [{ type: 'Order', id }] : []), // Return an empty array if id is null or undefined
+      keepUnusedDataFor: 0, // Force refetch every time screen opens
     }),
     getOrderStatus: builder.query<OrderStatusResponse, number>({
       query: id => `/orders/${id}/status`,
