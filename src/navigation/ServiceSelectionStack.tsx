@@ -8,7 +8,7 @@ import ServiceSelectionScreen from '../screens/ServiceSelectionScreen';
 export type ServiceSelectionStackParamList = {
   ServiceSelection: undefined;
   Addresses: undefined;
-  AddressMap: undefined;
+  AddressMap: { editAddress?: Address } | undefined;
 };
 
 const Stack = createNativeStackNavigator();

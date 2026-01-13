@@ -1,5 +1,6 @@
 import BottomSheet from '@gorhom/bottom-sheet';
 import Geolocation from '@react-native-community/geolocation';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -29,16 +30,36 @@ const ASPECT_RATIO = width / height;
 const LATITUDE_DELTA = 0.02;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
+// Type for route params - works with all navigation stacks
+type AddressMapRouteParams = {
+  editAddress?: Address;
+};
+
 const AddressMapScreen = () => {
+  const route = useRoute<RouteProp<{ AddressMap: AddressMapRouteParams }, 'AddressMap'>>();
+  const navigation = useNavigation();
+  const editAddress = route.params?.editAddress;
+  const isEditing = !!editAddress;
+
   const mapRef = useRef<MapView>(null);
   const detailsSheetRef = useRef<BottomSheet>(null);
 
-  const [region, setRegion] = useState<Region>({
-    latitude: 37.78825,
-    longitude: 35.4324,
-    latitudeDelta: LATITUDE_DELTA,
-    longitudeDelta: LONGITUDE_DELTA,
-  });
+  // Use edit address coordinates as initial region if editing
+  const initialRegion = editAddress
+    ? {
+      latitude: editAddress.latitude,
+      longitude: editAddress.longitude,
+      latitudeDelta: LATITUDE_DELTA,
+      longitudeDelta: LONGITUDE_DELTA,
+    }
+    : {
+      latitude: 37.78825,
+      longitude: 35.4324,
+      latitudeDelta: LATITUDE_DELTA,
+      longitudeDelta: LONGITUDE_DELTA,
+    };
+
+  const [region, setRegion] = useState<Region>(initialRegion);
 
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
@@ -46,7 +67,10 @@ const AddressMapScreen = () => {
   const { data: zones } = useGetZonesQuery();
 
   useEffect(() => {
-    requestLocationAccess();
+    // Only request location if not editing
+    if (!isEditing) {
+      requestLocationAccess();
+    }
   }, []);
 
   const requestLocationAccess = async () => {
@@ -292,16 +316,16 @@ const AddressMapScreen = () => {
         }}>
         <Button
           onPress={() => detailsSheetRef.current?.expand()}
-          disabled={!selectedZone}
+          disabled={!selectedZone && !isEditing}
           icon={<Icon_Add
-            color={selectedZone ? COLORS.lightColor : COLORS.borderColor}
+            color={(selectedZone || isEditing) ? COLORS.lightColor : COLORS.borderColor}
           />}
           style={{
             width: '60%'
           }}
           iconPosition='left'
         >
-          Add location
+          {isEditing ? 'Save location' : 'Add location'}
         </Button>
       </View>
 
@@ -317,6 +341,7 @@ const AddressMapScreen = () => {
           longitude: region.longitude,
           latitude: region.latitude,
         }}
+        editAddress={editAddress}
       />
     </View>
   );

@@ -1,7 +1,6 @@
-import BottomSheet from '@gorhom/bottom-sheet';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import { useDispatch } from 'react-redux';
@@ -15,7 +14,6 @@ import {
 } from '../api/addressesApi';
 import AddAddressButton from '../components/Address/AddAddressButton';
 import ConfirmationPopup from '../components/Popups/ConfirmationPopup';
-import AddressDetailsSheet from '../components/Sheets/AddressDetailsSheet';
 import { ServiceSelectionStackParamList } from '../navigation/ServiceSelectionStack';
 import {
   setAddress,
@@ -42,10 +40,6 @@ const AddressScreen = () => {
   // State for confirmation modal
   const [confirmModal, setConfirmModal] =
     useState<ModalState>(initialModalState);
-
-  // State for edit address
-  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
-  const editSheetRef = useRef<BottomSheet>(null);
 
   const [deleteAddress, { isLoading: deleteAddressLoading, error }] =
     useDeleteAddressMutation();
@@ -84,8 +78,7 @@ const AddressScreen = () => {
   };
 
   const handleEditAddress = (address: Address) => {
-    setEditingAddress(address);
-    editSheetRef.current?.expand();
+    navigation.navigate('AddressMap', { editAddress: address });
   };
 
   const renderAddressItem = (item: Address) => {
@@ -157,14 +150,6 @@ const AddressScreen = () => {
         onConfirm={() => handleConfirmDelete(confirmModal.id)}
         message={`Are you sure you want to delete ${confirmModal.addressTitle} ?`}
         btnLoading={deleteAddressLoading}
-      />
-      <AddressDetailsSheet
-        ref={editSheetRef}
-        coordinates={{
-          latitude: editingAddress?.latitude ?? 0,
-          longitude: editingAddress?.longitude ?? 0,
-        }}
-        editAddress={editingAddress}
       />
     </View>
   );

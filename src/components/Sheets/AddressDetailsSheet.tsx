@@ -124,7 +124,7 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
             },
           }).unwrap();
           sheetRef.current?.close();
-          // onClose?.();
+          navigation.goBack();
         } else {
           await addAddresses({ addresses: [data] }).unwrap();
           navigation.pop();
@@ -136,16 +136,19 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
 
     const handleSheetChange = (index: number) => {
       if (index === -1) {
-        // Reset form when sheet is closed
-        reset({
-          latitude: coordinates.latitude,
-          longitude: coordinates.longitude,
-          title: '',
-          street_address: '',
-          building: '',
-          floor: '',
-          additional_info: '',
-        });
+        // Only reset form when sheet is closed in add mode
+        // In edit mode, preserve the form values
+        if (!isEditMode) {
+          reset({
+            latitude: coordinates.latitude,
+            longitude: coordinates.longitude,
+            title: '',
+            street_address: '',
+            building: '',
+            floor: '',
+            additional_info: '',
+          });
+        }
       }
     };
 

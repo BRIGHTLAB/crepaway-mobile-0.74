@@ -5,6 +5,7 @@ import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import DeleteAnimation from '../../assets/lotties/Delete.json';
 import Icon_Delete from '../../assets/SVG/Icon_Delete';
+import Icon_Edit from '../../assets/SVG/Icon_Edit';
 import Icon_Location from '../../assets/SVG/Icon_Location';
 import {
   useDeleteAddressMutation,
@@ -49,23 +50,37 @@ const ProfileAddressesScreen = () => {
     }
   };
 
+  const handleEditAddress = (address: Address) => {
+    navigation.navigate('AddressMap', { editAddress: address });
+  };
+
   const renderAddressItem = (item: Address) => {
     return (
       <View style={styles.itemContainer}>
         <View style={styles.itemHeader}>
           <Icon_Location color={COLORS.black} />
           <Text style={[styles.itemName]}>{item.title}</Text>
-          <TouchableOpacity
-            style={{ marginLeft: 'auto', paddingBottom: 5, paddingLeft: 10 }}
-            onPress={() =>
-              setConfirmModal({
-                id: item.id,
-                visible: true,
-                addressTitle: item.title,
-              })
-            }>
-            <Icon_Delete />
-          </TouchableOpacity>
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => handleEditAddress(item)}>
+              <Icon_Edit color={COLORS.black} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() =>
+                setConfirmModal({
+                  id: item.id,
+                  visible: true,
+                  addressTitle: item.title,
+                })
+              }>
+              <Icon_Delete />
+            </TouchableOpacity>
+          </View>
         </View>
         <Text style={[styles.itemDescription]}>
           {item.building} {item.floor} {item.additional_info ? `| ${item.additional_info}` : ''}
@@ -172,6 +187,11 @@ const styles = StyleSheet.create({
   itemName: {
     ...TYPOGRAPHY.BODY,
     color: COLORS.black,
+    flex: 1,
+  },
+  iconButton: {
+    paddingBottom: 5,
+    paddingLeft: 10,
   },
   itemDescription: {
     ...TYPOGRAPHY.TAGS,
