@@ -1,7 +1,7 @@
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   SectionList,
@@ -18,7 +18,7 @@ import Icon_Star from '../../assets/SVG/Icon_Star';
 import { OrderItem, OrderListItem, useGetOrdersQuery } from '../api/ordersApi';
 import HeaderShadow from '../components/HeaderShadow';
 import Item from '../components/Order/Item';
-import OrderRatingPopup from '../components/Popups/OrderRatingPopup';
+import OrderRatingSheet, { OrderRatingSheetRef } from '../components/Sheets/OrderRatingSheet';
 import Button from '../components/UI/Button';
 import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
 import { COLORS, SCREEN_PADDING } from '../theme';
@@ -153,7 +153,7 @@ const OrdersScreen = () => {
     pollingInterval: isFocused ? 2000 : undefined,
   });
 
-  const [ratingPopupVisible, setRatingPopupVisible] = useState(false);
+  const ratingSheetRef = useRef<OrderRatingSheetRef>(null);
   const [selectedOrder, setSelectedOrder] = useState<OrderListItem | null>(null);
 
   const handleTrackOrder = useCallback((order: OrderListItem) => {
@@ -169,11 +169,10 @@ const OrdersScreen = () => {
 
   const handleRateOrder = useCallback((order: OrderListItem) => {
     setSelectedOrder(order);
-    setRatingPopupVisible(true);
+    ratingSheetRef.current?.expand();
   }, []);
 
-  const handleCloseRatingPopup = useCallback(() => {
-    setRatingPopupVisible(false);
+  const handleCloseRatingSheet = useCallback(() => {
     setSelectedOrder(null);
   }, []);
 
@@ -314,9 +313,9 @@ const OrdersScreen = () => {
       </View>
 
       {selectedOrder && (
-        <OrderRatingPopup
-          visible={ratingPopupVisible}
-          onClose={handleCloseRatingPopup}
+        <OrderRatingSheet
+          ref={ratingSheetRef}
+          onClose={handleCloseRatingSheet}
           orderId={selectedOrder.id}
           rating={selectedOrder.food_rating ? {
             food_rating: selectedOrder.food_rating,
