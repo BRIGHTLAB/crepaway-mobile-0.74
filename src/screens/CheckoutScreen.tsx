@@ -77,9 +77,6 @@ const CheckoutScreen = () => {
         switch (getCheckoutError.status) {
           case 488:
             setPromoError('Invalid Promo Code');
-            setDebouncedPromoCode('');
-            setPromoCode('');
-            dispatch(setPromoCodeAction(null));
             break;
           default:
             setErrorMessage((getCheckoutError?.data as any)?.message || 'Failed to load checkout data');
@@ -172,7 +169,14 @@ const CheckoutScreen = () => {
               routes: [
                 { name: 'Orders' },
                 { name: 'OrderDetails', params: { id: resp?.order_id } },
-                { name: 'TrackOrder', params: { orderId: resp?.order_id } },
+                {
+                  name: 'TrackOrder', params: {
+                    orderId: resp?.order_id,
+                    order_type: user?.orderType,
+                    addressLatitude: user?.addressLatitude,
+                    addressLongitude: user?.addressLongitude,
+                  }
+                },
               ],
               index: 2, // This will make TrackOrder the visible screen
             },

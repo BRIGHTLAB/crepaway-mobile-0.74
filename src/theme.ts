@@ -27,7 +27,7 @@ export const SCREEN_PADDING = {
 
 export const INPUT_HEIGHT = 53;
 
-export const BASE_URL = 'https://a7bb5986bd87.ngrok-free.app/api/app';
+export const BASE_URL = 'http://dev.mikael.pc:8080/api/app';
 // export const BASE_URL = 'https://cc9099b8927d.ngrok-free.app/api/app';
 // export const BASE_URL = 'https://dev.staging-api.thenewexperience.app/api/app';
 
