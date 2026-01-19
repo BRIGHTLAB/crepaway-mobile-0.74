@@ -161,7 +161,8 @@ export const CustomBottomTab = ({
 const styles = StyleSheet.create({
     mainContainer: {
         position: 'relative',
-        borderWidth: 1
+        borderWidth: 1,
+        backgroundColor: 'black', // Android fix to remove visible border in bottom tab container
     },
     bottomTabContainer: {
         flexDirection: 'row',
