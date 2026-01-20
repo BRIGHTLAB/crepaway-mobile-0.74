@@ -193,6 +193,9 @@ const CheckoutScreen = () => {
     if (data) {
       if (data?.summary?.promo_code_applied) {
         setPromoError(null);
+      } else if (data?.summary?.promo_code_error) {
+        // Show promo code error from API response
+        setPromoError(data.summary.promo_code_error);
       }
     }
   }, [data, promoCode]);

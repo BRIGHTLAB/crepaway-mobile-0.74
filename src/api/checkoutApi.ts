@@ -6,6 +6,7 @@ export interface Checkout {
     total_discount: string;
     final_total: string;
     promo_code_applied: boolean;
+    promo_code_error?: string | null;
   };
   delivery_charge: string;
   points_rewarded: number;
