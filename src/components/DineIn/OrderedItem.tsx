@@ -14,6 +14,7 @@ const OrderedItemCmp = ({
   onQuantityDecrease,
   onItemImageClick,
   isDisabled,
+  currentUserId,
 }: {
   item: OrderedItem & { uuid: string };
   orderedByUser?: TableUser;
@@ -21,8 +22,11 @@ const OrderedItemCmp = ({
   onQuantityIncrease?: () => void;
   onQuantityDecrease?: () => void;
   onItemImageClick?: () => void;
-  isDisabled: boolean,
+  isDisabled: boolean;
+  currentUserId?: number | null;
 }) => {
+
+  const isOrderedByCurrentUser = currentUserId != null && String(item.added_by.id) === String(currentUserId);
   const calculateItemTotal = () => {
     // Base item price
     let itemTotal = item?.price ? item.price * item.quantity : 0;
@@ -58,7 +62,7 @@ const OrderedItemCmp = ({
           alignItems: 'flex-start',
           gap: 8,
         }}>
-        <TouchableOpacity onPress={onItemImageClick} disabled={isDisabled}>
+        <TouchableOpacity onPress={onItemImageClick} disabled={isDisabled} style={{ position: 'relative' }}>
           <FastImage
             source={{
               uri: item.image_url || 'https://placehold.co/600x400/png',
@@ -67,6 +71,27 @@ const OrderedItemCmp = ({
             style={{ width: 80, height: 88, borderRadius: 8 }}
             resizeMode={FastImage.resizeMode.cover}
           />
+    
+          {(orderedByUser || orderedByWaiter) && (
+            <View style={{
+              position: 'absolute',
+              bottom: -8,
+              left: -8,
+              borderRadius: 14,
+              backgroundColor: COLORS.white,
+            }}>
+              <FastImage
+                source={{
+                  uri:
+                    (orderedByWaiter?.image_url || orderedByUser?.image_url) ||
+                    'https://placehold.co/200x200/png',
+                  priority: FastImage.priority.normal,
+                }}
+                style={{ width: 28, height: 28, borderRadius: 14 }}
+                resizeMode={FastImage.resizeMode.cover}
+              />
+            </View>
+          )}
         </TouchableOpacity>
 
         <View style={{ flex: 1 }}>
@@ -90,43 +115,6 @@ const OrderedItemCmp = ({
             {item.symbol} {calculateItemTotal().toFixed(2)}
           </Text>
 
-          {/* Ordered By User/Waiter Info */}
-          {(orderedByUser || orderedByWaiter) && (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginTop: 4,
-              }}>
-              <Text
-                style={{
-                  fontFamily: 'Poppins-Regular',
-                  fontSize: 10,
-                  color: COLORS.foregroundColor,
-                  marginRight: 4,
-                }}>
-                Ordered by:
-              </Text>
-              <FastImage
-                source={{
-                  uri:
-                    (orderedByWaiter?.image_url || orderedByUser?.image_url) ||
-                    'https://placehold.co/200x200/png',
-                  priority: FastImage.priority.normal,
-                }}
-                style={{ width: 16, height: 16, borderRadius: 8, marginRight: 4 }}
-                resizeMode={FastImage.resizeMode.cover}
-              />
-              <Text
-                style={{
-                  fontFamily: 'Poppins-Regular',
-                  fontSize: 10,
-                  color: orderedByWaiter ? COLORS.primaryColor : COLORS.foregroundColor,
-                }}>
-                {orderedByWaiter ? `${orderedByWaiter.name} (Waiter)` : orderedByUser?.name}
-              </Text>
-            </View>
-          )}
 
           {/* Modifier Groups */}
           {item.modifier_groups && item.modifier_groups.length > 0 && (
@@ -190,50 +178,42 @@ const OrderedItemCmp = ({
         </View>
       </View>
 
-      {/* Quantity Controls */}
-      {!isDisabled && onQuantityDecrease && onQuantityIncrease && (
-        <View
-          style={{
-            backgroundColor: COLORS.primaryColor,
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingVertical: 4,
-            paddingHorizontal: 8,
-            borderRadius: 8,
-          }}>
+
+      {!isDisabled && isOrderedByCurrentUser && onQuantityDecrease && onQuantityIncrease ? (
+        <View style={{
+          backgroundColor: COLORS.primaryColor,
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingVertical: 4,
+          paddingHorizontal: 8,
+          borderRadius: 8,
+        }}>
           <TouchableOpacity
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            style={{ width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}
             onPress={onQuantityDecrease}>
             <Icon_Decrease_Quantity color={'#FFF'} />
           </TouchableOpacity>
-          <Text
-            style={{
-              color: '#FFF',
-              fontSize: 18,
-              width: 32,
-              height: 32,
-              paddingTop: 2,
-              textAlign: 'center',
-            }}>
+          <Text style={{ color: '#FFF', fontSize: 18, width: 32, height: 32, paddingTop: 2, textAlign: 'center', fontFamily: 'Poppins-Medium' }}>
             {item?.quantity}
           </Text>
           <TouchableOpacity
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            style={{ width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}
             onPress={onQuantityIncrease}>
             <Icon_Increase_Quantity color={'#FFF'} />
           </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={{
+          backgroundColor: COLORS.primaryColor,
+          paddingVertical: 6,
+          paddingHorizontal: 12,
+          borderRadius: 8,
+          minWidth: 36,
+          alignItems: 'center',
+        }}>
+          <Text style={{ color: '#FFF', fontSize: 14, fontFamily: 'Poppins-Medium' }}>
+            {item?.quantity}
+          </Text>
         </View>
       )}
     </View>

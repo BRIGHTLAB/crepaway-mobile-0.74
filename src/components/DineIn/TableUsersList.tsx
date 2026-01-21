@@ -123,7 +123,7 @@ const TableUsersList = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Table Users</Text>
+      <Text style={styles.sectionTitle}>People at the same table</Text>
       <FlatList
         data={[
           ...Object.values(users).map(user => ({ ...user, type: 'user' as const })),
@@ -381,6 +381,7 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.HEADLINE,
     paddingHorizontal: SCREEN_PADDING.horizontal,
     paddingVertical: 16,
+    color: COLORS.darkColor,
   },
   listContent: {
     paddingHorizontal: SCREEN_PADDING.horizontal,

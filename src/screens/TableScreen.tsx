@@ -18,6 +18,8 @@ import {
 import FastImage from 'react-native-fast-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
+import Icon_Cart from '../../assets/SVG/Icon_Cart';
+import Icon_Dine_In from '../../assets/SVG/Icon_Dine_In';
 import Icon_Sign_Out from '../../assets/SVG/Icon_Sign_Out';
 import BannedPopup from '../components/DineIn/BannedPopup';
 import OrderedItemsList from '../components/DineIn/OrderedItemsList';
@@ -488,18 +490,36 @@ const TableScreen = () => {
       paddingTop: top
     }]}>
       <View style={styles.headerContainer}>
-        <FlatList
-          data={Object.values(tableWaiters)}
-          renderItem={renderWaiterItem}
-          keyExtractor={item => item.id.toString()}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.waitersList}
-          ItemSeparatorComponent={() => <View style={styles.waiterSeparator} />}
-        />
-        <TouchableOpacity onPress={handleLeaveTable}>
-          <Icon_Sign_Out color={COLORS.white} />
-        </TouchableOpacity>
+        {/* User avatar and name */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+          <FastImage
+            source={{ uri: currentUser.image_url || 'https://placehold.co/200x200/png' }}
+            style={{ width: 44, height: 44, borderRadius: 22 }}
+            resizeMode={FastImage.resizeMode.cover}
+          />
+          <Text style={{ color: COLORS.white, fontFamily: 'Poppins-SemiBold', fontSize: 16 }}>
+            {currentUser.name || 'Guest'}
+          </Text>
+        </View>
+
+        {/* Action icons */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <TouchableOpacity
+            onPress={handleOrderPress}
+            style={{ backgroundColor: COLORS.white, padding: 10, borderRadius: 27 }}>
+            <Icon_Dine_In color="#7CB342" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Checkout')}
+            style={{ backgroundColor: COLORS.white, padding: 10, borderRadius: 27 }}>
+            <Icon_Cart color="#FF6D00" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleLeaveTable}
+            style={{ backgroundColor: COLORS.white, padding: 10, borderRadius: 27 }}>
+            <Icon_Sign_Out color={COLORS.foregroundColor} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Main Content View */}

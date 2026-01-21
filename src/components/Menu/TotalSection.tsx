@@ -1,9 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Input from '../UI/Input';
 import { COLORS } from '../../theme';
 import Icon_Promo from '../../../assets/SVG/Icon_Promo';
 import React from 'react';
-import { ActivityIndicator } from 'react-native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 
 interface IProps {
@@ -14,7 +13,12 @@ interface IProps {
   promoCodeError?: string | null;
   onPromoCodeChange?: (code: string) => void;
   total: string;
+  totalUSD?: string;
   discount?: string;
+  tips?: {
+    value: number;
+    onPress: () => void;
+  };
   isLoading?: boolean;
   disabled?: boolean;
   orderType?: string;
@@ -29,7 +33,9 @@ const TotalSection = ({
   promoCodeError,
   onPromoCodeChange,
   total,
+  totalUSD,
   discount,
+  tips,
   isLoading = false,
   disabled = false,
   orderType,
@@ -77,6 +83,16 @@ const TotalSection = ({
         )}
       </View>
 
+      {/* Tips */}
+      {tips && (
+        <View style={styles.subTotalContainer}>
+          <Text style={styles.subTotalTitle}>Add Tips</Text>
+          <TouchableOpacity style={styles.tipsButton} onPress={tips.onPress}>
+            <Text style={styles.tipsButtonText}>% {tips.value}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Discount */}
       {discount && (
         <View style={styles.subTotalContainer}>
@@ -115,6 +131,18 @@ const TotalSection = ({
           <Text style={styles.totalTitle}>{total}</Text>
         )}
       </View>
+
+      {/* Total USD */}
+      {totalUSD && (
+        <View style={styles.subTotalContainer}>
+          <Text style={styles.subTotalTitle}>Total (USD)</Text>
+          {isLoading ? (
+            renderSkeleton()
+          ) : (
+            <Text style={styles.totalTitle}>{totalUSD}</Text>
+          )}
+        </View>
+      )}
     </View>
   );
 };
@@ -164,5 +192,17 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginTop: 2,
     textAlign: 'right',
+  },
+  tipsButton: {
+    borderWidth: 1,
+    borderColor: COLORS.foregroundColor,
+    borderRadius: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+  },
+  tipsButtonText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: COLORS.foregroundColor,
   },
 });

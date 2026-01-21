@@ -113,6 +113,7 @@ const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Prop
               orderedByUser={orderedByUser}
               orderedByWaiter={orderedByWaiter}
               isDisabled={isItemDisabled}
+              currentUserId={userState.id}
               onQuantityDecrease={
                 !isItemDisabled
                   ? () => handleDecreaseQuantity(item.uuid, item)
@@ -146,6 +147,7 @@ export default OrderedItemsList;
 
 const styles = StyleSheet.create({
   container: {
+    marginTop: 16,
     flex: 1,
     backgroundColor: COLORS.white,
   },
@@ -154,6 +156,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SCREEN_PADDING.horizontal,
     paddingVertical: 8,
     backgroundColor: COLORS.white,
+    color: COLORS.darkColor,
   },
   contentContainer: {
     flexGrow: 1,
