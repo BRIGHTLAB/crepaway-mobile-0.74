@@ -100,11 +100,15 @@ const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Prop
         }))}
         keyExtractor={item => item.uuid.toString()}
         renderItem={({ item }) => {
-          const orderedByUser = Object.values(users).find(
-            user => user.id === item.added_by.id,
-          );
+          const orderedByUser = item.added_by.type === 'user'
+            ? (users[String(item.added_by.id)] || Object.values(users).find(
+                user => String(user.id) === String(item.added_by.id),
+              ))
+            : undefined;
           const orderedByWaiter = item.added_by.type === 'waiter'
-            ? Object.values(waiters).find(waiter => waiter.id === item.added_by.id)
+            ? (waiters[String(item.added_by.id)] || Object.values(waiters).find(
+                waiter => String(waiter.id) === String(item.added_by.id),
+              ))
             : undefined;
           const isItemDisabled = isTableLocked || item.is_disabled || (orderedByUser?.id !== userState.id && !isCurrentUserKing) || item.added_by.type === 'waiter'
           return (
@@ -114,6 +118,7 @@ const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Prop
               orderedByWaiter={orderedByWaiter}
               isDisabled={isItemDisabled}
               currentUserId={userState.id}
+              isTableLocked={isTableLocked}
               onQuantityDecrease={
                 !isItemDisabled
                   ? () => handleDecreaseQuantity(item.uuid, item)

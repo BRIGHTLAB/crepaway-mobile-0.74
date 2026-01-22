@@ -15,6 +15,7 @@ const OrderedItemCmp = ({
   onItemImageClick,
   isDisabled,
   currentUserId,
+  isTableLocked,
 }: {
   item: OrderedItem & { uuid: string };
   orderedByUser?: TableUser;
@@ -24,9 +25,13 @@ const OrderedItemCmp = ({
   onItemImageClick?: () => void;
   isDisabled: boolean;
   currentUserId?: number | null;
+  isTableLocked?: boolean;
 }) => {
 
   const isOrderedByCurrentUser = currentUserId != null && String(item.added_by.id) === String(currentUserId);
+  
+  const shouldShowDisabledOpacity = isTableLocked || item.is_disabled === true;
+  
   const calculateItemTotal = () => {
     // Base item price
     let itemTotal = item?.price ? item.price * item.quantity : 0;
@@ -53,7 +58,7 @@ const OrderedItemCmp = ({
         borderBottomWidth: 1,
         borderBottomColor: `${COLORS.foregroundColor}40`,
         paddingVertical: 10,
-        opacity: isDisabled ? 0.5 : 1
+        opacity: shouldShowDisabledOpacity ? 0.5 : 1
       }}>
       <View
         style={{

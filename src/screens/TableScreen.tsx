@@ -490,17 +490,29 @@ const TableScreen = () => {
       paddingTop: top
     }]}>
       <View style={styles.headerContainer}>
-        {/* User avatar and name */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-          <FastImage
-            source={{ uri: currentUser.image_url || 'https://placehold.co/200x200/png' }}
-            style={{ width: 44, height: 44, borderRadius: 22 }}
-            resizeMode={FastImage.resizeMode.cover}
-          />
-          <Text style={{ color: COLORS.white, fontFamily: 'Poppins-SemiBold', fontSize: 16 }}>
-            {currentUser.name || 'Guest'}
-          </Text>
-        </View>
+        {(() => {
+          const waiter = Object.values(tableWaiters)[0];
+          if (!waiter) return <View style={{ flex: 1 }} />;
+          return (
+            <TouchableOpacity
+              onPress={() => {
+                setSelectedWaiterId(waiter.id);
+                setTimeout(() => {
+                  waiterSheetRef.current?.expand();
+                }, 100);
+              }}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+              <FastImage
+                source={{ uri: waiter?.image_url || 'https://placehold.co/200x200/png' }}
+                style={{ width: 44, height: 44, borderRadius: 22 }}
+                resizeMode={FastImage.resizeMode.cover}
+              />
+              <Text style={{ color: COLORS.white, fontFamily: 'Poppins-SemiBold', fontSize: 16 }}>
+                {waiter?.name}
+              </Text>
+            </TouchableOpacity>
+          );
+        })()}
 
         {/* Action icons */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -550,18 +562,23 @@ const TableScreen = () => {
         </View>
         <OrderedItemsList items={filteredOrderedItems} users={tableUsers} waiters={tableWaiters} />
         <View style={styles.orderButtonContainer}>
-          <Button onPress={handleOrderPress} disabled={isTableLocked}>Order</Button>
+          <Button onPress={handleOrderPress} disabled={isTableLocked}>Add Items</Button>
         </View>
       </Animated.View>
 
       {/* Waiter Instructions Sheet */}
-      {selectedWaiterId && tableWaiters?.[selectedWaiterId] && (
-        <WaiterInstructionsSheet
-          waiter={tableWaiters?.[selectedWaiterId]}
-          onSelectInstruction={handleInstructionSelect}
-          ref={waiterSheetRef}
-        />
-      )}
+      {(() => {
+        const waiter = Object.values(tableWaiters)[0];
+        const selectedWaiter = selectedWaiterId ? tableWaiters?.[selectedWaiterId] : waiter;
+        if (!selectedWaiter) return null;
+        return (
+          <WaiterInstructionsSheet
+            waiter={selectedWaiter}
+            onSelectInstruction={handleInstructionSelect}
+            ref={waiterSheetRef}
+          />
+        );
+      })()}
 
       {/* King Actions Popup */}
 
@@ -614,7 +631,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: 'row',
     height: 80,
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: SCREEN_PADDING.horizontal,
     gap: 10,
