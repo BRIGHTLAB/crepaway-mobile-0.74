@@ -32,7 +32,7 @@ export const INPUT_HEIGHT = 53;
 export const BASE_URL = 'https://dev.staging-api.thenewexperience.app/api/app';
 
 export const API_MAP_KEY = 'AIzaSyA0IxviANpXAl-sTNcYjH1zU5cjgXimKuk';
-export const DRIVER_SOCKET_URL = 'wss://crepaway.realtime.driver-tracking.com';
+export const DRIVER_SOCKET_URL = 'wss://dev.realtime.driver-tracking.com';
 export const DINEIN_SOCKET_URL =
   'http://chris.pc:5003';
 // export const DINEIN_SOCKET_URUL =
