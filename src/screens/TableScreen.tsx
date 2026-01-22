@@ -10,7 +10,6 @@ import {
   BackHandler,
   Dimensions,
   Easing,
-  FlatList,
   StyleSheet,
   Text,
   View
@@ -493,6 +492,11 @@ const TableScreen = () => {
         {(() => {
           const waiter = Object.values(tableWaiters)[0];
           if (!waiter) return <View style={{ flex: 1 }} />;
+
+          const getInitials = (name: string) => {
+            return name.split(' ').map(str => str.charAt(0).toUpperCase()).join('');
+          };
+
           return (
             <TouchableOpacity
               onPress={() => {
@@ -502,11 +506,31 @@ const TableScreen = () => {
                 }, 100);
               }}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-              <FastImage
-                source={{ uri: waiter?.image_url || 'https://placehold.co/200x200/png' }}
-                style={{ width: 44, height: 44, borderRadius: 22 }}
-                resizeMode={FastImage.resizeMode.cover}
-              />
+              {waiter?.image_url ? (
+                <FastImage
+                  source={{ uri: waiter.image_url }}
+                  style={{ width: 44, height: 44, borderRadius: 22 }}
+                  resizeMode={FastImage.resizeMode.cover}
+                />
+              ) : (
+                <View style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  backgroundColor: COLORS.darkColor,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <Text style={{
+                    color: COLORS.white,
+                    fontSize: 16,
+                    fontWeight: 'bold',
+                    fontFamily: 'Poppins-SemiBold',
+                  }}>
+                    {getInitials(waiter?.name || '')}
+                  </Text>
+                </View>
+              )}
               <Text style={{ color: COLORS.white, fontFamily: 'Poppins-SemiBold', fontSize: 16 }}>
                 {waiter?.name}
               </Text>

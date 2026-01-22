@@ -1,10 +1,59 @@
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import Icon_Decrease_Quantity from '../../../assets/SVG/Icon_Decrease_Quantity';
 import Icon_Increase_Quantity from '../../../assets/SVG/Icon_Increase_Quantity';
 import { OrderedItem, TableUser, TableWaiter } from '../../screens/TableScreen';
 import { COLORS } from '../../theme';
+
+// Helper component for displaying initials when image is null
+const InitialsAvatar = ({
+  imageUrl,
+  name,
+  size,
+}: {
+  imageUrl: string | null | undefined;
+  name: string;
+  size: number;
+}) => {
+  const getInitials = (name: string) => {
+    return name.split(' ').map(str => str.charAt(0).toUpperCase()).join('');
+  };
+
+  if (!imageUrl) {
+    return (
+      <View style={[
+        initialsStyles.container,
+        { width: size, height: size, borderRadius: size / 2 }
+      ]}>
+        <Text style={[initialsStyles.text, { fontSize: size * 0.4 }]}>
+          {getInitials(name)}
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <FastImage
+      source={{ uri: imageUrl, priority: FastImage.priority.normal }}
+      style={{ width: size, height: size, borderRadius: size / 2 }}
+      resizeMode={FastImage.resizeMode.cover}
+    />
+  );
+};
+
+const initialsStyles = StyleSheet.create({
+  container: {
+    backgroundColor: COLORS.darkColor,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  text: {
+    color: COLORS.white,
+    fontWeight: 'bold',
+    fontFamily: 'Poppins-SemiBold',
+  },
+});
 
 const OrderedItemCmp = ({
   item,
@@ -89,16 +138,12 @@ const OrderedItemCmp = ({
               left: -8,
               borderRadius: 14,
               backgroundColor: COLORS.white,
+              padding: 1,
             }}>
-              <FastImage
-                source={{
-                  uri:
-                    (orderedByWaiter?.image_url || orderedByUser?.image_url) ||
-                    'https://placehold.co/200x200/png',
-                  priority: FastImage.priority.normal,
-                }}
-                style={{ width: 28, height: 28, borderRadius: 14 }}
-                resizeMode={FastImage.resizeMode.cover}
+              <InitialsAvatar
+                imageUrl={orderedByWaiter?.image_url || orderedByUser?.image_url}
+                name={orderedByWaiter?.name || orderedByUser?.name || ''}
+                size={28}
               />
             </View>
           )}

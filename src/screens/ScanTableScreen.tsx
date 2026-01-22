@@ -24,11 +24,11 @@ const ScanTableScreen = () => {
 
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setTimeout(() => {
-      dispatch(setBranchTable('ashrafieh.table1'));
-    }, 100);
-  }, []);
+  // useEffect(() => {
+  //   setTimeout(() => {
+  //     dispatch(setBranchTable('ashrafieh.table1'));
+  //   }, 100);
+  // }, []);
 
   useFocusEffect(
     React.useCallback(() => {
