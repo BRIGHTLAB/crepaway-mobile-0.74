@@ -112,6 +112,7 @@ const HomeStack = () => {
           title: "",
           headerLeft: () => <CustomHeader color={'white'} clearOrderType />,
           headerTitleAlign: 'center',
+          headerTitle: "hii",
           headerRight: () => (
             <View
               style={{
