@@ -14,9 +14,12 @@ import {
   View,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
+import Icon_Branch from '../../assets/SVG/Icon_Branch';
 import Icon_Checkout from '../../assets/SVG/Icon_Checkout';
+import Icon_Location from '../../assets/SVG/Icon_Location';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
 import Icon_Paper_Edit from '../../assets/SVG/Icon_Paper_Edit';
 import { useGetCheckoutQuery, usePlaceOrderMutation } from '../api/checkoutApi';
@@ -295,6 +298,74 @@ const CheckoutScreen = () => {
       >
         <ScrollView>
           <View style={styles.container}>
+
+
+            {/* Delivery Address or Takeaway Branch */}
+            {(user.orderType === 'delivery' && user.addressTitle) ||
+            (user.orderType === 'takeaway' && cart.branchName) ? (
+              <View style={styles.boxContainer}>
+                <Text style={styles.boxContainerTitle}>
+                  {user.orderType === 'delivery' ? 'Delivery Address' : 'Pickup Branch'}
+                </Text>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
+                    marginTop: 8,
+                  }}
+                >
+                  {user.orderType === 'delivery' ? (
+                    <Icon_Location />
+                  ) : (
+                    <Icon_Branch />
+                  )}
+                  <Text
+                    style={{
+                      fontFamily: 'Poppins-Regular',
+                      fontSize: 14,
+                      color: COLORS.darkColor,
+                      flex: 1,
+                      lineHeight: 20,
+                    }}
+                  >
+                    {user.orderType === 'delivery'
+                      ? user.addressTitle
+                      : cart.branchName}
+                  </Text>
+                </View>
+                {/* Minimap for delivery addresses */}
+                {user.orderType === 'delivery' &&
+                  user.addressLatitude &&
+                  user.addressLongitude && (
+                    <View style={styles.minimapContainer}>
+                      <MapView
+                        provider={PROVIDER_GOOGLE}
+                        style={styles.minimap}
+                        scrollEnabled={false}
+                        zoomEnabled={false}
+                        pitchEnabled={false}
+                        rotateEnabled={false}
+                        initialRegion={{
+                          latitude: user.addressLatitude,
+                          longitude: user.addressLongitude,
+                          latitudeDelta: 0.001,
+                          longitudeDelta: 0.001,
+                        }}
+                      >
+                        <Marker
+                          coordinate={{
+                            latitude: user.addressLatitude,
+                            longitude: user.addressLongitude,
+                          }}
+                          title={user.addressTitle || 'Delivery Address'}
+                        />
+                      </MapView>
+                    </View>
+                  )}
+              </View>
+            ) : null}
+
             <View style={styles.paymentContainer}>
               <Text style={styles.paymentTitle}>Payment Method</Text>
 
@@ -334,6 +405,7 @@ const CheckoutScreen = () => {
                 </View>
               </View>
             </View>
+
 
             {/* Delivery or pickup  */}
             <View style={styles.boxContainer}>
@@ -612,5 +684,17 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
     lineHeight: 22,
+  },
+  minimapContainer: {
+    marginTop: 12,
+    height: 120,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: `${COLORS.foregroundColor}20`,
+  },
+  minimap: {
+    width: '100%',
+    height: '100%',
   },
 });
