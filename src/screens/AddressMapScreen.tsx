@@ -1,6 +1,7 @@
 import BottomSheet from '@gorhom/bottom-sheet';
 import Geolocation from '@react-native-community/geolocation';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Dimensions,
@@ -18,10 +19,9 @@ import {
   RESULTS
 } from 'react-native-permissions';
 import Icon_Add from '../../assets/SVG/Icon_Add';
-import { useGetCitiesQuery, useGetZonesQuery, Zone } from '../api/dataApi';
+import { useGetZonesQuery, Zone } from '../api/dataApi';
 import Marker from '../components/Map/Marker';
 import AddressDetailsSheet from '../components/Sheets/AddressDetailsSheet';
-import SelectSheet from '../components/Sheets/SelectSheet';
 import Button from '../components/UI/Button';
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
 
@@ -30,61 +30,47 @@ const ASPECT_RATIO = width / height;
 const LATITUDE_DELTA = 0.02;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
+// Type for route params - works with all navigation stacks
+type AddressMapRouteParams = {
+  editAddress?: Address;
+};
+
 const AddressMapScreen = () => {
+  const route = useRoute<RouteProp<{ AddressMap: AddressMapRouteParams }, 'AddressMap'>>();
+  const navigation = useNavigation();
+  const editAddress = route.params?.editAddress;
+  const isEditing = !!editAddress;
+
   const mapRef = useRef<MapView>(null);
   const detailsSheetRef = useRef<BottomSheet>(null);
-  const citiesSheetRef = useRef<BottomSheet>(null);
 
-  const [region, setRegion] = useState<Region>({
-    latitude: 37.78825,
-    longitude: 35.4324,
-    latitudeDelta: LATITUDE_DELTA,
-    longitudeDelta: LONGITUDE_DELTA,
-  });
+  // Use edit address coordinates as initial region if editing
+  const initialRegion = editAddress
+    ? {
+      latitude: editAddress.latitude,
+      longitude: editAddress.longitude,
+      latitudeDelta: LATITUDE_DELTA,
+      longitudeDelta: LONGITUDE_DELTA,
+    }
+    : {
+      latitude: 37.78825,
+      longitude: 35.4324,
+      latitudeDelta: LATITUDE_DELTA,
+      longitudeDelta: LONGITUDE_DELTA,
+    };
 
-  const [selectedCity, setSelectedCity] = useState<{
-    id: number;
-    city: string;
-  } | null>(null);
+  const [region, setRegion] = useState<Region>(initialRegion);
+
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const [pendingLocation, setPendingLocation] = useState<Region | null>(null);
-  const { data: cities, isLoading: citiesLoading } = useGetCitiesQuery();
   const { data: zones } = useGetZonesQuery();
 
-  const cityOptions = useMemo(
-    () =>
-      cities?.map(ct => ({
-        label: ct.city,
-        value: ct.id,
-      })) || [],
-    [cities],
-  );
-
-  const handleSelectPress = () => {
-    detailsSheetRef.current?.close();
-    setTimeout(() => {
-      citiesSheetRef.current?.expand();
-    }, 500);
-  };
-
-  const handleCityChange = (city: City | null) => {
-    setSelectedCity(city ? { id: city.id, city: city.city } : null);
-    citiesSheetRef.current?.close();
-    setTimeout(() => {
-      detailsSheetRef.current?.expand();
-    }, 800);
-  };
-
-  const handleBackPress = () => {
-    citiesSheetRef.current?.close();
-    setTimeout(() => {
-      detailsSheetRef.current?.expand();
-    }, 500);
-  };
-
   useEffect(() => {
-    requestLocationAccess();
+    // Only request location if not editing
+    if (!isEditing) {
+      requestLocationAccess();
+    }
   }, []);
 
   const requestLocationAccess = async () => {
@@ -330,16 +316,16 @@ const AddressMapScreen = () => {
         }}>
         <Button
           onPress={() => detailsSheetRef.current?.expand()}
-          disabled={!selectedZone}
+          disabled={!selectedZone && !isEditing}
           icon={<Icon_Add
-            color={selectedZone ? COLORS.lightColor : COLORS.borderColor}
+            color={(selectedZone || isEditing) ? COLORS.lightColor : COLORS.borderColor}
           />}
           style={{
             width: '60%'
           }}
           iconPosition='left'
         >
-          Add location
+          {isEditing ? 'Save location' : 'Add location'}
         </Button>
       </View>
 
@@ -355,20 +341,7 @@ const AddressMapScreen = () => {
           longitude: region.longitude,
           latitude: region.latitude,
         }}
-        onSelectCityPress={handleSelectPress}
-        selectedCity={selectedCity}
-      />
-      <SelectSheet
-        ref={citiesSheetRef}
-        value={selectedCity?.id}
-        options={cityOptions}
-        onChange={id =>
-          handleCityChange(cities?.find(ct => ct.id === id) || null)
-        }
-        title="Select City"
-        loading={citiesLoading}
-        showBackButton={true}
-        onBackPress={handleBackPress}
+        editAddress={editAddress}
       />
     </View>
   );

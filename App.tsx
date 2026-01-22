@@ -4,6 +4,7 @@ import { I18nextProvider } from 'react-i18next';
 import { PermissionsAndroid, Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-get-random-values';
+// import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import DeleteAnimation from './assets/lotties/Delete.json';
 import i18n from './src/i18n';
@@ -12,9 +13,7 @@ import store, { persistor } from './src/store/store';
 
 import * as Sentry from '@sentry/react-native';
 import { PersistGate } from 'redux-persist/integration/react';
-import { useGetPendingRatingQuery } from './src/api/ordersApi';
 import ConfirmationPopup from './src/components/Popups/ConfirmationPopup';
-import OrderRatingPopup from './src/components/Popups/OrderRatingPopup';
 
 
 
@@ -47,26 +46,10 @@ Sentry.init({
 
 const AppContent = () => {
   const [popupDetails, setPopupDetails] = useState(initialPopupDetails);
-  const [showRatingSheet, setShowRatingSheet] = useState(false);
-  const [isSplashFinished, setIsSplashFinished] = useState(false);
-
-  const { data: pendingOrderToRate } = useGetPendingRatingQuery(undefined, {
-    skip: showRatingSheet || !isSplashFinished, // Skip query if rating sheet is already shown or splash hasn't finished
-  });
-
-  useEffect(() => {
-    if (pendingOrderToRate?.id && isSplashFinished) {
-      setShowRatingSheet(true);
-    }
-  }, [pendingOrderToRate, isSplashFinished]);
-
-  const handleRatingClose = () => {
-    setShowRatingSheet(false);
-  };
 
   return (
     <>
-      <NavigationStack onSplashFinish={() => setIsSplashFinished(true)} />
+      <NavigationStack />
       <ConfirmationPopup
         visible={popupDetails.isVisible}
         title={popupDetails.title}
@@ -75,14 +58,6 @@ const AppContent = () => {
         onConfirm={() => setPopupDetails(initialPopupDetails)}
         message={popupDetails.message}
       />
-      {pendingOrderToRate && (
-        <OrderRatingPopup
-          visible={showRatingSheet}
-          onClose={handleRatingClose}
-          orderId={pendingOrderToRate.id}
-          title="Rate your last order"
-        />
-      )}
     </>
   );
 };

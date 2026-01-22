@@ -6,6 +6,7 @@ import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import { useDispatch } from 'react-redux';
 import DeleteAnimation from '../../assets/lotties/Delete.json';
 import Icon_Delete from '../../assets/SVG/Icon_Delete';
+import Icon_Edit from '../../assets/SVG/Icon_Edit';
 import Icon_Location from '../../assets/SVG/Icon_Location';
 import {
   useDeleteAddressMutation,
@@ -34,6 +35,7 @@ const initialModalState = {
   visible: false,
   addressTitle: '',
 };
+
 const AddressScreen = () => {
   // State for confirmation modal
   const [confirmModal, setConfirmModal] =
@@ -55,6 +57,7 @@ const AddressScreen = () => {
       console.error('Failed to delete address:', err);
     }
   };
+
   const handleSelectAddress = (address: Address) => {
     dispatch(
       setAddress({
@@ -74,6 +77,10 @@ const AddressScreen = () => {
     );
   };
 
+  const handleEditAddress = (address: Address) => {
+    navigation.navigate('AddressMap', { editAddress: address });
+  };
+
   const renderAddressItem = (item: Address) => {
     return (
       <TouchableOpacity
@@ -82,20 +89,30 @@ const AddressScreen = () => {
         <View style={styles.itemHeader}>
           <Icon_Location color={COLORS.black} />
           <Text style={[styles.itemName]}>{item.title}</Text>
-          <TouchableOpacity
-            style={{ marginLeft: 'auto', paddingBottom: 5, paddingLeft: 10 }}
-            onPress={() =>
-              setConfirmModal({
-                id: item.id,
-                visible: true,
-                addressTitle: item.title,
-              })
-            }>
-            <Icon_Delete />
-          </TouchableOpacity>
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => handleEditAddress(item)}>
+              <Icon_Edit color={COLORS.black} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() =>
+                setConfirmModal({
+                  id: item.id,
+                  visible: true,
+                  addressTitle: item.title,
+                })
+              }>
+              <Icon_Delete />
+            </TouchableOpacity>
+          </View>
         </View>
         <Text style={[styles.itemDescription]}>
-          {item.city} | {item.building} {item.floor} | {item.additional_info}
+          {item.building} {item.floor} {item.additional_info ? `| ${item.additional_info}` : ''}
         </Text>
       </TouchableOpacity>
     );
@@ -214,5 +231,9 @@ const styles = StyleSheet.create({
   itemDescription: {
     ...TYPOGRAPHY.TAGS,
     color: COLORS.black,
+  },
+  iconButton: {
+    paddingBottom: 5,
+    paddingLeft: 10,
   },
 });

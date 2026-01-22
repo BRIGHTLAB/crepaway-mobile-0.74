@@ -59,7 +59,7 @@ export type DeliveryTakeawayStackParamList = {
   Cart: undefined;
   Notifications: undefined;
   Checkout: undefined;
-  AddressMap: undefined;
+  AddressMap: { editAddress?: Address } | undefined;
   TrackOrder: { orderId: number; order_type: string; addressLatitude?: number; addressLongitude?: number };
   Profile: undefined;
   ProfileSettings: undefined;
@@ -414,7 +414,7 @@ export type ProfileStackParamList = {
   Profile: undefined;
   ProfileSettings: undefined;
   Addresses: undefined;
-  AddressMap: undefined;
+  AddressMap: { editAddress?: Address } | undefined;
   Legal: undefined;
   FAQ: undefined;
   PaymentMethods: undefined;

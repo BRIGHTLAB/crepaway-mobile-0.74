@@ -34,19 +34,12 @@ export const baseApi = createApi({
     // console.log('Error Status:', result.error?.status);
     if (result.error?.status === 401) {
       api.dispatch(logoutUser());
-      //   const user = realmInstance
-      //     .objects('User')
-      //     .filtered('TRUEPREDICATE LIMIT(1)')[0];
-      //   if (user) {
-      //     // await realmInstance.write(() => {
-      //     //   realmInstance.delete(realmInstance.objects('User'));
-      //     // });
-      //     await realmInstance.write(() => {
-      //       user.token = null;
-      //       console.log('writing to realm userToken is null12e3413');
-      //     });
-      //   }
     }
+
+    // Automatically unwrap the 'data' field if the response is wrapped
+    // if (result.data && typeof result.data === 'object' && 'data' in result.data) {
+    //   return { ...result, data: (result.data as { data: unknown }).data };
+    // }
 
     return result;
   },

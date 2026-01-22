@@ -145,10 +145,10 @@ const MenuItemScreen = ({ }: IProps) => {
       const cartItem = cartState.items[itemUuid];
       setQuantity(cartItem.quantity);
       setSpecialInstruction(cartItem.special_instruction || '');
-      
+
       // Always initialize with an empty array first to ensure we're tracking edit mode
       setSelectedModifiers([]);
-      
+
       // Then add any modifier groups that exist in the cart item
       if (cartItem.modifier_groups && cartItem.modifier_groups.length > 0) {
         const formattedModifiers = cartItem.modifier_groups.map(group => ({
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingHorizontal: SCREEN_PADDING.horizontal,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     backgroundColor: '#FFFFFF',
   },
   contentContainer: {

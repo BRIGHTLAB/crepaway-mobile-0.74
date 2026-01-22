@@ -1,26 +1,23 @@
 import BottomSheet, {
   BottomSheetFooter,
   BottomSheetFooterProps,
-  BottomSheetScrollView,
-  BottomSheetView,
+  BottomSheetScrollView
 } from '@gorhom/bottom-sheet';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { forwardRef, useEffect } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { View, Text, Keyboard, Platform, StyleSheet } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { z } from 'zod';
 import Icon_Add from '../../../assets/SVG/Icon_Add';
+import Icon_Edit from '../../../assets/SVG/Icon_Edit';
+import { useAddAddressesMutation, useUpdateAddressMutation } from '../../api/addressesApi';
 import { ServiceSelectionStackParamList } from '../../navigation/ServiceSelectionStack';
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../../theme';
-import Button from '../UI/Button';
-import Input from '../UI/Input';
-import SelectButton from '../UI/SelectButton';
-import DynamicSheet from './DynamicSheet';
-import { useAddAddressesMutation } from '../../api/addressesApi';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomSheetInput from '../UI/BottomSheetInput';
+import Button from '../UI/Button';
+import DynamicSheet from './DynamicSheet';
 
 type Coordinates = {
   latitude: number;
@@ -29,15 +26,13 @@ type Coordinates = {
 
 type Props = {
   coordinates: Coordinates;
-  onSelectCityPress: () => void;
-  selectedCity: { id: number; city: string } | null;
+  editAddress?: Address | null;
 };
 
 type AddressForm = z.infer<typeof addressSchema>;
 
 const inputs = [
   { name: 'title', placeholder: 'Address Title (Home,Work,etc.)' },
-  { name: 'cities_id', placeholder: 'City' },
   { name: 'street_address', placeholder: 'Street Address' },
   { name: 'building', placeholder: 'Bldg' },
   { name: 'floor', placeholder: 'Floor' },
@@ -46,7 +41,6 @@ const inputs = [
 
 const addressSchema = z.object({
   title: z.string().nonempty('Address Title is required'),
-  cities_id: z.number().min(1, 'City is required'),
   street_address: z.string().nonempty('Street Address is required'),
   building: z.string().nonempty('Building is required'),
   floor: z.string().nonempty('Floor is required'),
@@ -61,13 +55,16 @@ type NavigationProp = NativeStackNavigationProp<
 >;
 
 const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
-  ({ coordinates, onSelectCityPress, selectedCity }, ref) => {
+  ({ coordinates, editAddress }, ref) => {
+    const sheetRef = useRef<BottomSheet>(null);
+    const isEditMode = !!editAddress;
+
     const {
       control,
       handleSubmit,
       setValue,
+      reset,
       formState: { errors },
-      trigger,
     } = useForm<AddressForm>({
       resolver: zodResolver(addressSchema),
       defaultValues: {
@@ -77,29 +74,81 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
     });
 
     const [addAddresses, { isLoading: addAddressesLoading }] = useAddAddressesMutation();
+    const [updateAddress, { isLoading: updateAddressLoading }] = useUpdateAddressMutation();
     const navigation = useNavigation<NavigationProp>();
 
-    useEffect(() => {
-      if (selectedCity) {
-        setValue('cities_id', selectedCity.id);
-        trigger('cities_id');
-        setTimeout(() => {
-          inputRefs.street_address.current?.focus();
-        }, 1500);
-      }
-    }, [selectedCity]);
+    const isLoading = addAddressesLoading || updateAddressLoading;
+
+    // Expose sheet methods via ref
+    useImperativeHandle(ref, () => ({
+      expand: () => sheetRef.current?.expand(),
+      close: () => sheetRef.current?.close(),
+      collapse: () => sheetRef.current?.collapse(),
+      snapToIndex: (index: number) => sheetRef.current?.snapToIndex(index),
+      snapToPosition: (position: string | number) => sheetRef.current?.snapToPosition(position),
+      forceClose: () => sheetRef.current?.forceClose(),
+    } as BottomSheet));
 
     useEffect(() => {
       setValue('latitude', coordinates.latitude);
       setValue('longitude', coordinates.longitude);
     }, [coordinates]);
 
+    // Populate form when editing
+    useEffect(() => {
+      if (editAddress) {
+        setValue('title', editAddress.title || '');
+        setValue('street_address', editAddress.street_address || '');
+        setValue('building', editAddress.building || '');
+        setValue('floor', editAddress.floor || '');
+        setValue('additional_info', editAddress.additional_info || '');
+        setValue('latitude', editAddress.latitude);
+        setValue('longitude', editAddress.longitude);
+      }
+    }, [editAddress]);
+
     const onSubmit = async (data: AddressForm) => {
       try {
-        await addAddresses({ addresses: [data] }).unwrap();
-        navigation.pop();
+        if (isEditMode && editAddress) {
+          await updateAddress({
+            id: editAddress.id,
+            address: {
+              title: data.title,
+              street_address: data.street_address,
+              building: data.building,
+              floor: data.floor,
+              additional_info: data.additional_info,
+              latitude: data.latitude,
+              longitude: data.longitude,
+              is_default: editAddress.is_default,
+            },
+          }).unwrap();
+          sheetRef.current?.close();
+          navigation.goBack();
+        } else {
+          await addAddresses({ addresses: [data] }).unwrap();
+          navigation.pop();
+        }
       } catch (error) {
         console.error('ERROR', error);
+      }
+    };
+
+    const handleSheetChange = (index: number) => {
+      if (index === -1) {
+        // Only reset form when sheet is closed in add mode
+        // In edit mode, preserve the form values
+        if (!isEditMode) {
+          reset({
+            latitude: coordinates.latitude,
+            longitude: coordinates.longitude,
+            title: '',
+            street_address: '',
+            building: '',
+            floor: '',
+            additional_info: '',
+          });
+        }
       }
     };
 
@@ -115,10 +164,7 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
       const names = Object.keys(inputRefs);
       const idx = names.indexOf(currentInput);
 
-      if (currentInput === 'title') {
-        Keyboard.dismiss();
-        onSelectCityPress();
-      } else if (currentInput === 'additional_info') {
+      if (currentInput === 'additional_info') {
         handleSubmit(onSubmit)();
       } else {
         const next = names[idx + 1];
@@ -131,26 +177,34 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
         animatedFooterPosition={animatedFooterPosition}
         style={{ paddingVertical: SCREEN_PADDING.vertical + 9 }}
       >
-        <Button onPress={handleSubmit(onSubmit)} isLoading={addAddressesLoading}
+        <Button
+          onPress={handleSubmit(onSubmit)}
+          isLoading={isLoading}
           icon={
-            <Icon_Add color={COLORS.lightColor} />
+            isEditMode ? (
+              <Icon_Edit color={COLORS.lightColor} />
+            ) : (
+              <Icon_Add color={COLORS.lightColor} />
+            )
           }
-          iconPosition='left'>
-
-          Add
+          iconPosition='left'
+        >
+          {isEditMode ? 'Update' : 'Add'}
         </Button>
       </BottomSheetFooter>
     );
 
     return (
       <DynamicSheet
-        ref={ref}
+        ref={sheetRef}
         footerComponent={Footer}
         maxDynamicContentSize={470}
-      // keyboard handling props
+        onChange={handleSheetChange}
       >
         <View style={styles.headerContainer}>
-          <Text style={styles.title}>Add Address Details</Text>
+          <Text style={styles.title}>
+            {isEditMode ? 'Edit Address Details' : 'Add Address Details'}
+          </Text>
         </View>
         <View style={{
           paddingBottom: 150,
@@ -165,26 +219,18 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
                 key={inp.name}
                 control={control}
                 name={inp.name as keyof AddressForm}
-                render={({ field: { onBlur, onChange, value } }) =>
-                  inp.name === 'cities_id' ? (
-                    <SelectButton
-                      onPress={onSelectCityPress}
-                      title={selectedCity?.city ?? 'Select City'}
-                      error={errors.cities_id?.message}
-                    />
-                  ) : (
-                    <BottomSheetInput
-                      ref={inputRefs[inp.name as keyof typeof inputRefs]}
-                      placeholder={inp.placeholder}
-                      value={value?.toString()}
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      error={errors[inp.name as keyof AddressForm]?.message}
-                      returnKeyType={inp.name === 'additional_info' ? 'done' : 'next'}
-                      onSubmitEditing={() => handleInputSubmit(inp.name)}
-                    />
-                  )
-                }
+                render={({ field: { onBlur, onChange, value } }) => (
+                  <BottomSheetInput
+                    ref={inputRefs[inp.name as keyof typeof inputRefs]}
+                    placeholder={inp.placeholder}
+                    value={value?.toString()}
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    error={errors[inp.name as keyof AddressForm]?.message}
+                    returnKeyType={inp.name === 'additional_info' ? 'done' : 'next'}
+                    onSubmitEditing={() => handleInputSubmit(inp.name)}
+                  />
+                )}
               />
             ))}
 

@@ -5,7 +5,14 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
@@ -21,7 +28,14 @@ import DateInput from '../components/UI/DateInput';
 import DynamicPopup from '../components/UI/DynamicPopup';
 import RadioButton from '../components/UI/RadioButton';
 import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
-import { clearCart, setDeliveryInstructions as setDeliveryInstructionsAction, setPromoCode as setPromoCodeAction, setScheduleOrder as setScheduleOrderAction, setScheduledDateTime as setScheduledDateTimeAction, setSendCutlery as setSendCutleryAction } from '../store/slices/cartSlice';
+import {
+  clearCart,
+  setDeliveryInstructions as setDeliveryInstructionsAction,
+  setPromoCode as setPromoCodeAction,
+  setScheduleOrder as setScheduleOrderAction,
+  setScheduledDateTime as setScheduledDateTimeAction,
+  setSendCutlery as setSendCutleryAction,
+} from '../store/slices/cartSlice';
 import { RootState, useAppDispatch } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
 
@@ -37,7 +51,9 @@ const CheckoutScreen = () => {
 
   // Use Redux state for persisted values
   const scheduleOrder = cart.scheduleOrder || 'no';
-  const scheduledDateTime = cart.scheduledDateTime ? new Date(cart.scheduledDateTime) : undefined;
+  const scheduledDateTime = cart.scheduledDateTime
+    ? new Date(cart.scheduledDateTime)
+    : undefined;
 
   // Handler to update scheduledDateTime in Redux
   const handleScheduledDateTimeChange = (date: Date) => {
@@ -45,7 +61,9 @@ const CheckoutScreen = () => {
   };
   const [promoCode, setPromoCode] = useState<string>(cart.promoCode || '');
   const [promoError, setPromoError] = useState<string | null>(null);
-  const [debouncedPromoCode, setDebouncedPromoCode] = useState<string>(cart.promoCode || '');
+  const [debouncedPromoCode, setDebouncedPromoCode] = useState<string>(
+    cart.promoCode || ''
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Use Redux state for persisted values
@@ -55,7 +73,12 @@ const CheckoutScreen = () => {
 
   const { bottom } = useSafeAreaInsets();
 
-  const { data, isLoading, refetch, error: getCheckoutError } = useGetCheckoutQuery({
+  const {
+    data,
+    isLoading,
+    refetch,
+    error: getCheckoutError,
+  } = useGetCheckoutQuery({
     promoCode: debouncedPromoCode,
   });
 
@@ -77,16 +100,15 @@ const CheckoutScreen = () => {
         switch (getCheckoutError.status) {
           case 488:
             setPromoError('Invalid Promo Code');
-            setDebouncedPromoCode('');
-            setPromoCode('');
-            dispatch(setPromoCodeAction(null));
             break;
           default:
-            setErrorMessage((getCheckoutError?.data as any)?.message || 'Failed to load checkout data');
+            setErrorMessage(
+              (getCheckoutError?.data as any)?.message ||
+                'Failed to load checkout data'
+            );
             break;
         }
       }
-
     }
   }, [getCheckoutError]);
 
@@ -118,9 +140,8 @@ const CheckoutScreen = () => {
       }
       console.log('promo code', code);
     }, 500),
-    [dispatch],
+    [dispatch]
   );
-
 
   const handlerOrder = async () => {
     // Clear any existing error messages
@@ -134,26 +155,26 @@ const CheckoutScreen = () => {
       is_scheduled: scheduleOrder === 'yes' ? 1 : 0,
       scheduled_date: scheduledDateTime
         ? scheduledDateTime
-          .toLocaleDateString('en-US', {
-            month: '2-digit',
-            day: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false,
-          })
-          .replace(',', '')
+            .toLocaleDateString('en-US', {
+              month: '2-digit',
+              day: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: false,
+            })
+            .replace(',', '')
         : null,
       order_type: user?.orderType,
       ...(user.orderType === 'delivery'
         ? {
-          delivery_instructions: deliveryInstructions?.map(el => {
-            return {
-              id: el.id,
-            };
-          }),
-        }
+            delivery_instructions: deliveryInstructions?.map((el) => {
+              return {
+                id: el.id,
+              };
+            }),
+          }
         : {}),
       cutleries: sendCutlery === 'yes' ? 1 : 0,
     };
@@ -172,7 +193,15 @@ const CheckoutScreen = () => {
               routes: [
                 { name: 'Orders' },
                 { name: 'OrderDetails', params: { id: resp?.order_id } },
-                { name: 'TrackOrder', params: { orderId: resp?.order_id } },
+                {
+                  name: 'TrackOrder',
+                  params: {
+                    orderId: resp?.order_id,
+                    order_type: user?.orderType,
+                    addressLatitude: user?.addressLatitude,
+                    addressLongitude: user?.addressLongitude,
+                  },
+                },
               ],
               index: 2, // This will make TrackOrder the visible screen
             },
@@ -189,18 +218,23 @@ const CheckoutScreen = () => {
     if (data) {
       if (data?.summary?.promo_code_applied) {
         setPromoError(null);
+      } else if (data?.summary?.promo_code_error) {
+        // Show promo code error from API response
+        setPromoError(data.summary.promo_code_error);
       }
     }
   }, [data, promoCode]);
 
   const handleAddDeliveryInstructions = (
     instructions: { id: number; title: string }[],
-    specialNotes: string,
+    specialNotes: string
   ) => {
-    dispatch(setDeliveryInstructionsAction({
-      instructions,
-      specialNotes,
-    }));
+    dispatch(
+      setDeliveryInstructionsAction({
+        instructions,
+        specialNotes,
+      })
+    );
   };
 
   const handlePromoCodeChange = (code: string) => {
@@ -218,10 +252,9 @@ const CheckoutScreen = () => {
     navigation.goBack();
   };
 
+  console.log('total123', data?.summary?.final_total);
 
-  console.log('total123', data?.summary?.final_total)
-
-  const headerHeight = useHeaderHeight()
+  const headerHeight = useHeaderHeight();
 
   // Calculate minimum date: now + 5 minutes, rounded up to next 30-minute interval
   const getMinimumDate = (): Date => {
@@ -257,7 +290,7 @@ const CheckoutScreen = () => {
         style={{
           flex: 1,
         }}
-        behavior={"padding"}
+        behavior={'padding'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight + 10 : 0}
       >
         <ScrollView>
@@ -270,13 +303,19 @@ const CheckoutScreen = () => {
                   height: 2,
                   backgroundColor: `${COLORS.foregroundColor}10`,
                   marginTop: 6,
-                }}></View>
+                }}
+              ></View>
 
               <View style={styles.paymentMethodContainer}>
                 <View style={styles.paymentMethodItem}>
                   {/* Type of payment */}
                   <View
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                  >
                     <FastImage
                       source={require('../../assets/images/payment/cash.png')}
                       style={{ width: 48, height: 28 }}
@@ -286,11 +325,12 @@ const CheckoutScreen = () => {
                         fontFamily: 'Poppins-Regular',
                         fontSize: 14,
                         color: COLORS.darkColor,
-                      }}>
+                      }}
+                    >
                       Cash
                     </Text>
                   </View>
-                  <RadioButton onPress={() => { }} checked={true} />
+                  <RadioButton onPress={() => {}} checked={true} />
                 </View>
               </View>
             </View>
@@ -306,8 +346,9 @@ const CheckoutScreen = () => {
                   checked={scheduleOrder === 'no'}
                   onPress={() => dispatch(setScheduleOrderAction('no'))}
                   title="No"
-                  description={`Estimated ${user?.orderType === 'delivery' ? 'delivery' : 'pickup'
-                    } time 00:30 Min`}
+                  description={`Estimated ${
+                    user?.orderType === 'delivery' ? 'delivery' : 'pickup'
+                  } time 00:30 Min`}
                 />
                 <View
                   style={{
@@ -315,7 +356,8 @@ const CheckoutScreen = () => {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     gap: 8,
-                  }}>
+                  }}
+                >
                   <RadioButton
                     checked={scheduleOrder === 'yes'}
                     onPress={() => {
@@ -326,12 +368,12 @@ const CheckoutScreen = () => {
                     description={
                       scheduledDateTime
                         ? scheduledDateTime.toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
                         : 'Select Date and Time'
                     }
                   />
@@ -362,20 +404,26 @@ const CheckoutScreen = () => {
               </View>
             </View>
 
-
-
             <TotalSection
               orderType={user?.orderType ?? 'delivery'}
-              subtotal={`USD ${data?.summary?.original_sub_total ?? ''}`}
-              deliveryCharge={`LBP ${data?.delivery_charge ?? ''}`}
+              subtotal={`${data?.currency?.symbol ?? ''} ${
+                data?.summary?.original_sub_total ?? ''
+              }`}
+              deliveryCharge={`${data?.currency?.symbol ?? ''} ${
+                data?.delivery_charge ?? ''
+              }`}
               pointsRewarded={`+ ${data?.points_rewarded ?? ''} pts`}
               promoCode={promoCode}
               promoCodeError={promoError}
               onPromoCodeChange={handlePromoCodeChange}
-              total={`USD ${data?.summary?.final_total ?? ''}`}
+              total={`${data?.currency?.symbol ?? ''} ${
+                data?.summary?.final_total ?? ''
+              }`}
               discount={
                 data?.summary?.total_discount
-                  ? `USD ${data?.summary?.total_discount}`
+                  ? `${data?.currency?.symbol ?? ''} ${
+                      data?.summary?.total_discount
+                    }`
                   : ''
               }
               isLoading={isLoading}
@@ -383,14 +431,15 @@ const CheckoutScreen = () => {
             />
 
             {/* Delivery instructions  */}
-            {(deliveryInstructions?.length > 0 || specialDeliveryInstructions) && (
+            {(deliveryInstructions?.length > 0 ||
+              specialDeliveryInstructions) && (
               <View style={styles.boxContainer}>
                 <Text style={styles.boxContainerTitle}>
                   Delivery Instructions
                 </Text>
 
                 <View style={{ gap: 8 }}>
-                  {deliveryInstructions?.map(el => {
+                  {deliveryInstructions?.map((el) => {
                     return (
                       <Text key={el.id} style={{}}>
                         {el.title}
@@ -399,7 +448,9 @@ const CheckoutScreen = () => {
                   })}
                   {specialDeliveryInstructions && (
                     <Text style={{}}>
-                      <Text style={{ fontWeight: 700 }}>Special Instructions:</Text>{' '}
+                      <Text style={{ fontWeight: 700 }}>
+                        Special Instructions:
+                      </Text>{' '}
                       {specialDeliveryInstructions}
                     </Text>
                   )}
@@ -413,16 +464,21 @@ const CheckoutScreen = () => {
                   icon={<Icon_Motorcycle />}
                   variant="outline"
                   onPress={() => {
-                    console.log('instructionsSheet', deliveryInstructionRef?.current)
-                    deliveryInstructionRef?.current?.expand()
-                  }}>
+                    console.log(
+                      'instructionsSheet',
+                      deliveryInstructionRef?.current
+                    );
+                    deliveryInstructionRef?.current?.expand();
+                  }}
+                >
                   Add Delivery Instructions
                 </Button>
               )}
               <Button
                 isLoading={isSubmitLoading}
                 icon={<Icon_Checkout />}
-                onPress={handlerOrder}>
+                onPress={handlerOrder}
+              >
                 Place Order
               </Button>
             </View>
@@ -436,9 +492,14 @@ const CheckoutScreen = () => {
       />
 
       <DynamicSheet ref={scheduleOrderRef}>
-        <BottomSheetView style={[styles.scheduleSheetContainer, {
-          paddingBottom: bottom + 20
-        }]}>
+        <BottomSheetView
+          style={[
+            styles.scheduleSheetContainer,
+            {
+              paddingBottom: bottom + 20,
+            },
+          ]}
+        >
           <Text style={styles.scheduleSheetTitle}>Schedule Your Order</Text>
           <View style={styles.scheduleInputsContainer}>
             <DateInput
@@ -458,7 +519,8 @@ const CheckoutScreen = () => {
       {/* Error Popup */}
       <DynamicPopup
         visible={errorMessage !== null}
-        onClose={handleCloseErrorPopup}>
+        onClose={handleCloseErrorPopup}
+      >
         <View style={styles.errorPopupContent}>
           <Text style={styles.errorTitle}>Oops!</Text>
           <Text style={styles.errorMessage}>
@@ -467,7 +529,8 @@ const CheckoutScreen = () => {
           <Button
             variant="primary"
             size="medium"
-            onPress={handleCloseErrorPopup}>
+            onPress={handleCloseErrorPopup}
+          >
             OK
           </Button>
         </View>
