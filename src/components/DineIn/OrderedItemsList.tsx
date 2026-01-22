@@ -102,15 +102,26 @@ const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Prop
         renderItem={({ item }) => {
           const orderedByUser = item.added_by.type === 'user'
             ? (users[String(item.added_by.id)] || Object.values(users).find(
-                user => String(user.id) === String(item.added_by.id),
-              ))
+              user => String(user.id) === String(item.added_by.id),
+            ))
             : undefined;
           const orderedByWaiter = item.added_by.type === 'waiter'
             ? (waiters[String(item.added_by.id)] || Object.values(waiters).find(
-                waiter => String(waiter.id) === String(item.added_by.id),
-              ))
+              waiter => String(waiter.id) === String(item.added_by.id),
+            ))
             : undefined;
-          const isItemDisabled = isTableLocked || item.is_disabled || (orderedByUser?.id !== userState.id && !isCurrentUserKing) || item.added_by.type === 'waiter'
+          // Disable logic:
+          // - Always disabled if table is locked or item.is_disabled is true
+          // - Waiter items cannot be edited by anyone
+          // - King can edit all user items (not waiter items)
+          // - Normal user can only edit their own items
+          const isWaiterItem = item.added_by.type === 'waiter';
+          // Compare directly with item.added_by.id since orderedByUser might be undefined
+          const isOwnItem = item.added_by.type === 'user' && String(item.added_by.id) === String(userState.id);
+          const canKingEdit = isCurrentUserKing && !isWaiterItem;
+          const canUserEdit = isOwnItem;
+          const isItemDisabled = isTableLocked || item.is_disabled || isWaiterItem || (!canKingEdit && !canUserEdit);
+
           return (
             <OrderedItemCmp
               item={item}
@@ -119,6 +130,7 @@ const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Prop
               isDisabled={isItemDisabled}
               currentUserId={userState.id}
               isTableLocked={isTableLocked}
+              isCurrentUserKing={isCurrentUserKing}
               onQuantityDecrease={
                 !isItemDisabled
                   ? () => handleDecreaseQuantity(item.uuid, item)

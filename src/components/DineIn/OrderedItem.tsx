@@ -16,6 +16,7 @@ const OrderedItemCmp = ({
   isDisabled,
   currentUserId,
   isTableLocked,
+  isCurrentUserKing,
 }: {
   item: OrderedItem & { uuid: string };
   orderedByUser?: TableUser;
@@ -26,12 +27,16 @@ const OrderedItemCmp = ({
   isDisabled: boolean;
   currentUserId?: number | null;
   isTableLocked?: boolean;
+  isCurrentUserKing?: boolean;
 }) => {
 
   const isOrderedByCurrentUser = currentUserId != null && String(item.added_by.id) === String(currentUserId);
-  
+  const isWaiterItem = item.added_by.type === 'waiter';
+  // King can edit other users' items (not waiter items), normal users can only edit their own
+  const canEditItem = isCurrentUserKing ? !isWaiterItem : isOrderedByCurrentUser;
+
   const shouldShowDisabledOpacity = isTableLocked || item.is_disabled === true;
-  
+
   const calculateItemTotal = () => {
     // Base item price
     let itemTotal = item?.price ? item.price * item.quantity : 0;
@@ -76,7 +81,7 @@ const OrderedItemCmp = ({
             style={{ width: 80, height: 88, borderRadius: 8 }}
             resizeMode={FastImage.resizeMode.cover}
           />
-    
+
           {(orderedByUser || orderedByWaiter) && (
             <View style={{
               position: 'absolute',
@@ -109,6 +114,13 @@ const OrderedItemCmp = ({
             }}>
             {item.name}
             {item?.quantity > 1 && <Text> x{item.quantity}</Text>}
+            {item.status === 'in-kitchen' && (
+              <Text style={{
+                fontSize: 12,
+                color: COLORS.secondaryColor,
+                fontFamily: 'Poppins-Medium',
+              }}> • In Kitchen</Text>
+            )}
           </Text>
 
           <Text
@@ -184,7 +196,7 @@ const OrderedItemCmp = ({
       </View>
 
 
-      {!isDisabled && isOrderedByCurrentUser && onQuantityDecrease && onQuantityIncrease ? (
+      {!isDisabled && canEditItem && onQuantityDecrease && onQuantityIncrease ? (
         <View style={{
           backgroundColor: COLORS.primaryColor,
           flexDirection: 'row',
