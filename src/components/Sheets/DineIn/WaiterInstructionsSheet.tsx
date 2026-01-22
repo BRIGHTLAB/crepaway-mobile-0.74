@@ -1,14 +1,13 @@
+import BottomSheet, { BottomSheetFooter, BottomSheetFooterProps, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import React, { forwardRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
-import { COLORS, TYPOGRAPHY, SCREEN_PADDING } from '../../../theme';
+import { useGetWaiterInstructionsQuery } from '../../../api/dataApi';
+import { TableWaiter } from '../../../screens/TableScreen';
+import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../../../theme';
 import Button from '../../UI/Button';
 import DynamicSheet from '../DynamicSheet';
-import BottomSheet, { BottomSheetScrollView, BottomSheetView, BottomSheetFooter, BottomSheetFooterProps } from '@gorhom/bottom-sheet';
-import { TableWaiter } from '../../../screens/TableScreen';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useGetWaiterInstructionsQuery } from '../../../api/dataApi';
-import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 
 type Props = {
   waiter: TableWaiter;
@@ -43,12 +42,20 @@ const WaiterInstructionsSheet = forwardRef<BottomSheet, Props>(({
         <>
           <Text style={styles.waiterSheetTitle}>Request from Waiter</Text>
           <View style={styles.waiterProfile}>
-            <FastImage
-              style={styles.waiterSheetImage}
-              source={{
-                uri: waiter.image_url || 'https://placehold.co/200x200/png',
-              }}
-            />
+            {waiter.image_url ? (
+              <FastImage
+                style={styles.waiterSheetImage}
+                source={{
+                  uri: waiter.image_url,
+                }}
+              />
+            ) : (
+              <View style={[styles.waiterSheetImage, styles.initialsContainer]}>
+                <Text style={styles.initialsText}>
+                  {waiter.name.split(' ').map(str => str.charAt(0).toUpperCase()).join('')}
+                </Text>
+              </View>
+            )}
             <Text style={styles.waiterSheetName}>{waiter.name}</Text>
           </View>
           <View
@@ -118,5 +125,16 @@ const styles = StyleSheet.create({
   },
   instructionText: {
     ...TYPOGRAPHY.BODY,
+  },
+  initialsContainer: {
+    backgroundColor: COLORS.darkColor,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initialsText: {
+    color: COLORS.white,
+    fontSize: 22,
+    fontWeight: 'bold',
+    fontFamily: 'Poppins-SemiBold',
   },
 });
