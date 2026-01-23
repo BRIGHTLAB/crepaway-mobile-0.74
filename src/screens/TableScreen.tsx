@@ -15,6 +15,7 @@ import {
   View
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import Icon_Cart from '../../assets/SVG/Icon_Cart';
@@ -138,6 +139,10 @@ const kingActions: Action[] = [
   { id: 2, key: 'make-table-admin', text: 'Make table admin' },
 ];
 
+const hapticOptions = {
+  enableVibrateFallback: true,
+  ignoreAndroidSystemSettings: false,
+};
 
 const TableScreen = () => {
   const dispatch = useDispatch();
@@ -164,6 +169,8 @@ const TableScreen = () => {
   const [showTableClosedPopup, setShowTableClosedPopup] = useState(false);
 
   const isTableLocked = useSelector((state: RootState) => state.dineIn.isTableLocked);
+  const previousTableLockRef = useRef<boolean | null>(null);
+  const previousOrderedItemsRef = useRef<OrderedItems | null>(null);
 
   const [pendingJoinRequests, setPendingJoinRequests] = useState<PendingJoinRequests>({});
 
@@ -348,6 +355,43 @@ const TableScreen = () => {
     //   socketInstance.disconnect();
     // };
   }, []);
+
+  useEffect(() => {
+    if (previousTableLockRef.current === null) {
+      previousTableLockRef.current = isTableLocked;
+      return;
+    }
+
+    if (!previousTableLockRef.current && isTableLocked) {
+      ReactNativeHapticFeedback.trigger('impactHeavy', hapticOptions);
+    }
+
+    previousTableLockRef.current = isTableLocked;
+  }, [isTableLocked]);
+
+  useEffect(() => {
+    const previousItems = previousOrderedItemsRef.current;
+
+    if (!previousItems || Object.keys(previousItems).length === 0) {
+      previousOrderedItemsRef.current = orderedItems;
+      return;
+    }
+
+    const hasNewInKitchen = Object.entries(orderedItems).some(([key, item]) => {
+      if (item.deleted === 1) return false;
+      const previousStatus = previousItems?.[key]?.status;
+      return item.status === 'in-kitchen' && previousStatus !== 'in-kitchen';
+    });
+
+    if (hasNewInKitchen) {
+      ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+      setTimeout(() => {
+        ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+      }, 150);
+    }
+
+    previousOrderedItemsRef.current = orderedItems;
+  }, [orderedItems]);
 
   useFocusEffect(
     React.useCallback(() => {

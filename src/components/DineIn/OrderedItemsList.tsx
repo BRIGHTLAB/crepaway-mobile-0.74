@@ -2,6 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import { FlatList, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useSelector } from 'react-redux';
 import { DineInStackParamList } from '../../navigation/DineInStack';
 import { OrderedItem, OrderedItems, TableUsers, TableWaiters } from '../../screens/TableScreen';
@@ -18,6 +19,11 @@ type Props = {
 };
 
 type NavigationProp = NativeStackNavigationProp<DineInStackParamList>;
+
+const hapticOptions = {
+  enableVibrateFallback: true,
+  ignoreAndroidSystemSettings: false,
+};
 
 const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Props) => {
   const navigation = useNavigation<NavigationProp>();
@@ -40,6 +46,11 @@ const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Prop
   };
 
   const handleDecreaseQuantity = (itemUuid: string, item: OrderedItem) => {
+    const isOwnItem = item.added_by.type === 'user' && String(item.added_by.id) === String(userState.id);
+    if (isOwnItem) {
+      ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
+    }
+
     const newQuantity = item.quantity - 1; // FIXED: Added missing semicolon
     const messageData: {
       tableName: string | null;
@@ -65,6 +76,11 @@ const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Prop
   };
 
   const handleIncreaseQuantity = (itemUuid: string, item: OrderedItem) => {
+    const isOwnItem = item.added_by.type === 'user' && String(item.added_by.id) === String(userState.id);
+    if (isOwnItem) {
+      ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
+    }
+
     const newQuantity = item.quantity + 1;
     const messageData: {
       tableName: string | null;

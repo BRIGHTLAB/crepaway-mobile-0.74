@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import uuid from 'react-native-uuid';
@@ -95,6 +96,11 @@ type DineInMenuItemScreenRouteProp = RouteProp<
   DineInOrderStackParamList,
   'MenuItem'
 >;
+
+const hapticOptions = {
+  enableVibrateFallback: true,
+  ignoreAndroidSystemSettings: false,
+};
 
 const DineInMenuItemScreen = ({ }: IProps) => {
   const navigation = useNavigation();
@@ -183,6 +189,8 @@ const DineInMenuItemScreen = ({ }: IProps) => {
     console.log('userState', userState);
     console.log('userState.branchTable', userState.branchTable);
     console.log('userState.tableSessionId', userState.tableSessionId);
+
+    const isNewItem = !itemUuid;
 
     // Check if table is locked
     if (isTableLocked) {
@@ -273,6 +281,10 @@ const DineInMenuItemScreen = ({ }: IProps) => {
       0,
       TOAST_OFFSET,
     );
+
+    if (isNewItem) {
+      ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
+    }
 
     setQuantity(1);
     setSpecialInstruction('');
