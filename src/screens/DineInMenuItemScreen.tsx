@@ -456,15 +456,15 @@ const DineInMenuItemScreen = ({ }: IProps) => {
                 })}
               </View>
 
-              <View style={{ marginTop: 16, gap: 6 }}>
-                <Text
+              <View style={{ marginTop: 25, gap: 6 }}>
+                {/* <Text
                   style={{
                     fontFamily: 'Poppins-Medium',
                     fontSize: 16,
                     color: COLORS.darkColor,
                   }}>
                   Special Instruction
-                </Text>
+                </Text> */}
                 <Input
                   placeholder="Special Instruction"
                   value={specialInstruction}
@@ -523,9 +523,11 @@ const DineInMenuItemScreen = ({ }: IProps) => {
                 icon={<Icon_Cart />}
                 iconPosition="right"
                 textSize="large"
-                onPress={handleAddToOrder}>
+                onPress={handleAddToOrder}
+                variant={isTableLocked ? 'accent' : 'primary'}
+                backgroundColor={isTableLocked ? '#FF6D00' : undefined}>
                 {isTableLocked
-                  ? 'Table is Locked'
+                  ? 'Table is locked'
                   : `${!!itemUuid ? 'Update Order' : 'Add to Order'} - ${itemData?.symbol} ${itemData
                     ? (
                       itemData.price * quantity +

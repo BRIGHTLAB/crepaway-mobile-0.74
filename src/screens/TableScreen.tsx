@@ -631,7 +631,14 @@ const TableScreen = () => {
         </View>
         <OrderedItemsList items={filteredOrderedItems} users={tableUsers} waiters={tableWaiters} />
         <View style={styles.orderButtonContainer}>
-          <Button onPress={handleOrderPress} disabled={isTableLocked}>Add Items</Button>
+          <Button
+            onPress={handleOrderPress}
+            disabled={isTableLocked}
+            variant={isTableLocked ? 'accent' : 'primary'}
+            backgroundColor={isTableLocked ? '#FF6D00' : undefined}
+          >
+            {isTableLocked ? 'Table is locked' : 'Add Items'}
+          </Button>
         </View>
       </Animated.View>
 
