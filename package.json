@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "android": "react-native run-android",
+    "android:apk": "cd android && ./gradlew assembleRelease && node -e \"const path=require('path'); const {spawn}=require('child_process'); const apk=path.resolve('app/build/outputs/apk/release/app-release.apk'); const isMac=process.platform==='darwin'; const isWin=process.platform==='win32'; const cmd=isMac?'open':isWin?'explorer':'xdg-open'; const args=isMac?['-R', apk]:isWin?['/select,', apk]:[path.dirname(apk)]; const p=spawn(cmd,args,{stdio:'inherit'}); p.on('error',e=>{console.error('Failed to open file manager:', e.message); process.exit(0);});\"",
     "ios": "react-native run-ios --simulator='iPhone 16 Pro'",
     "lint": "eslint .",
     "start": "react-native start",
