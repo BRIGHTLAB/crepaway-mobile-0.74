@@ -37,6 +37,7 @@ import SocketService from '../utils/SocketService';
 
 export type OrderedItem = {
     id: number;
+    plu: string;
     name: string;
     image_url: string | null;
     quantity: number;

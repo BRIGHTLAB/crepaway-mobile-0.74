@@ -228,6 +228,7 @@ const DineInMenuItemScreen = ({ }: IProps) => {
     // Prepare item data
     const preparedItem = {
       id: itemData.id,
+      plu: itemData.plu || '',
       name: itemData.name || '',
       image_url: itemData.image_url || '',
       price: itemData.price,
