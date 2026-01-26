@@ -24,14 +24,19 @@ const ScanTableScreen = () => {
 
   const [mounted, setMounted] = useState(false);
 
-  // useEffect(() => {
-  //   setTimeout(() => {
-  //     dispatch(setBranchTable('ashrafieh.table1'));
-  //   }, 100);
-  // }, []);
-
   useFocusEffect(
     React.useCallback(() => {
+
+          // setTimeout(() => {
+    //   dispatch(setBranchTable('ashrafieh.table1'));
+    // }, 100);
+      if (userState.branchTable || userState.tableSessionId) {
+        navigation.navigate('Pending');
+        setMounted(false);
+      } else {
+        setMounted(true);
+      }
+
       const backHandler = BackHandler.addEventListener(
         'hardwareBackPress',
         () => {
@@ -47,21 +52,8 @@ const ScanTableScreen = () => {
 
       // Cleanup function that runs when screen loses focus or unmounts
       return () => backHandler.remove();
-    }, [dispatch]),
+    }, [userState.branchTable, userState.tableSessionId, navigation, dispatch]),
   );
-
-  useFocusEffect(React.useCallback(() => {
-    setMounted(true);
-  }, []))
-
-  useEffect(() => {
-    // if the user already was on a branch table
-    if (userState.branchTable)
-      setTimeout(() => {
-        navigation.navigate('Pending');
-      }, 100);
-    console.log('should be navigating', userState.branchTable);
-  }, [userState.branchTable]);
 
   const handleScan = async (code: Code) => {
     const query = code.value?.split('?')?.[1];

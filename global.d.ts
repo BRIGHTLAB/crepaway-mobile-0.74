@@ -48,6 +48,7 @@ type Item = {
   tags: Tags[];
   taste_triad: TasteTriad[];
   modifier_groups: ModifierGroup[];
+  isHiddenFromUser?: boolean | null;
 };
 
 type TasteTriad = {

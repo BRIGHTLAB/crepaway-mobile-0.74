@@ -53,7 +53,7 @@ export type OrderedItem = {
   name: string;
   image_url: string | null;
   quantity: number;
-  price: number | null
+  price: number | null;
   symbol: string;
   special_instruction?: string | null;
   added_by: {
@@ -66,6 +66,8 @@ export type OrderedItem = {
   deleted: number;
   is_disabled: boolean;
   status: 'pending' | 'in-kitchen';
+  isHiddenFromUser?: boolean | null;
+  order: number;
   modifier_groups: Array<{
     id: number;
     name: string;
@@ -325,7 +327,13 @@ const TableScreen = () => {
       }
 
       if (message.items) {
-        setOrderedItems(message.items as Record<string, OrderedItem>);
+        // Filter out items where isHiddenFromUser is true
+        const filteredItems = Object.fromEntries(
+          Object.entries(message.items as Record<string, OrderedItem>).filter(
+            ([key, value]) => value.isHiddenFromUser !== true
+          )
+        );
+        setOrderedItems(filteredItems);
       }
 
       dispatch(setIsTableLocked(message.isLocked))

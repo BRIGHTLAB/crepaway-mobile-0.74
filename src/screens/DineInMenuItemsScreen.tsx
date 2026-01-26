@@ -201,7 +201,10 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
     ...category,
     items:
       items && items?.data?.length > 0
-        ? items?.data?.filter(item => item.menu_categories_id === category.id)
+        ? items?.data?.filter(item => 
+            item.menu_categories_id === category.id && 
+            !item.isHiddenFromUser
+          )
         : [],
   }));
 

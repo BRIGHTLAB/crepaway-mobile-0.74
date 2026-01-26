@@ -110,10 +110,13 @@ const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Prop
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Ordered Items</Text>
       <FlatList
-        data={Object.entries(items).map(([key, value]) => ({
-          ...value,
-          uuid: key,
-        }))}
+          data={Object.entries(items)
+          .filter(([key, value]) => !value.isHiddenFromUser)
+          .map(([key, value]) => ({
+            ...value,
+            uuid: key,
+          }))
+          .sort((a, b) => (a.order || 0) - (b.order || 0))}
         keyExtractor={item => item.uuid.toString()}
         renderItem={({ item }) => {
           const orderedByUser = item.added_by.type === 'user'
