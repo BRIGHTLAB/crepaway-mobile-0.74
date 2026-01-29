@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import CountryPicker, { CountryCode } from 'react-native-country-picker-modal';
-import Toast from 'react-native-simple-toast';
+import Toast from 'react-native-toast-message';
 import { z } from 'zod';
 import DeleteAnimation from '../../assets/lotties/Delete.json';
 import LogoutAnimation from '../../assets/lotties/Log_out.json';
@@ -35,7 +35,7 @@ import Input from '../components/UI/Input';
 import { ProfileStackParamList } from '../navigation/DeliveryTakeawayStack';
 import { logoutUser } from '../store/slices/userSlice';
 import { useAppDispatch } from '../store/store';
-import { COLORS, INPUT_HEIGHT, SCREEN_PADDING, TOAST_OFFSET, TYPOGRAPHY } from '../theme';
+import { COLORS, INPUT_HEIGHT, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
 
 const profileSchema = z.object({
   name: z.string().nonempty('Name is required'),
@@ -131,16 +131,31 @@ const ProfileSettingsScreen = () => {
   const handleConfirmDeleteAccount = async () => {
     try {
       await deleteAccount();
-      Toast.showWithGravityAndOffset('Account deleted successfully', Toast.SHORT, Toast.BOTTOM, 0, TOAST_OFFSET);
+      Toast.show({
+        type: 'success',
+        text1: 'Your account has been deleted successfully',
+        visibilityTime: 2000,
+        position: 'bottom',
+      });
       dispatch(logoutUser());
     } catch (error) {
       console.log(error);
-      Toast.showWithGravityAndOffset('Failed to delete account. Please try again.', Toast.SHORT, Toast.BOTTOM, 0, TOAST_OFFSET);
+      Toast.show({
+        type: 'success',
+        text1: 'Failed to delete your account. Please try again.',
+        visibilityTime: 2000,
+        position: 'bottom',
+      });
     }
   };
 
   const handleConfirmSignOut = () => {
-    Toast.showWithGravityAndOffset('Signed out successfully', Toast.SHORT, Toast.BOTTOM, 0, TOAST_OFFSET);
+    Toast.show({
+      type: 'success',
+      text1: 'You have been signed out successfully',
+      visibilityTime: 2000,
+      position: 'bottom',
+    });
     dispatch(logoutUser());
   };
 
@@ -149,10 +164,20 @@ const ProfileSettingsScreen = () => {
     try {
       await updateProfile(data).unwrap();
       setHasChanged(false); // Reset hasChanged after successful update
-      Toast.showWithGravityAndOffset('Profile updated successfully!', Toast.SHORT, Toast.BOTTOM, 0, TOAST_OFFSET);
+      Toast.show({
+        type: 'success',
+        text1: 'Your profile has been updated successfully',
+        visibilityTime: 2000,
+        position: 'bottom',
+      });
     } catch (error) {
       console.error('ERROR', error);
-      Toast.showWithGravityAndOffset('Failed to update profile. Please try again.', Toast.SHORT, Toast.BOTTOM, 0, TOAST_OFFSET);
+      Toast.show({
+        type: 'success',
+        text1: 'Failed to update your profile. Please try again.',
+        visibilityTime: 2000,
+        position: 'bottom',
+      });
     }
   };
 

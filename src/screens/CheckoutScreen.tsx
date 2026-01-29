@@ -17,6 +17,7 @@ import FastImage from 'react-native-fast-image';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
+import Toast from 'react-native-toast-message';
 import Icon_Branch from '../../assets/SVG/Icon_Branch';
 import Icon_Checkout from '../../assets/SVG/Icon_Checkout';
 import Icon_Location from '../../assets/SVG/Icon_Location';
@@ -28,17 +29,12 @@ import TotalSection from '../components/Menu/TotalSection';
 import DynamicSheet from '../components/Sheets/DynamicSheet';
 import Button from '../components/UI/Button';
 import DateInput from '../components/UI/DateInput';
-import DynamicPopup from '../components/UI/DynamicPopup';
 import RadioButton from '../components/UI/RadioButton';
 import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
 import {
   clearCart,
-  setDeliveryInstructions as setDeliveryInstructionsAction,
-  setPromoCode as setPromoCodeAction,
-  setScheduleOrder as setScheduleOrderAction,
-  setScheduledDateTime as setScheduledDateTimeAction,
-  setSendCutlery as setSendCutleryAction,
 } from '../store/slices/cartSlice';
+import { DeliveryInstruction } from '../store/slices/cartSlice';
 import { RootState, useAppDispatch } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
 
@@ -52,27 +48,16 @@ const CheckoutScreen = () => {
   const user = useSelector((state: RootState) => state.user);
   const cart = useSelector((state: RootState) => state.cart);
 
-  // Use Redux state for persisted values
-  const scheduleOrder = cart.scheduleOrder || 'no';
-  const scheduledDateTime = cart.scheduledDateTime
-    ? new Date(cart.scheduledDateTime)
-    : undefined;
+  const [scheduleOrder, setScheduleOrder] = useState<string>('no');
+  const [scheduledDateTime, setScheduledDateTime] = useState<Date | undefined>(undefined);
+  const [sendCutlery, setSendCutlery] = useState<string>('no');
+  const [deliveryInstructions, setDeliveryInstructions] = useState<DeliveryInstruction[]>([]);
+  const [specialDeliveryInstructions, setSpecialDeliveryInstructions] = useState<string>('');
 
-  // Handler to update scheduledDateTime in Redux
-  const handleScheduledDateTimeChange = (date: Date) => {
-    dispatch(setScheduledDateTimeAction(date));
-  };
-  const [promoCode, setPromoCode] = useState<string>(cart.promoCode || '');
+  // Promo code state (local state, resets on mount)
+  const [promoCode, setPromoCode] = useState<string>('');
   const [promoError, setPromoError] = useState<string | null>(null);
-  const [debouncedPromoCode, setDebouncedPromoCode] = useState<string>(
-    cart.promoCode || ''
-  );
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Use Redux state for persisted values
-  const deliveryInstructions = cart.deliveryInstructions;
-  const specialDeliveryInstructions = cart.specialDeliveryInstructions;
-  const sendCutlery = cart.sendCutlery;
+  const [debouncedPromoCode, setDebouncedPromoCode] = useState<string>('');
 
   const { bottom } = useSafeAreaInsets();
 
@@ -88,13 +73,6 @@ const CheckoutScreen = () => {
   const [placeOrder, { isLoading: isSubmitLoading, error: placeOrderError }] =
     usePlaceOrderMutation();
 
-  // Initialize promo code from persisted state on mount
-  useEffect(() => {
-    if (cart.promoCode) {
-      setPromoCode(cart.promoCode);
-      setDebouncedPromoCode(cart.promoCode);
-    }
-  }, []); // Only run on mount
 
   // Handle API errors from useGetCheckoutQuery
   useEffect(() => {
@@ -105,50 +83,107 @@ const CheckoutScreen = () => {
             setPromoError('Invalid Promo Code');
             break;
           default:
-            setErrorMessage(
-              (getCheckoutError?.data as any)?.message ||
-                'Failed to load checkout data'
-            );
+            const errorMessage = (getCheckoutError?.data as any)?.message ||
+              'Failed to load checkout data';
+            const isUnknownError = !(getCheckoutError?.data as any)?.message;
+            Toast.show({
+              type: 'error',
+              text1: errorMessage,
+              visibilityTime: 4000,
+              position: 'bottom',
+            });
+            if (isUnknownError) {
+              setTimeout(() => {
+                navigation.navigate('Cart');
+              }, 2000);
+            }
             break;
         }
       }
     }
-  }, [getCheckoutError]);
+  }, [getCheckoutError, navigation]);
 
   // Handle API errors from usePlaceOrderMutation
   useEffect(() => {
     if (placeOrderError) {
       console.log('placeOrderError', placeOrderError);
       const error = placeOrderError as any;
-      setErrorMessage(error?.data?.message || 'Failed to place order');
+      const errorMessage = error?.data?.message || 'Failed to place order';
+      const isUnknownError = !error?.data?.message;
+      Toast.show({
+        type: 'error',
+        text1: errorMessage,
+        visibilityTime: 4000,
+        position: 'bottom',
+      });
+      // Navigate to cart for unknown errors after showing toast
+      if (isUnknownError) {
+        setTimeout(() => {
+          navigation.navigate('Cart');
+        }, 2000);
+      }
     }
-  }, [placeOrderError]);
+  }, [placeOrderError, navigation]);
 
   const handleScheduleConfirm = () => {
     scheduleOrderRef?.current?.close();
   };
 
   const handleScheduleEdit = () => {
+    if (scheduleOrder !== 'yes') return;
     scheduleOrderRef?.current?.expand();
+  };
+
+  // Handle sheet close - if "Yes" is selected but no date, switch back to "No"
+  const handleScheduleSheetClose = () => {
+    if (scheduleOrder === 'yes' && !scheduledDateTime) {
+      setScheduleOrder('no');
+    }
+  };
+
+  const handleScheduledDateTimeChange = (date: Date) => {
+    setScheduledDateTime(date);
   };
 
   const debouncedApplyPromo = useCallback(
     debounce((code: string) => {
       const trimmedCode = code.trim();
       setDebouncedPromoCode(trimmedCode);
-      const promoCodeValue: string | null = trimmedCode || null;
-      dispatch(setPromoCodeAction(promoCodeValue));
       if (!trimmedCode) {
         setPromoError(null);
       }
       console.log('promo code', code);
     }, 500),
-    [dispatch]
+    []
   );
 
   const handlerOrder = async () => {
-    // Clear any existing error messages
-    setErrorMessage(null);
+    // Front-end validation: if scheduleOrder is "yes" but no date selected, switch to "no"
+    if (scheduleOrder === 'yes' && !scheduledDateTime) {
+      setScheduleOrder('no');
+      Toast.show({
+        type: 'error',
+        text1: 'Please select a date and time to schedule your order',
+        visibilityTime: 3000,
+        position: 'bottom',
+      });
+      return;
+    }
+
+    // Front-end validation: if date is selected but not in the future, show error
+    if (scheduledDateTime) {
+      const now = new Date();
+      const minDate = getMinimumDate();
+      if (scheduledDateTime <= now || scheduledDateTime < minDate) {
+        Toast.show({
+          type: 'error',
+          text1: 'Please select a future date and time',
+          visibilityTime: 3000,
+          position: 'bottom',
+        });
+        return;
+      }
+    }
 
     const formData = {
       special_delivery_instructions: specialDeliveryInstructions,
@@ -213,7 +248,20 @@ const CheckoutScreen = () => {
       });
     } catch (err) {
       const error = err as { data: { message: string } };
-      setErrorMessage(error?.data?.message || 'Something went wrong!');
+      const errorMessage = error?.data?.message || 'Something went wrong!';
+      const isUnknownError = !error?.data?.message;
+      Toast.show({
+        type: 'error',
+        text1: errorMessage,
+        visibilityTime: 4000,
+        position: 'bottom',
+      });
+      // Navigate to cart for unknown errors after showing toast
+      if (isUnknownError) {
+        setTimeout(() => {
+          navigation.navigate('Cart');
+        }, 2000);
+      }
     }
   };
 
@@ -232,12 +280,8 @@ const CheckoutScreen = () => {
     instructions: { id: number; title: string }[],
     specialNotes: string
   ) => {
-    dispatch(
-      setDeliveryInstructionsAction({
-        instructions,
-        specialNotes,
-      })
-    );
+    setDeliveryInstructions(instructions);
+    setSpecialDeliveryInstructions(specialNotes);
   };
 
   const handlePromoCodeChange = (code: string) => {
@@ -250,10 +294,6 @@ const CheckoutScreen = () => {
     debouncedApplyPromo(code);
   };
 
-  const handleCloseErrorPopup = () => {
-    setErrorMessage(null);
-    navigation.goBack();
-  };
 
   console.log('total123', data?.summary?.final_total);
 
@@ -379,29 +419,11 @@ const CheckoutScreen = () => {
 
               <View style={styles.paymentMethodContainer}>
                 <View style={styles.paymentMethodItem}>
-                  {/* Type of payment */}
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 8,
-                    }}
-                  >
-                    <FastImage
-                      source={require('../../assets/images/payment/cash.png')}
-                      style={{ width: 48, height: 28 }}
-                    />
-                    <Text
-                      style={{
-                        fontFamily: 'Poppins-Regular',
-                        fontSize: 14,
-                        color: COLORS.darkColor,
-                      }}
-                    >
-                      Cash
-                    </Text>
-                  </View>
-                  <RadioButton onPress={() => {}} checked={true} />
+                  <RadioButton onPress={() => {}} checked={true} title="Cash on delivery" />
+                  <FastImage
+                    source={require('../../assets/images/payment/cash.png')}
+                    style={{ width: 48, height: 28 }}
+                  />
                 </View>
               </View>
             </View>
@@ -410,17 +432,17 @@ const CheckoutScreen = () => {
             {/* Delivery or pickup  */}
             <View style={styles.boxContainer}>
               <Text style={styles.boxContainerTitle}>
-                Would you unlock this awesome feature and schedule your order?{' '}
+                Schedule your order?
               </Text>
 
               <View style={{ gap: 16 }}>
                 <RadioButton
                   checked={scheduleOrder === 'no'}
-                  onPress={() => dispatch(setScheduleOrderAction('no'))}
+                  onPress={() => setScheduleOrder('no')}
                   title="No"
                   description={`Estimated ${
                     user?.orderType === 'delivery' ? 'delivery' : 'pickup'
-                  } time 00:30 Min`}
+                  } time 30 minutes`}
                 />
                 <View
                   style={{
@@ -433,8 +455,13 @@ const CheckoutScreen = () => {
                   <RadioButton
                     checked={scheduleOrder === 'yes'}
                     onPress={() => {
+                      setScheduleOrder('yes');
+                      // Automatically set default date if not already set
+                      if (!scheduledDateTime) {
+                        const defaultDate = getMinimumDate();
+                        setScheduledDateTime(defaultDate);
+                      }
                       scheduleOrderRef?.current?.expand();
-                      dispatch(setScheduleOrderAction('yes'));
                     }}
                     title="Yes"
                     description={
@@ -449,7 +476,7 @@ const CheckoutScreen = () => {
                         : 'Select Date and Time'
                     }
                   />
-                  <Icon_Paper_Edit onPress={handleScheduleEdit} />
+                  {/* <Icon_Paper_Edit onPress={handleScheduleEdit} color={COLORS.secondaryColor} /> */}
                 </View>
               </View>
             </View>
@@ -461,16 +488,12 @@ const CheckoutScreen = () => {
               <View style={{ gap: 16 }}>
                 <RadioButton
                   checked={sendCutlery === 'no'}
-                  onPress={() => {
-                    dispatch(setSendCutleryAction('no'));
-                  }}
+                  onPress={() => setSendCutlery('no')}
                   title="No"
                 />
                 <RadioButton
                   checked={sendCutlery === 'yes'}
-                  onPress={() => {
-                    dispatch(setSendCutleryAction('yes'));
-                  }}
+                  onPress={() => setSendCutlery('yes')}
                   title="Yes"
                 />
               </View>
@@ -563,7 +586,7 @@ const CheckoutScreen = () => {
         onAddInstructions={handleAddDeliveryInstructions}
       />
 
-      <DynamicSheet ref={scheduleOrderRef}>
+      <DynamicSheet ref={scheduleOrderRef} onClose={handleScheduleSheetClose}>
         <BottomSheetView
           style={[
             styles.scheduleSheetContainer,
@@ -587,26 +610,6 @@ const CheckoutScreen = () => {
           <Button onPress={handleScheduleConfirm}>Confirm Schedule</Button>
         </BottomSheetView>
       </DynamicSheet>
-
-      {/* Error Popup */}
-      <DynamicPopup
-        visible={errorMessage !== null}
-        onClose={handleCloseErrorPopup}
-      >
-        <View style={styles.errorPopupContent}>
-          <Text style={styles.errorTitle}>Oops!</Text>
-          <Text style={styles.errorMessage}>
-            {errorMessage || 'Something went wrong!'}
-          </Text>
-          <Button
-            variant="primary"
-            size="medium"
-            onPress={handleCloseErrorPopup}
-          >
-            OK
-          </Button>
-        </View>
-      </DynamicPopup>
     </>
   );
 };
@@ -665,25 +668,6 @@ const styles = StyleSheet.create({
   },
   scheduleInputsContainer: {
     gap: 16,
-  },
-  errorPopupContent: {
-    alignItems: 'center',
-    padding: 16,
-    minWidth: 280,
-  },
-  errorTitle: {
-    fontSize: 18,
-    fontFamily: 'Poppins-Medium',
-    color: COLORS.darkColor,
-    marginBottom: 8,
-  },
-  errorMessage: {
-    fontSize: 16,
-    fontFamily: 'Poppins-Regular',
-    color: COLORS.errorColor,
-    marginBottom: 16,
-    textAlign: 'center',
-    lineHeight: 22,
   },
   minimapContainer: {
     marginTop: 12,

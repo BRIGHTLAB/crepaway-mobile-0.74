@@ -9,11 +9,15 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { StyleSheet, Text, View } from 'react-native';
+import Toast from 'react-native-toast-message';
+import { useDispatch } from 'react-redux';
 import { z } from 'zod';
 import Icon_Add from '../../../assets/SVG/Icon_Add';
 import Icon_Edit from '../../../assets/SVG/Icon_Edit';
 import { useAddAddressesMutation, useUpdateAddressMutation } from '../../api/addressesApi';
+import { Zone } from '../../api/dataApi';
 import { ServiceSelectionStackParamList } from '../../navigation/ServiceSelectionStack';
+import { setAddress, setBranchName, setOrderType } from '../../store/slices/userSlice';
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../../theme';
 import BottomSheetInput from '../UI/BottomSheetInput';
 import Button from '../UI/Button';
@@ -27,6 +31,12 @@ type Coordinates = {
 type Props = {
   coordinates: Coordinates;
   editAddress?: Address | null;
+  selectedZone: Zone | null;
+  zones: Zone[];
+  isPointInPolygon: (
+    point: { latitude: number; longitude: number },
+    polygon: Zone['boundary'],
+  ) => boolean;
 };
 
 type AddressForm = z.infer<typeof addressSchema>;
@@ -36,7 +46,7 @@ const inputs = [
   { name: 'street_address', placeholder: 'Street Address' },
   { name: 'building', placeholder: 'Bldg' },
   { name: 'floor', placeholder: 'Floor' },
-  { name: 'additional_info', placeholder: 'Additional Information' },
+  { name: 'additional_info', placeholder: 'Additional Information*' },
 ];
 
 const addressSchema = z.object({
@@ -55,7 +65,7 @@ type NavigationProp = NativeStackNavigationProp<
 >;
 
 const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
-  ({ coordinates, editAddress }, ref) => {
+  ({ coordinates, editAddress, selectedZone, zones, isPointInPolygon }, ref) => {
     const sheetRef = useRef<BottomSheet>(null);
     const isEditMode = !!editAddress;
 
@@ -76,6 +86,7 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
     const [addAddresses, { isLoading: addAddressesLoading }] = useAddAddressesMutation();
     const [updateAddress, { isLoading: updateAddressLoading }] = useUpdateAddressMutation();
     const navigation = useNavigation<NavigationProp>();
+    const dispatch = useDispatch();
 
     const isLoading = addAddressesLoading || updateAddressLoading;
 
@@ -108,6 +119,27 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
     }, [editAddress]);
 
     const onSubmit = async (data: AddressForm) => {
+      // Check if the location is within a zone
+      const point = {
+        latitude: data.latitude,
+        longitude: data.longitude,
+      };
+
+      const zoneInPoint = zones.find(zone =>
+        isPointInPolygon(point, zone.boundary),
+      );
+
+      if (!zoneInPoint) {
+        Toast.show({
+          type: 'error',
+          text1: 'Location not in coverage area',
+          text2: 'Please select a location within our delivery zone',
+          visibilityTime: 4000,
+          position: 'bottom',
+        });
+        return;
+      }
+
       try {
         if (isEditMode && editAddress) {
           await updateAddress({
@@ -126,11 +158,44 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
           sheetRef.current?.close();
           navigation.goBack();
         } else {
-          await addAddresses({ addresses: [data] }).unwrap();
-          navigation.pop();
+          const response = await addAddresses({ addresses: [data] }).unwrap();
+          
+
+          const newAddress = response.user_address?.[0];
+          
+          if (newAddress) {
+            dispatch(
+              setAddress({
+                id: newAddress.id,
+                title: newAddress.title,
+                latitude: newAddress.latitude,
+                longitude: newAddress.longitude,
+              })
+            );
+            
+            dispatch(setBranchName(null));
+            
+            dispatch(
+              setOrderType({
+                menuType: 'delivery',
+                orderTypeAlias: 'delivery',
+              })
+            );
+          } else {
+            navigation.goBack();
+          }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('ERROR', error);
+        const errorMessage =
+          error?.data?.message ||
+          'Failed to save address. Please try again.';
+        Toast.show({
+          type: 'error',
+          text1: errorMessage,
+          visibilityTime: 4000,
+          position: 'bottom',
+        });
       }
     };
 

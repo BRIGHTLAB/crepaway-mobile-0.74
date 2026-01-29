@@ -18,6 +18,7 @@ import FastImage from 'react-native-fast-image';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
+import Toast from 'react-native-toast-message';
 import Icon_Cart from '../../assets/SVG/Icon_Cart';
 import Icon_Dine_In from '../../assets/SVG/Icon_Dine_In';
 import Icon_Sign_Out from '../../assets/SVG/Icon_Sign_Out';
@@ -173,6 +174,7 @@ const TableScreen = () => {
   const isTableLocked = useSelector((state: RootState) => state.dineIn.isTableLocked);
   const previousTableLockRef = useRef<boolean | null>(null);
   const previousOrderedItemsRef = useRef<OrderedItems | null>(null);
+  const previousIsKingRef = useRef<boolean | null>(null);
 
   const [pendingJoinRequests, setPendingJoinRequests] = useState<PendingJoinRequests>({});
 
@@ -321,6 +323,22 @@ const TableScreen = () => {
     socketInstance.on('tableUpdate', (message: TableUpdateMessage) => {
       console.log('tableUpdate ', message);
 
+      if (message.users && currentUser?.id) {
+        const currentUserData = message.users[currentUser.id];
+        const currentIsKing = currentUserData?.isKing || false;
+        const previousIsKing = previousIsKingRef.current;
+
+        if (previousIsKing !== null && !previousIsKing && currentIsKing) {
+          Toast.show({
+            type: 'success',
+            text1: 'You are now the king! 👑',
+            visibilityTime: 4000,
+            position: 'bottom',
+          });
+        }
+
+        previousIsKingRef.current = currentIsKing;
+      }
 
       if (message.users) {
         setTableUsers(message.users);

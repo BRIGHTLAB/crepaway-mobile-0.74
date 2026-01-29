@@ -14,7 +14,7 @@ export const addresses = baseApi.injectEndpoints({
       invalidatesTags: ['addresses'],
     }),
     addAddresses: builder.mutation<
-      { message: string },
+      { message: string; user_address: Address[] },
       { addresses: Partial<Address>[] }
     >({
       query: ({ addresses }) => ({

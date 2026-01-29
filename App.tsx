@@ -1,11 +1,14 @@
 import { PortalProvider } from '@gorhom/portal';
 import React, { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
-import { PermissionsAndroid, Platform, StyleSheet } from 'react-native';
+import { PermissionsAndroid, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-get-random-values';
 // import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
+import Toast from 'react-native-toast-message';
+import type { ToastConfigParams } from 'react-native-toast-message';
+import Icon_Cart from './assets/SVG/Icon_Cart';
 import DeleteAnimation from './assets/lotties/Delete.json';
 import i18n from './src/i18n';
 import NavigationStack from './src/navigation/NavigationStack';
@@ -14,6 +17,8 @@ import store, { persistor } from './src/store/store';
 import * as Sentry from '@sentry/react-native';
 import { PersistGate } from 'redux-persist/integration/react';
 import ConfirmationPopup from './src/components/Popups/ConfirmationPopup';
+import { COLORS } from './src/theme';
+import Icon_Spine from './assets/SVG/Icon_Spine';
 
 
 
@@ -44,6 +49,111 @@ Sentry.init({
   // spotlight: __DEV__,
 });
 
+interface ToastProps {
+  onViewCart?: () => void;
+}
+
+const toastConfig = {
+  success: ({ text1, props, hide }: ToastConfigParams<ToastProps>) => {
+    const { onViewCart } = props || {};
+    
+    const handleViewCart = () => {
+      hide();
+      onViewCart?.();
+    };
+
+    return (
+      <View
+        style={{
+          backgroundColor: COLORS.darkColor,
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          borderRadius: 8,
+          marginHorizontal: 16,
+          marginBottom: 80,
+          shadowColor: '#000',
+          shadowOffset: {
+            width: 0,
+            height: 2,
+          },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+          elevation: 5,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+        }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1, }}>
+          <Icon_Spine width={26} height={26} color={COLORS.white} />
+          <Text
+            style={{
+              color: COLORS.white,
+              fontSize: 12,
+              fontFamily: 'Poppins-Regular',
+              flex: 1,
+            }}>
+            {text1 || ''}
+          </Text>
+        </View>
+        {onViewCart && (
+          <TouchableOpacity
+            onPress={handleViewCart}
+            style={{
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              backgroundColor: COLORS.white,
+              borderRadius: 6,
+            }}>
+            <Text
+              style={{
+                color: COLORS.darkColor,
+                fontSize: 12,
+                fontFamily: 'Poppins-SemiBold',
+              }}>
+              View Cart
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  },
+  error: ({ text1 }: ToastConfigParams<ToastProps>) => {
+    return (
+      <View
+        style={{
+          backgroundColor: COLORS.errorColor,
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          borderRadius: 8,
+          marginHorizontal: 16,
+          marginBottom: 80,
+          shadowColor: '#000',
+          shadowOffset: {
+            width: 0,
+            height: 2,
+          },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+          elevation: 5,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+        }}>
+        <Text
+          style={{
+            color: COLORS.white,
+            fontSize: 12,
+            fontFamily: 'Poppins-Regular',
+            flex: 1,
+          }}>
+          {text1 || 'An error occurred'}
+        </Text>
+      </View>
+    );
+  },
+};
+
 const AppContent = () => {
   const [popupDetails, setPopupDetails] = useState(initialPopupDetails);
 
@@ -58,6 +168,7 @@ const AppContent = () => {
         onConfirm={() => setPopupDetails(initialPopupDetails)}
         message={popupDetails.message}
       />
+      <Toast config={toastConfig} />
     </>
   );
 };

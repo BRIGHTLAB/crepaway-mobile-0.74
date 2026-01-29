@@ -188,6 +188,7 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
     addressId: userState.addressId,
   });
 
+
   const groupedItems = categories.map(category => ({
     ...category,
     items:

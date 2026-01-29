@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import uuid from 'react-native-uuid';
 import { useSelector } from 'react-redux';
-import Toast from 'react-native-simple-toast';
+import Toast from 'react-native-toast-message';
 import Icon_Cart from '../../assets/SVG/Icon_Cart';
 import Icon_Decrease_Quantity from '../../assets/SVG/Icon_Decrease_Quantity';
 import Icon_Increase_Quantity from '../../assets/SVG/Icon_Increase_Quantity';
@@ -33,7 +33,7 @@ import Input from '../components/UI/Input';
 import { TYPOGRAPHY } from '../constants/typography';
 import { DineInOrderStackParamList } from '../navigation/DineInOrderStack';
 import { RootState } from '../store/store';
-import { COLORS, TOAST_OFFSET } from '../theme';
+import { COLORS } from '../theme';
 import SocketService from '../utils/SocketService';
 import { OrderedItem } from './TableScreen';
 
@@ -273,14 +273,15 @@ const DineInMenuItemScreen = ({ }: IProps) => {
       data: messageData,
     });
 
-    const toastMessage = itemUuid ? 'Item has been updated' : 'Added to your order';
-    Toast.showWithGravityAndOffset(
-      toastMessage,
-      Toast.LONG,
-      Toast.BOTTOM,
-      0,
-      TOAST_OFFSET,
-    );
+    const toastMessage = itemUuid 
+      ? `${itemData.name} (x${quantity}) updated in order`
+      : `${itemData.name} (x${quantity}) added to order`;
+    Toast.show({
+      type: 'success',
+      text1: toastMessage,
+      visibilityTime: 3000,
+      position: 'bottom',
+    });
 
     if (isNewItem) {
       ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
