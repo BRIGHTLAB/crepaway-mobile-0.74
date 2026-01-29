@@ -33,10 +33,10 @@ export const BASE_URL = 'https://dev.staging-api.thenewexperience.app/api/app';
 
 export const API_MAP_KEY = 'AIzaSyA0IxviANpXAl-sTNcYjH1zU5cjgXimKuk';
 export const DRIVER_SOCKET_URL = 'wss://dev.realtime.driver-tracking.com';
+// export const DINEIN_SOCKET_URL =
+//   'http://chris.pc:5003';
 export const DINEIN_SOCKET_URL =
-  'http://chris.pc:5003';
-// export const DINEIN_SOCKET_URUL =
-//   'wss://crepaway-dinein-websocket-ts-hgga.onrender.com';
+  'wss://crepaway-dinein-websocket-ts-hgga.onrender.com';
 
 export const TOAST_OFFSET = -80;
 
