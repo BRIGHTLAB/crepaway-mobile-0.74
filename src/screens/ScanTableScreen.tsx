@@ -27,7 +27,7 @@ const ScanTableScreen = () => {
   useFocusEffect(
     React.useCallback(() => {
 
-          // setTimeout(() => {
+    //       setTimeout(() => {
     //   dispatch(setBranchTable('ashrafieh.table1'));
     // }, 100);
       if (userState.branchTable || userState.tableSessionId) {

@@ -1,20 +1,21 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import { FlatList, StyleSheet, View } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
 import DeleteAnimation from '../../assets/lotties/Delete.json';
-import Icon_Delete from '../../assets/SVG/Icon_Delete';
-import Icon_Edit from '../../assets/SVG/Icon_Edit';
-import Icon_Location from '../../assets/SVG/Icon_Location';
 import {
   useDeleteAddressMutation,
   useGetAddressesQuery,
 } from '../api/addressesApi';
 import AddAddressButton from '../components/Address/AddAddressButton';
+import AddressItem from '../components/Address/AddressItem';
+import AddressSkeleton from '../components/Address/AddressSkeleton';
 import ConfirmationPopup from '../components/Popups/ConfirmationPopup';
 import { ProfileStackParamList } from '../navigation/DeliveryTakeawayStack';
-import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
+import { setAddress } from '../store/slices/userSlice';
+import { RootState } from '../store/store';
+import { COLORS, SCREEN_PADDING } from '../theme';
 
 type NavigationProp = NativeStackNavigationProp<ProfileStackParamList>;
 
@@ -39,11 +40,40 @@ const ProfileAddressesScreen = () => {
 
   const navigation = useNavigation<NavigationProp>();
   const { data, isLoading } = useGetAddressesQuery();
+  const dispatch = useDispatch();
+  const selectedAddressId = useSelector(
+    (state: RootState) => state.user.addressId,
+  );
 
   const handleConfirmDelete = async (id: number | null) => {
     if (!id) return;
     try {
       await deleteAddress({ id }).unwrap();
+
+      if (id === selectedAddressId) {
+        const remaining = (data ?? []).filter(addr => addr.id !== id);
+        const lastAddress = remaining[remaining.length - 1];
+        if (lastAddress) {
+          dispatch(
+            setAddress({
+              id: lastAddress.id,
+              title: lastAddress.title,
+              latitude: lastAddress.latitude,
+              longitude: lastAddress.longitude,
+            }),
+          );
+        } else {
+          dispatch(
+            setAddress({
+              id: null,
+              title: null,
+              latitude: null,
+              longitude: null,
+            }),
+          );
+        }
+      }
+
       setConfirmModal(initialModalState);
     } catch (err) {
       console.error('Failed to delete address:', err);
@@ -54,38 +84,23 @@ const ProfileAddressesScreen = () => {
     navigation.navigate('AddressMap', { editAddress: address });
   };
 
+  const handleDeleteAddress = (address: Address) => {
+    setConfirmModal({
+      id: address.id,
+      visible: true,
+      addressTitle: address.title,
+    });
+  };
+
   const renderAddressItem = (item: Address) => {
+    const isSelected = item.id === selectedAddressId;
     return (
-      <View style={styles.itemContainer}>
-        <View style={styles.itemHeader}>
-          <Icon_Location color={COLORS.black} />
-          <Text style={[styles.itemName]}>{item.title}</Text>
-          <View style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-          }}>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => handleEditAddress(item)}>
-              <Icon_Edit color={COLORS.black} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() =>
-                setConfirmModal({
-                  id: item.id,
-                  visible: true,
-                  addressTitle: item.title,
-                })
-              }>
-              <Icon_Delete />
-            </TouchableOpacity>
-          </View>
-        </View>
-        <Text style={[styles.itemDescription]}>
-          {item.building} {item.floor} {item.additional_info ? `| ${item.additional_info}` : ''}
-        </Text>
-      </View>
+      <AddressItem
+        address={item}
+        isSelected={isSelected}
+        onEdit={handleEditAddress}
+        onDelete={handleDeleteAddress}
+      />
     );
   };
 
@@ -116,49 +131,6 @@ const ProfileAddressesScreen = () => {
   );
 };
 
-const AddressSkeleton = () => {
-  return (
-    <View>
-      <View style={styles.listContainer}>
-        {Array.from({ length: 4 }).map((_, index) => (
-          <View key={index} style={styles.itemContainer}>
-            <SkeletonPlaceholder>
-              <>
-                <View style={styles.itemHeader}>
-                  {/* Location icon placeholder */}
-                  <View style={{ width: 20, height: 20, borderRadius: 10 }} />
-                  {/* Title placeholder */}
-                  <View
-                    style={{
-                      marginLeft: 16,
-                      width: 100,
-                      height: 20,
-                      borderRadius: 4,
-                    }}
-                  />
-                  {/* Delete icon placeholder */}
-                  <View style={{ marginLeft: 'auto' }}>
-                    <View style={{ width: 20, height: 20, borderRadius: 10 }} />
-                  </View>
-                </View>
-                {/* Address description placeholder */}
-                <View
-                  style={{
-                    width: '80%',
-                    height: 15,
-                    borderRadius: 4,
-                    marginTop: 8,
-                  }}
-                />
-              </>
-            </SkeletonPlaceholder>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-};
-
 export default ProfileAddressesScreen;
 
 const styles = StyleSheet.create({
@@ -168,33 +140,10 @@ const styles = StyleSheet.create({
     gap: 10,
     justifyContent: 'space-between',
     flex: 1,
+    backgroundColor: COLORS.lightColor,
   },
   listContainer: {
     gap: 12,
-  },
-  itemContainer: {
-    gap: 4,
-    padding: 16,
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-  },
-  itemHeader: {
-    flexDirection: 'row',
-    width: '100%',
-    gap: 16,
-    alignItems: 'center',
-  },
-  itemName: {
-    ...TYPOGRAPHY.BODY,
-    color: COLORS.black,
-    flex: 1,
-  },
-  iconButton: {
-    paddingBottom: 5,
-    paddingLeft: 10,
-  },
-  itemDescription: {
-    ...TYPOGRAPHY.TAGS,
-    color: COLORS.black,
+    paddingBottom: 20,
   },
 });

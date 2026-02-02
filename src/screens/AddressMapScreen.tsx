@@ -73,6 +73,21 @@ const AddressMapScreen = () => {
     }
   }, []);
 
+  // Check zone when zones are first loaded (especially important when editing)
+  useEffect(() => {
+    if (zones && zones.length > 0 && region) {
+      const centerPoint = {
+        latitude: region.latitude,
+        longitude: region.longitude,
+      };
+      const zoneInPoint =
+        zones.find(zone => isPointInPolygon(centerPoint, zone.boundary)) ||
+        null;
+      setSelectedZone(zoneInPoint);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zones?.length]); // Only run when zones array length changes (initial load)
+
   const requestLocationAccess = async () => {
     console.log('requestLocationAccess');
 
@@ -316,9 +331,9 @@ const AddressMapScreen = () => {
         }}>
         <Button
           onPress={() => detailsSheetRef.current?.expand()}
-          disabled={!selectedZone && !isEditing}
+          disabled={!selectedZone}
           icon={<Icon_Add
-            color={(selectedZone || isEditing) ? COLORS.lightColor : COLORS.borderColor}
+            color={selectedZone ? COLORS.lightColor : COLORS.borderColor}
           />}
           style={{
             width: '60%'
@@ -342,6 +357,9 @@ const AddressMapScreen = () => {
           latitude: region.latitude,
         }}
         editAddress={editAddress}
+        selectedZone={selectedZone}
+        zones={zones || []}
+        isPointInPolygon={isPointInPolygon}
       />
     </View>
   );

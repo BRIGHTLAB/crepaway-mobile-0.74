@@ -105,6 +105,10 @@ const OrderComponent = React.memo(
           </Text>
         </View>
 
+        {/* <TouchableOpacity onPress={() => console.log('pressed')}>
+          <Text>Test</Text>
+        </TouchableOpacity> */}
+
         {sectionTitle === 'Past Orders' && (
           <Button
             iconPosition="left"
@@ -150,7 +154,7 @@ const OrdersScreen = () => {
     isLoading: loading,
     refetch: fetchOrders,
   } = useGetOrdersQuery(undefined, {
-    pollingInterval: isFocused ? 2000 : undefined,
+    // pollingInterval: isFocused ? 2000 : undefined,
   });
 
   const ratingSheetRef = useRef<OrderRatingSheetRef>(null);
@@ -165,7 +169,6 @@ const OrdersScreen = () => {
     });
   }, []);
 
-  console.log('ordersasd', orders);
 
   const handleRateOrder = useCallback((order: OrderListItem) => {
     setSelectedOrder(order);
@@ -312,20 +315,18 @@ const OrdersScreen = () => {
         {renderContent()}
       </View>
 
-      {selectedOrder && (
-        <OrderRatingSheet
-          ref={ratingSheetRef}
-          onClose={handleCloseRatingSheet}
-          orderId={selectedOrder.id}
-          rating={selectedOrder.food_rating ? {
-            food_rating: selectedOrder.food_rating,
-            experience_rating: selectedOrder.experience_rating || 0,
-            service_rating: selectedOrder.service_rating || 0,
-            review_comment: selectedOrder.review_comment,
-          } : null}
-          disabled={!!selectedOrder.food_rating}
-        />
-      )}
+      <OrderRatingSheet
+        ref={ratingSheetRef}
+        onClose={handleCloseRatingSheet}
+        orderId={selectedOrder?.id ?? 0}
+        rating={selectedOrder?.food_rating ? {
+          food_rating: selectedOrder.food_rating,
+          experience_rating: selectedOrder.experience_rating || 0,
+          service_rating: selectedOrder.service_rating || 0,
+          review_comment: selectedOrder.review_comment,
+        } : null}
+        disabled={!!selectedOrder?.food_rating}
+      />
     </View>
   );
 };

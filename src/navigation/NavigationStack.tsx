@@ -29,7 +29,10 @@ export type RootStackParamList = {
     screen: keyof LoginStackParamList;
     params?: LoginStackParamList[keyof LoginStackParamList];
   };
-  DeliveryTakeaway: undefined;
+  DeliveryTakeaway: {
+    screen?: keyof DeliveryTakeawayStackParamList;
+    params?: DeliveryTakeawayStackParamList[keyof DeliveryTakeawayStackParamList];
+  } | undefined;
   DineIn: undefined;
   MenuItem: { itemId: number; itemUuid?: string };
   HomeStack: {
