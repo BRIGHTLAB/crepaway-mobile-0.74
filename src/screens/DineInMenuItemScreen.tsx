@@ -10,10 +10,12 @@ import {
   View,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import uuid from 'react-native-uuid';
 import { useSelector } from 'react-redux';
+import Toast from 'react-native-toast-message';
 import Icon_Cart from '../../assets/SVG/Icon_Cart';
 import Icon_Decrease_Quantity from '../../assets/SVG/Icon_Decrease_Quantity';
 import Icon_Increase_Quantity from '../../assets/SVG/Icon_Increase_Quantity';
@@ -94,6 +96,11 @@ type DineInMenuItemScreenRouteProp = RouteProp<
   DineInOrderStackParamList,
   'MenuItem'
 >;
+
+const hapticOptions = {
+  enableVibrateFallback: true,
+  ignoreAndroidSystemSettings: false,
+};
 
 const DineInMenuItemScreen = ({ }: IProps) => {
   const navigation = useNavigation();
@@ -183,6 +190,8 @@ const DineInMenuItemScreen = ({ }: IProps) => {
     console.log('userState.branchTable', userState.branchTable);
     console.log('userState.tableSessionId', userState.tableSessionId);
 
+    const isNewItem = !itemUuid;
+
     // Check if table is locked
     if (isTableLocked) {
       console.log('Table is locked, cannot add items');
@@ -227,6 +236,7 @@ const DineInMenuItemScreen = ({ }: IProps) => {
     // Prepare item data
     const preparedItem = {
       id: itemData.id,
+      plu: itemData.plu || '',
       name: itemData.name || '',
       image_url: itemData.image_url || '',
       price: itemData.price,
@@ -262,6 +272,20 @@ const DineInMenuItemScreen = ({ }: IProps) => {
       type: 'updateItem',
       data: messageData,
     });
+
+    const toastMessage = itemUuid 
+      ? `${itemData.name} (x${quantity}) updated in order`
+      : `${itemData.name} (x${quantity}) added to order`;
+    Toast.show({
+      type: 'success',
+      text1: toastMessage,
+      visibilityTime: 3000,
+      position: 'bottom',
+    });
+
+    if (isNewItem) {
+      ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
+    }
 
     setQuantity(1);
     setSpecialInstruction('');
@@ -427,20 +451,21 @@ const DineInMenuItemScreen = ({ }: IProps) => {
                       group={group}
                       selectedModifiers={selectedModifiers}
                       setSelectedModifiers={setSelectedModifiers}
+                      isEditMode={!!itemUuid}
                     />
                   );
                 })}
               </View>
 
-              <View style={{ marginTop: 16, gap: 6 }}>
-                <Text
+              <View style={{ marginTop: 25, gap: 6 }}>
+                {/* <Text
                   style={{
                     fontFamily: 'Poppins-Medium',
                     fontSize: 16,
                     color: COLORS.darkColor,
                   }}>
                   Special Instruction
-                </Text>
+                </Text> */}
                 <Input
                   placeholder="Special Instruction"
                   value={specialInstruction}
@@ -499,9 +524,11 @@ const DineInMenuItemScreen = ({ }: IProps) => {
                 icon={<Icon_Cart />}
                 iconPosition="right"
                 textSize="large"
-                onPress={handleAddToOrder}>
+                onPress={handleAddToOrder}
+                variant={isTableLocked ? 'accent' : 'primary'}
+                backgroundColor={isTableLocked ? '#FF6D00' : undefined}>
                 {isTableLocked
-                  ? 'Table is Locked'
+                  ? 'Table is locked'
                   : `${!!itemUuid ? 'Update Order' : 'Add to Order'} - ${itemData?.symbol} ${itemData
                     ? (
                       itemData.price * quantity +

@@ -5,11 +5,22 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import FastImage from 'react-native-fast-image';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
+import Toast from 'react-native-toast-message';
+import Icon_Branch from '../../assets/SVG/Icon_Branch';
 import Icon_Checkout from '../../assets/SVG/Icon_Checkout';
+import Icon_Location from '../../assets/SVG/Icon_Location';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
 import Icon_Paper_Edit from '../../assets/SVG/Icon_Paper_Edit';
 import { useGetCheckoutQuery, usePlaceOrderMutation } from '../api/checkoutApi';
@@ -18,10 +29,12 @@ import TotalSection from '../components/Menu/TotalSection';
 import DynamicSheet from '../components/Sheets/DynamicSheet';
 import Button from '../components/UI/Button';
 import DateInput from '../components/UI/DateInput';
-import DynamicPopup from '../components/UI/DynamicPopup';
 import RadioButton from '../components/UI/RadioButton';
 import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
-import { clearCart } from '../store/slices/cartSlice';
+import {
+  clearCart,
+} from '../store/slices/cartSlice';
+import { DeliveryInstruction } from '../store/slices/cartSlice';
 import { RootState, useAppDispatch } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
 
@@ -31,31 +44,35 @@ const CheckoutScreen = () => {
 
   const deliveryInstructionRef = useRef<BottomSheetMethods | null>(null);
   const scheduleOrderRef = useRef<BottomSheetMethods | null>(null);
-  const [scheduleOrder, setScheduleOrder] = React.useState<string | null>('no');
-  const [scheduledDateTime, setScheduledDateTime] = React.useState<
-    Date | undefined
-  >(undefined);
+  const dispatch = useAppDispatch();
+  const user = useSelector((state: RootState) => state.user);
+  const cart = useSelector((state: RootState) => state.cart);
+
+  const [scheduleOrder, setScheduleOrder] = useState<string>('no');
+  const [scheduledDateTime, setScheduledDateTime] = useState<Date | undefined>(undefined);
+  const [sendCutlery, setSendCutlery] = useState<string>('no');
+  const [deliveryInstructions, setDeliveryInstructions] = useState<DeliveryInstruction[]>([]);
+  const [specialDeliveryInstructions, setSpecialDeliveryInstructions] = useState<string>('');
+
+  // Promo code state (local state, resets on mount)
   const [promoCode, setPromoCode] = useState<string>('');
   const [promoError, setPromoError] = useState<string | null>(null);
   const [debouncedPromoCode, setDebouncedPromoCode] = useState<string>('');
-  const [deliveryInstructions, setDeliveryInstructions] = useState<
-    { id: number; title: string }[]
-  >([]);
-  const [specialDeliveryInstructions, setSpecialDeliveryInstructions] =
-    useState<string>('');
-  const dispatch = useAppDispatch();
-  const user = useSelector((state: RootState) => state.user);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [sendCutlery, setSendCutlery] = useState<string>('no');
 
   const { bottom } = useSafeAreaInsets();
 
-  const { data, isLoading, refetch, error: getCheckoutError } = useGetCheckoutQuery({
+  const {
+    data,
+    isLoading,
+    refetch,
+    error: getCheckoutError,
+  } = useGetCheckoutQuery({
     promoCode: debouncedPromoCode,
   });
 
   const [placeOrder, { isLoading: isSubmitLoading, error: placeOrderError }] =
     usePlaceOrderMutation();
+
 
   // Handle API errors from useGetCheckoutQuery
   useEffect(() => {
@@ -64,49 +81,109 @@ const CheckoutScreen = () => {
         switch (getCheckoutError.status) {
           case 488:
             setPromoError('Invalid Promo Code');
-            setDebouncedPromoCode('');
             break;
           default:
-            setErrorMessage((getCheckoutError?.data as any)?.message || 'Failed to load checkout data');
+            const errorMessage = (getCheckoutError?.data as any)?.message ||
+              'Failed to load checkout data';
+            const isUnknownError = !(getCheckoutError?.data as any)?.message;
+            Toast.show({
+              type: 'error',
+              text1: errorMessage,
+              visibilityTime: 4000,
+              position: 'bottom',
+            });
+            if (isUnknownError) {
+              setTimeout(() => {
+                navigation.navigate('Cart');
+              }, 2000);
+            }
             break;
         }
       }
-
     }
-  }, [getCheckoutError]);
+  }, [getCheckoutError, navigation]);
 
   // Handle API errors from usePlaceOrderMutation
   useEffect(() => {
     if (placeOrderError) {
       console.log('placeOrderError', placeOrderError);
       const error = placeOrderError as any;
-      setErrorMessage(error?.data?.message || 'Failed to place order');
+      const errorMessage = error?.data?.message || 'Failed to place order';
+      const isUnknownError = !error?.data?.message;
+      Toast.show({
+        type: 'error',
+        text1: errorMessage,
+        visibilityTime: 4000,
+        position: 'bottom',
+      });
+      // Navigate to cart for unknown errors after showing toast
+      if (isUnknownError) {
+        setTimeout(() => {
+          navigation.navigate('Cart');
+        }, 2000);
+      }
     }
-  }, [placeOrderError]);
+  }, [placeOrderError, navigation]);
 
   const handleScheduleConfirm = () => {
     scheduleOrderRef?.current?.close();
   };
 
   const handleScheduleEdit = () => {
+    if (scheduleOrder !== 'yes') return;
     scheduleOrderRef?.current?.expand();
+  };
+
+  // Handle sheet close - if "Yes" is selected but no date, switch back to "No"
+  const handleScheduleSheetClose = () => {
+    if (scheduleOrder === 'yes' && !scheduledDateTime) {
+      setScheduleOrder('no');
+    }
+  };
+
+  const handleScheduledDateTimeChange = (date: Date) => {
+    setScheduledDateTime(date);
   };
 
   const debouncedApplyPromo = useCallback(
     debounce((code: string) => {
-      setDebouncedPromoCode(code);
-      if (!code.trim()) {
-        setPromoError(null); 
+      const trimmedCode = code.trim();
+      setDebouncedPromoCode(trimmedCode);
+      if (!trimmedCode) {
+        setPromoError(null);
       }
       console.log('promo code', code);
     }, 500),
-    [],
+    []
   );
 
-
   const handlerOrder = async () => {
-    // Clear any existing error messages
-    setErrorMessage(null);
+    // Front-end validation: if scheduleOrder is "yes" but no date selected, switch to "no"
+    if (scheduleOrder === 'yes' && !scheduledDateTime) {
+      setScheduleOrder('no');
+      Toast.show({
+        type: 'error',
+        text1: 'Please select a date and time to schedule your order',
+        visibilityTime: 3000,
+        position: 'bottom',
+      });
+      return;
+    }
+
+    // Front-end validation: if date is selected but not in the future, show error
+    if (scheduledDateTime) {
+      const now = new Date();
+      const minDate = getMinimumDate();
+      if (scheduledDateTime <= now || scheduledDateTime < minDate) {
+        Toast.show({
+          type: 'error',
+          text1: 'Please select a future date and time',
+          visibilityTime: 3000,
+          position: 'bottom',
+        });
+        return;
+      }
+    }
 
     const formData = {
       special_delivery_instructions: specialDeliveryInstructions,
@@ -116,33 +193,33 @@ const CheckoutScreen = () => {
       is_scheduled: scheduleOrder === 'yes' ? 1 : 0,
       scheduled_date: scheduledDateTime
         ? scheduledDateTime
-          .toLocaleDateString('en-US', {
-            month: '2-digit',
-            day: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false,
-          })
-          .replace(',', '')
+            .toLocaleDateString('en-US', {
+              month: '2-digit',
+              day: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: false,
+            })
+            .replace(',', '')
         : null,
       order_type: user?.orderType,
       ...(user.orderType === 'delivery'
         ? {
-          delivery_instructions: deliveryInstructions?.map(el => {
-            return {
-              id: el.id,
-            };
-          }),
-        }
+            delivery_instructions: deliveryInstructions?.map((el) => {
+              return {
+                id: el.id,
+              };
+            }),
+          }
         : {}),
       cutleries: sendCutlery === 'yes' ? 1 : 0,
     };
 
     try {
       const resp = await placeOrder(formData).unwrap();
-      dispatch(clearCart());
+      dispatch(clearCart()); // This will also clear promoCode
       refetch();
 
       navigation.reset({
@@ -154,7 +231,15 @@ const CheckoutScreen = () => {
               routes: [
                 { name: 'Orders' },
                 { name: 'OrderDetails', params: { id: resp?.order_id } },
-                { name: 'TrackOrder', params: { orderId: resp?.order_id } },
+                {
+                  name: 'TrackOrder',
+                  params: {
+                    orderId: resp?.order_id,
+                    order_type: user?.orderType,
+                    addressLatitude: user?.addressLatitude,
+                    addressLongitude: user?.addressLongitude,
+                  },
+                },
               ],
               index: 2, // This will make TrackOrder the visible screen
             },
@@ -163,7 +248,20 @@ const CheckoutScreen = () => {
       });
     } catch (err) {
       const error = err as { data: { message: string } };
-      setErrorMessage(error?.data?.message || 'Something went wrong!');
+      const errorMessage = error?.data?.message || 'Something went wrong!';
+      const isUnknownError = !error?.data?.message;
+      Toast.show({
+        type: 'error',
+        text1: errorMessage,
+        visibilityTime: 4000,
+        position: 'bottom',
+      });
+      // Navigate to cart for unknown errors after showing toast
+      if (isUnknownError) {
+        setTimeout(() => {
+          navigation.navigate('Cart');
+        }, 2000);
+      }
     }
   };
 
@@ -171,15 +269,17 @@ const CheckoutScreen = () => {
     if (data) {
       if (data?.summary?.promo_code_applied) {
         setPromoError(null);
+      } else if (data?.summary?.promo_code_error) {
+        // Show promo code error from API response
+        setPromoError(data.summary.promo_code_error);
       }
     }
   }, [data, promoCode]);
 
   const handleAddDeliveryInstructions = (
     instructions: { id: number; title: string }[],
-    specialNotes: string,
+    specialNotes: string
   ) => {
-
     setDeliveryInstructions(instructions);
     setSpecialDeliveryInstructions(specialNotes);
   };
@@ -194,15 +294,10 @@ const CheckoutScreen = () => {
     debouncedApplyPromo(code);
   };
 
-  const handleCloseErrorPopup = () => {
-    setErrorMessage(null);
-    navigation.goBack();
-  };
 
+  console.log('total123', data?.summary?.final_total);
 
-  console.log('total123', data?.summary?.final_total)
-
-  const headerHeight = useHeaderHeight()
+  const headerHeight = useHeaderHeight();
 
   // Calculate minimum date: now + 5 minutes, rounded up to next 30-minute interval
   const getMinimumDate = (): Date => {
@@ -238,11 +333,79 @@ const CheckoutScreen = () => {
         style={{
           flex: 1,
         }}
-        behavior={"padding"}
+        behavior={'padding'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight + 10 : 0}
       >
         <ScrollView>
           <View style={styles.container}>
+
+
+            {/* Delivery Address or Takeaway Branch */}
+            {(user.orderType === 'delivery' && user.addressTitle) ||
+            (user.orderType === 'takeaway' && cart.branchName) ? (
+              <View style={styles.boxContainer}>
+                <Text style={styles.boxContainerTitle}>
+                  {user.orderType === 'delivery' ? 'Delivery Address' : 'Pickup Branch'}
+                </Text>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
+                    marginTop: 8,
+                  }}
+                >
+                  {user.orderType === 'delivery' ? (
+                    <Icon_Location />
+                  ) : (
+                    <Icon_Branch />
+                  )}
+                  <Text
+                    style={{
+                      fontFamily: 'Poppins-Regular',
+                      fontSize: 14,
+                      color: COLORS.darkColor,
+                      flex: 1,
+                      lineHeight: 20,
+                    }}
+                  >
+                    {user.orderType === 'delivery'
+                      ? user.addressTitle
+                      : cart.branchName}
+                  </Text>
+                </View>
+                {/* Minimap for delivery addresses */}
+                {user.orderType === 'delivery' &&
+                  user.addressLatitude &&
+                  user.addressLongitude && (
+                    <View style={styles.minimapContainer}>
+                      <MapView
+                        provider={PROVIDER_GOOGLE}
+                        style={styles.minimap}
+                        scrollEnabled={false}
+                        zoomEnabled={false}
+                        pitchEnabled={false}
+                        rotateEnabled={false}
+                        initialRegion={{
+                          latitude: user.addressLatitude,
+                          longitude: user.addressLongitude,
+                          latitudeDelta: 0.001,
+                          longitudeDelta: 0.001,
+                        }}
+                      >
+                        <Marker
+                          coordinate={{
+                            latitude: user.addressLatitude,
+                            longitude: user.addressLongitude,
+                          }}
+                          title={user.addressTitle || 'Delivery Address'}
+                        />
+                      </MapView>
+                    </View>
+                  )}
+              </View>
+            ) : null}
+
             <View style={styles.paymentContainer}>
               <Text style={styles.paymentTitle}>Payment Method</Text>
 
@@ -251,35 +414,25 @@ const CheckoutScreen = () => {
                   height: 2,
                   backgroundColor: `${COLORS.foregroundColor}10`,
                   marginTop: 6,
-                }}></View>
+                }}
+              ></View>
 
               <View style={styles.paymentMethodContainer}>
                 <View style={styles.paymentMethodItem}>
-                  {/* Type of payment */}
-                  <View
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <FastImage
-                      source={require('../../assets/images/payment/cash.png')}
-                      style={{ width: 48, height: 28 }}
-                    />
-                    <Text
-                      style={{
-                        fontFamily: 'Poppins-Regular',
-                        fontSize: 14,
-                        color: COLORS.darkColor,
-                      }}>
-                      Cash
-                    </Text>
-                  </View>
-                  <RadioButton onPress={() => { }} checked={true} />
+                  <RadioButton onPress={() => {}} checked={true} title="Cash on delivery" />
+                  <FastImage
+                    source={require('../../assets/images/payment/cash.png')}
+                    style={{ width: 48, height: 28 }}
+                  />
                 </View>
               </View>
             </View>
 
+
             {/* Delivery or pickup  */}
             <View style={styles.boxContainer}>
               <Text style={styles.boxContainerTitle}>
-                Would you unlock this awesome feature and schedule your order?{' '}
+                Schedule your order?
               </Text>
 
               <View style={{ gap: 16 }}>
@@ -287,8 +440,9 @@ const CheckoutScreen = () => {
                   checked={scheduleOrder === 'no'}
                   onPress={() => setScheduleOrder('no')}
                   title="No"
-                  description={`Estimated ${user?.orderType === 'delivery' ? 'delivery' : 'pickup'
-                    } time 00:30 Min`}
+                  description={`Estimated ${
+                    user?.orderType === 'delivery' ? 'delivery' : 'pickup'
+                  } time 30 minutes`}
                 />
                 <View
                   style={{
@@ -296,24 +450,33 @@ const CheckoutScreen = () => {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     gap: 8,
-                  }}>
+                  }}
+                >
                   <RadioButton
                     checked={scheduleOrder === 'yes'}
-                    onPress={() => setScheduleOrder('yes')}
+                    onPress={() => {
+                      setScheduleOrder('yes');
+                      // Automatically set default date if not already set
+                      if (!scheduledDateTime) {
+                        const defaultDate = getMinimumDate();
+                        setScheduledDateTime(defaultDate);
+                      }
+                      scheduleOrderRef?.current?.expand();
+                    }}
                     title="Yes"
                     description={
                       scheduledDateTime
                         ? scheduledDateTime.toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
                         : 'Select Date and Time'
                     }
                   />
-                  <Icon_Paper_Edit onPress={handleScheduleEdit} />
+                  {/* <Icon_Paper_Edit onPress={handleScheduleEdit} color={COLORS.secondaryColor} /> */}
                 </View>
               </View>
             </View>
@@ -325,35 +488,37 @@ const CheckoutScreen = () => {
               <View style={{ gap: 16 }}>
                 <RadioButton
                   checked={sendCutlery === 'no'}
-                  onPress={() => {
-                    setSendCutlery('no');
-                  }}
+                  onPress={() => setSendCutlery('no')}
                   title="No"
                 />
                 <RadioButton
                   checked={sendCutlery === 'yes'}
-                  onPress={() => {
-                    setSendCutlery('yes');
-                  }}
+                  onPress={() => setSendCutlery('yes')}
                   title="Yes"
                 />
               </View>
             </View>
 
-
-
             <TotalSection
               orderType={user?.orderType ?? 'delivery'}
-              subtotal={`USD ${data?.summary?.original_sub_total ?? ''}`}
-              deliveryCharge={`LBP ${data?.delivery_charge ?? ''}`}
+              subtotal={`${data?.currency?.symbol ?? ''} ${
+                data?.summary?.original_sub_total ?? ''
+              }`}
+              deliveryCharge={`${data?.currency?.symbol ?? ''} ${
+                data?.delivery_charge ?? ''
+              }`}
               pointsRewarded={`+ ${data?.points_rewarded ?? ''} pts`}
               promoCode={promoCode}
               promoCodeError={promoError}
               onPromoCodeChange={handlePromoCodeChange}
-              total={`USD ${data?.summary?.final_total ?? ''}`}
+              total={`${data?.currency?.symbol ?? ''} ${
+                data?.summary?.final_total ?? ''
+              }`}
               discount={
                 data?.summary?.total_discount
-                  ? `USD ${data?.summary?.total_discount}`
+                  ? `${data?.currency?.symbol ?? ''} ${
+                      data?.summary?.total_discount
+                    }`
                   : ''
               }
               isLoading={isLoading}
@@ -361,14 +526,15 @@ const CheckoutScreen = () => {
             />
 
             {/* Delivery instructions  */}
-            {(deliveryInstructions?.length > 0 || specialDeliveryInstructions) && (
+            {(deliveryInstructions?.length > 0 ||
+              specialDeliveryInstructions) && (
               <View style={styles.boxContainer}>
                 <Text style={styles.boxContainerTitle}>
                   Delivery Instructions
                 </Text>
 
                 <View style={{ gap: 8 }}>
-                  {deliveryInstructions?.map(el => {
+                  {deliveryInstructions?.map((el) => {
                     return (
                       <Text key={el.id} style={{}}>
                         {el.title}
@@ -377,7 +543,9 @@ const CheckoutScreen = () => {
                   })}
                   {specialDeliveryInstructions && (
                     <Text style={{}}>
-                      <Text style={{ fontWeight: 700 }}>Special Instructions:</Text>{' '}
+                      <Text style={{ fontWeight: 700 }}>
+                        Special Instructions:
+                      </Text>{' '}
                       {specialDeliveryInstructions}
                     </Text>
                   )}
@@ -391,16 +559,21 @@ const CheckoutScreen = () => {
                   icon={<Icon_Motorcycle />}
                   variant="outline"
                   onPress={() => {
-                    console.log('instructionsSheet', deliveryInstructionRef?.current)
-                    deliveryInstructionRef?.current?.expand()
-                  }}>
+                    console.log(
+                      'instructionsSheet',
+                      deliveryInstructionRef?.current
+                    );
+                    deliveryInstructionRef?.current?.expand();
+                  }}
+                >
                   Add Delivery Instructions
                 </Button>
               )}
               <Button
                 isLoading={isSubmitLoading}
                 icon={<Icon_Checkout />}
-                onPress={handlerOrder}>
+                onPress={handlerOrder}
+              >
                 Place Order
               </Button>
             </View>
@@ -413,15 +586,20 @@ const CheckoutScreen = () => {
         onAddInstructions={handleAddDeliveryInstructions}
       />
 
-      <DynamicSheet ref={scheduleOrderRef}>
-        <BottomSheetView style={[styles.scheduleSheetContainer, {
-          paddingBottom: bottom + 20
-        }]}>
+      <DynamicSheet ref={scheduleOrderRef} onClose={handleScheduleSheetClose}>
+        <BottomSheetView
+          style={[
+            styles.scheduleSheetContainer,
+            {
+              paddingBottom: bottom + 20,
+            },
+          ]}
+        >
           <Text style={styles.scheduleSheetTitle}>Schedule Your Order</Text>
           <View style={styles.scheduleInputsContainer}>
             <DateInput
               value={scheduledDateTime}
-              onChange={setScheduledDateTime}
+              onChange={handleScheduledDateTimeChange}
               mode="datetime"
               placeholder="Select Date and Time"
               minimumDate={getMinimumDate()}
@@ -432,24 +610,6 @@ const CheckoutScreen = () => {
           <Button onPress={handleScheduleConfirm}>Confirm Schedule</Button>
         </BottomSheetView>
       </DynamicSheet>
-
-      {/* Error Popup */}
-      <DynamicPopup
-        visible={errorMessage !== null}
-        onClose={handleCloseErrorPopup}>
-        <View style={styles.errorPopupContent}>
-          <Text style={styles.errorTitle}>Oops!</Text>
-          <Text style={styles.errorMessage}>
-            {errorMessage || 'Something went wrong!'}
-          </Text>
-          <Button
-            variant="primary"
-            size="medium"
-            onPress={handleCloseErrorPopup}>
-            OK
-          </Button>
-        </View>
-      </DynamicPopup>
     </>
   );
 };
@@ -509,23 +669,16 @@ const styles = StyleSheet.create({
   scheduleInputsContainer: {
     gap: 16,
   },
-  errorPopupContent: {
-    alignItems: 'center',
-    padding: 16,
-    minWidth: 280,
+  minimapContainer: {
+    marginTop: 12,
+    height: 120,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: `${COLORS.foregroundColor}20`,
   },
-  errorTitle: {
-    fontSize: 18,
-    fontFamily: 'Poppins-Medium',
-    color: COLORS.darkColor,
-    marginBottom: 8,
-  },
-  errorMessage: {
-    fontSize: 16,
-    fontFamily: 'Poppins-Regular',
-    color: COLORS.errorColor,
-    marginBottom: 16,
-    textAlign: 'center',
-    lineHeight: 22,
+  minimap: {
+    width: '100%',
+    height: '100%',
   },
 });

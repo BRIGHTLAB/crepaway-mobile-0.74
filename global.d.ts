@@ -48,6 +48,7 @@ type Item = {
   tags: Tags[];
   taste_triad: TasteTriad[];
   modifier_groups: ModifierGroup[];
+  isHiddenFromUser?: boolean | null;
 };
 
 type TasteTriad = {
@@ -172,7 +173,6 @@ interface Address {
   id: number;
   title: string;
   province_id: number;
-  cities_id: number;
   street_address: string;
   building: string;
   floor: string;
@@ -181,7 +181,6 @@ interface Address {
   latitude: number;
   longitude: number;
   is_default: number;
-  city: string;
   delivery_charge: number;
   branch: string;
   menu: string;
@@ -193,10 +192,7 @@ interface Branch {
   name: string;
 }
 
-interface City {
-  id: number;
-  city: string;
-}
+
 
 interface Profile {
   name: string;

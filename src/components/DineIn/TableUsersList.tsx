@@ -12,6 +12,7 @@ import Animated, {
 import { TableBannedUsers, TableUser, TableUsers } from '../../screens/TableScreen';
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../../theme';
 import DynamicPopup from '../UI/DynamicPopup';
+import KingIcon from '../../../assets/SVG/Icon_King';
 
 // Helper component for user images with placeholder
 const UserImage = ({
@@ -123,7 +124,7 @@ const TableUsersList = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Table Users</Text>
+      <Text style={styles.sectionTitle}>People at the same table</Text>
       <FlatList
         data={[
           ...Object.values(users).map(user => ({ ...user, type: 'user' as const })),
@@ -262,9 +263,7 @@ const UserItem = ({ isUserPending, user, isCurrentUserKing, onPress }: {
 
         {/* Crown for king/admin user */}
         {user.isKing && (
-          <View style={styles.crownContainer}>
-            <Text style={styles.crownIcon}>👑</Text>
-          </View>
+            <KingIcon style={styles.crownIcon} />
         )}
 
         {/* Ping animation for pending users */}
@@ -381,16 +380,19 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.HEADLINE,
     paddingHorizontal: SCREEN_PADDING.horizontal,
     paddingVertical: 16,
+    color: COLORS.darkColor,
   },
   listContent: {
     paddingHorizontal: SCREEN_PADDING.horizontal,
+    paddingTop: 12, // Add padding to accommodate crown above images
   },
   userContainer: {
     alignItems: 'center',
     marginRight: 20,
     width: 70,
-    // Ensure no overflow clipping
+    // Ensure no overflow clipping for crown and animations
     overflow: 'visible',
+    paddingTop: 4, // Add top padding to accommodate crown overflow
   },
   // Additional padding for pending users to accommodate scaling animation
   pendingUserContainer: {
@@ -433,14 +435,12 @@ const styles = StyleSheet.create({
     color: COLORS.primaryColor, // Orange text for pending users
     fontWeight: 'bold',
   },
-  crownContainer: {
-    position: 'absolute',
-    top: 3,  // Adjusted for the new padding
-    left: 3, // Adjusted for the new padding
-    backgroundColor: 'transparent',
-  },
   crownIcon: {
-    fontSize: 16,
+    position: 'absolute',
+    top: -10, 
+    left: 24, 
+    backgroundColor: 'transparent',
+    zIndex: 10, 
   },
   pingContainer: {
     position: 'absolute',

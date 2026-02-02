@@ -2,6 +2,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { useDispatch } from 'react-redux';
 import CustomHeader from '../components/Header';
+import DineInAddCardScreen from '../screens/DineInAddCardScreen';
+import DineInCheckoutScreen from '../screens/DineInCheckoutScreen';
 import DineInPendingScreen from '../screens/DineInPendingScreen';
 import ScanTableScreen from '../screens/ScanTableScreen';
 import TableScreen from '../screens/TableScreen';
@@ -12,6 +14,8 @@ export type DineInStackParamList = {
   ScanTable: undefined;
   Pending: undefined;
   Table: undefined;
+  Checkout: undefined;
+  AddCard: undefined;
   OrderStack:
   | {
     screen?: string;
@@ -51,6 +55,26 @@ const DineInStack = () => {
           headerShown: false,
           gestureEnabled: false,
           headerBackVisible: false,
+        }}
+      />
+      <Stack.Screen
+        name="Checkout"
+        component={DineInCheckoutScreen}
+        options={{
+          headerTitle: '',
+          headerBackVisible: false,
+          headerLeft: () => <CustomHeader />,
+          headerTitleAlign: 'center',
+        }}
+      />
+      <Stack.Screen
+        name="AddCard"
+        component={DineInAddCardScreen}
+        options={{
+          headerTitle: '',
+          headerBackVisible: false,
+          headerLeft: () => <CustomHeader />,
+          headerTitleAlign: 'center',
         }}
       />
       <Stack.Screen

@@ -60,7 +60,7 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
         <View
           style={{
             flexDirection: 'row',
-            gap: 6,
+            gap: 10,
             flex: 1,
           }}>
           <FastImage
@@ -71,14 +71,13 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
             resizeMode={FastImage.resizeMode.cover}
             style={{
               width: 80,
-              height: 88,
-              borderRadius: 8,
+              height: 80,
+              borderRadius: 10,
             }}
           />
-
           <View style={styles.menuItem}>
             <Text style={styles.itemName}>{item.name}</Text>
-            <Text style={styles.itemDescription} numberOfLines={1}>
+            <Text style={styles.itemDescription} numberOfLines={2}>
               {item.description}
             </Text>
             <Text style={styles.itemPrice}>
@@ -196,11 +195,16 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
       : null,
   });
 
+  console.log('ITEMSSSS', items);
+
   const groupedItems = categories.map(category => ({
     ...category,
     items:
       items && items?.data?.length > 0
-        ? items?.data?.filter(item => item.menu_categories_id === category.id)
+        ? items?.data?.filter(item => 
+            item.menu_categories_id === category.id && 
+            !item.isHiddenFromUser
+          )
         : [],
   }));
 
@@ -283,7 +287,7 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
     }
 
     if (scrollViewRef.current && categoryOffsets[categoryId] !== undefined) {
-      const scrollOffset = Math.max(0, categoryOffsets[categoryId] - 2);
+      const scrollOffset = Math.max(0, categoryOffsets[categoryId] - 50);
 
       scrollViewRef.current.scrollToOffset({
         offset: scrollOffset,
@@ -415,24 +419,17 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
           onPress={() => {
             scrollToCategory(index, item.id);
           }}>
-          <FastImage
-            source={{
-              uri: item?.image_url,
-              priority: FastImage.priority.normal,
-            }}
-            resizeMode={FastImage.resizeMode.cover}
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-            }}
-          />
-          <Text style={[styles.categoryTitle]}>{item.name}</Text>
+          <Text style={[
+            styles.categoryTitle,
+            selectedCategoryIndex === index ? styles.activeCategoryTitle : null,
+          ]}>{item.name}</Text>
         </TouchableOpacity>
       );
     },
     [selectedCategoryIndex, scrollToCategory],
   );
+
+  // return null;
 
   return (
     <View style={[styles.container]}>
@@ -527,7 +524,7 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
             data={groupedItems}
             renderItem={renderCategorySection}
             keyExtractor={item => item.id.toString()}
-            style={{ paddingHorizontal: SCREEN_PADDING.horizontal, marginTop: 8 }}
+            style={{ paddingHorizontal: SCREEN_PADDING.horizontal, zIndex: 2 }}
             showsVerticalScrollIndicator={false}
             onScrollToIndexFailed={info => {
               const wait = new Promise(resolve => setTimeout(resolve, 50));
@@ -593,50 +590,63 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   categoryList: {
-    paddingVertical: 10,
-    marginTop: SCREEN_PADDING.vertical,
+    paddingTop: 4,
+    maxHeight: 50,
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 5,
+    zIndex: 5,
+    overflow: 'visible',
   },
   categoryTitle: {
     fontSize: 14,
     fontFamily: 'Poppins-Regular',
     fontWeight: '400',
     color: COLORS.darkColor,
+    opacity: 0.9,
+    borderBottomColor: 'transparent',
+    borderBottomWidth: 2,
   },
   activeCategory: {
-    backgroundColor: '#EBE3E3',
     borderRadius: 8,
-    paddingHorizontal: 6,
+    paddingHorizontal: 10,
     paddingVertical: 10,
+    borderBottomColor: 'red',
+    borderBottomWidth: 2,
+  },
+  activeCategoryTitle: {
+    fontWeight: '600',
+    color: COLORS.darkColor,
   },
   sectionHeader: {
     marginTop: 6,
-    fontSize: 20,
+    fontSize: 22,
     fontFamily: 'Poppins-SemiBold',
     fontWeight: '600',
     color: COLORS.darkColor,
-    marginBottom: 4,
     height: CATEGORY_HEADER_HEIGHT,
   },
   menuContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    height: ITEM_HEIGHT,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#d2d2d2ff',
   },
   menuItem: {
-    flex: 2,
-    gap: 2,
-    marginTop: 2,
+    flex: 1,
+    gap: 3,
+    paddingTop: 0,
   },
   itemName: {
     fontSize: 16,
     fontFamily: 'Poppins-Medium',
     fontWeight: '500',
     color: COLORS.darkColor,
-    lineHeight: 18,
   },
   itemPrice: {
     fontSize: 16,

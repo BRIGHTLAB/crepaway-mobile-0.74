@@ -75,17 +75,6 @@ const CartItemComponent = ({
             }}>
             {item.name}
           </Text>
-          {item.description && (
-            <Text
-              numberOfLines={1}
-              style={{
-                fontFamily: 'Poppins-Regular',
-                fontSize: 12,
-                color: COLORS.foregroundColor,
-              }}>
-              {item.description}
-            </Text>
-          )}
           <Text
             style={{
               fontFamily: 'Poppins-Medium',

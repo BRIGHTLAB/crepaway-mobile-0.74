@@ -60,8 +60,8 @@ export type DeliveryTakeawayStackParamList = {
   Cart: undefined;
   Notifications: undefined;
   Checkout: undefined;
-  AddressMap: undefined;
-  TrackOrder: { orderId: number; order_type: string };
+  AddressMap: { editAddress?: Address } | undefined;
+  TrackOrder: { orderId: number; order_type: string; addressLatitude?: number; addressLongitude?: number };
   Profile: undefined;
   ProfileSettings: undefined;
   Addresses: undefined;
@@ -113,6 +113,7 @@ const HomeStack = () => {
           title: "",
           headerLeft: () => <CustomHeader color={'white'} clearOrderType />,
           headerTitleAlign: 'center',
+          headerTitle: "hii",
           headerRight: () => (
             <View
               style={{
@@ -422,7 +423,7 @@ export type ProfileStackParamList = {
   Profile: undefined;
   ProfileSettings: undefined;
   Addresses: undefined;
-  AddressMap: undefined;
+  AddressMap: { editAddress?: Address } | undefined;
   Legal: undefined;
   FAQ: undefined;
   PaymentMethods: undefined;
@@ -548,6 +549,8 @@ export type OrdersStackParamList = {
   TrackOrder: {
     orderId: number;
     order_type: string;
+    addressLatitude?: number;
+    addressLongitude?: number;
   };
 };
 

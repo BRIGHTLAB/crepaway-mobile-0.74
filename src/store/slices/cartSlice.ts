@@ -39,6 +39,11 @@ interface ModifierItem {
   symbol?: string;
 }
 
+export interface DeliveryInstruction {
+  id: number;
+  title: string;
+}
+
 interface ICart {
   items: { [uuid: string]: CartItem };
   orderType: OrderType['alias'] | null;

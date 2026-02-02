@@ -1,24 +1,24 @@
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useMemo, useState } from 'react';
+import dayjs from 'dayjs';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  FlatList,
   SectionList,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import Icon_Arrow_Right from '../../assets/SVG/Icon_Arrow_Right';
 import Icon_Location from '../../assets/SVG/Icon_Location';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
 import Icon_Spine from '../../assets/SVG/Icon_Spine';
 import Icon_Star from '../../assets/SVG/Icon_Star';
-import { Order, OrderItem, useGetOrdersQuery } from '../api/ordersApi';
+import { OrderItem, OrderListItem, useGetOrdersQuery } from '../api/ordersApi';
 import HeaderShadow from '../components/HeaderShadow';
 import Item from '../components/Order/Item';
-import OrderRatingPopup from '../components/Popups/OrderRatingPopup';
+import OrderRatingSheet, { OrderRatingSheetRef } from '../components/Sheets/OrderRatingSheet';
 import Button from '../components/UI/Button';
 import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
 import { COLORS, SCREEN_PADDING } from '../theme';
@@ -31,10 +31,10 @@ const OrderComponent = React.memo(
     // onReorder,
     sectionTitle,
   }: {
-    item: Order;
-    onTrackOrder: (order: Order) => void;
-    onRateOrder: (order: Order) => void;
-    // onReorder: (order: Order) => void;
+    item: OrderListItem;
+    onTrackOrder: (order: OrderListItem) => void;
+    onRateOrder: (order: OrderListItem) => void;
+    // onReorder: (order: OrderListItem) => void;
     sectionTitle: string;
   }) => {
     const navigation =
@@ -43,7 +43,9 @@ const OrderComponent = React.memo(
       >();
 
     const renderOrderItem = useCallback(
-      ({ item }: { item: OrderItem }) => <Item item={item} />,
+      ({ item: orderItem }: { item: OrderItem }) => (
+        <Item item={orderItem} />
+      ),
       [],
     );
 
@@ -63,15 +65,15 @@ const OrderComponent = React.memo(
             })
           }>
           <View
-            style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Icon_Motorcycle color={COLORS.darkColor} />
             <View style={{ flexDirection: 'column', gap: 0 }}>
               <Text style={styles.orderNumber}>{item.order_number}</Text>
-              {item.status?.key === 'delivered' && (
-                <Text style={styles.orderDate}>
-                  Delivered on {new Date(item.order_date).toLocaleDateString()}
-                </Text>
-              )}
+              <Text style={styles.orderDate}>
+                {item.status === 'delivered' ? 'Delivered on ' : 'Ordered at '}
+                {/* TODO we need to add delivered at in the backend */}
+                {dayjs(item.status === 'delivered' ? item.delivered_at : item.order_date).format('dddd, MMM D, YYYY, hh:mm A')}
+              </Text>
             </View>
           </View>
           <Icon_Arrow_Right
@@ -80,34 +82,42 @@ const OrderComponent = React.memo(
             color={COLORS.foregroundColor}
           />
         </TouchableOpacity>
-        <FlatList
-          data={item.items}
-          ItemSeparatorComponent={() => (
-            <View
-              style={{
-                borderBottomWidth: 1,
-                borderBottomColor: '#F0F0F0',
-              }}
-            />
+
+        {/* Items Summary */}
+        <View style={styles.itemsSummary}>
+          {item.items.slice(0, 3).map((orderItem, index) => (
+            <Text key={orderItem.uuid || index} style={styles.itemSummaryText} numberOfLines={1}>
+              {orderItem.quantity}× {orderItem.name}
+            </Text>
+          ))}
+          {item.items.length > 3 && (
+            <Text style={styles.moreItemsText}>
+              +{item.items.length - 3} other item{item.items.length - 3 > 1 ? 's' : ''}...
+            </Text>
           )}
-          renderItem={renderOrderItem}
-          keyExtractor={keyExtractor}
-          scrollEnabled={false}
-          removeClippedSubviews={true}
-          maxToRenderPerBatch={5}
-          windowSize={5}
-          initialNumToRender={5}
-        />
+        </View>
+
+        {/* Total Amount */}
+        <View style={styles.totalRow}>
+          <Text style={styles.totalLabel}>Total</Text>
+          <Text style={styles.totalValue}>
+            {item.currency?.symbol ?? ''} {item.total}
+          </Text>
+        </View>
+
+        {/* <TouchableOpacity onPress={() => console.log('pressed')}>
+          <Text>Test</Text>
+        </TouchableOpacity> */}
 
         {sectionTitle === 'Past Orders' && (
           <Button
             iconPosition="left"
             icon={<Icon_Star width={20} height={20} color={COLORS.white} />}
             onPress={() => onRateOrder(item)}>
-            {item.rating ? 'View Rating' : 'Rate Order'}
+            {item.food_rating ? 'View Rating' : 'Rate Order'}
           </Button>
         )}
-        {sectionTitle === 'Ongoing Orders' && item?.status?.key !== 'delivered' && (
+        {sectionTitle === 'Ongoing Orders' && item.status !== 'delivered' && (
           <Button
             iconPosition="left"
             icon={<Icon_Location color={'#FFF'} />}
@@ -137,32 +147,35 @@ const SectionTitle = React.memo(({ title }: { title: string }) => (
 const OrdersScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<DeliveryTakeawayStackParamList>>();
+  const isFocused = useIsFocused();
 
   const {
     data: orders,
     isLoading: loading,
     refetch: fetchOrders,
   } = useGetOrdersQuery(undefined, {
-    pollingInterval: 2000,
+    // pollingInterval: isFocused ? 2000 : undefined,
   });
 
-  const [ratingPopupVisible, setRatingPopupVisible] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const ratingSheetRef = useRef<OrderRatingSheetRef>(null);
+  const [selectedOrder, setSelectedOrder] = useState<OrderListItem | null>(null);
 
-  const handleTrackOrder = useCallback((order: Order) => {
+  const handleTrackOrder = useCallback((order: OrderListItem) => {
     navigation.navigate('TrackOrder', {
       orderId: order.id,
       order_type: order.order_type,
+      addressLatitude: order.address?.latitude,
+      addressLongitude: order.address?.longitude,
     });
   }, []);
 
-  const handleRateOrder = useCallback((order: Order) => {
+
+  const handleRateOrder = useCallback((order: OrderListItem) => {
     setSelectedOrder(order);
-    setRatingPopupVisible(true);
+    ratingSheetRef.current?.expand();
   }, []);
 
-  const handleCloseRatingPopup = useCallback(() => {
-    setRatingPopupVisible(false);
+  const handleCloseRatingSheet = useCallback(() => {
     setSelectedOrder(null);
   }, []);
 
@@ -171,7 +184,7 @@ const OrdersScreen = () => {
   // }, []);
 
   const renderOrder = useCallback(
-    ({ item, section }: { item: Order; section: { title: string } }) => {
+    ({ item, section }: { item: OrderListItem; section: { title: string } }) => {
       return (
         <OrderComponent
           item={item}
@@ -185,7 +198,7 @@ const OrdersScreen = () => {
     [handleTrackOrder, handleRateOrder],
   );
 
-  const keyExtractor = useCallback((item: Order) => item.id.toString(), []);
+  const keyExtractor = useCallback((item: OrderListItem) => item.id.toString(), []);
 
   const EmptyState = useMemo(
     () => (
@@ -302,15 +315,18 @@ const OrdersScreen = () => {
         {renderContent()}
       </View>
 
-      {selectedOrder && (
-        <OrderRatingPopup
-          visible={ratingPopupVisible}
-          onClose={handleCloseRatingPopup}
-          orderId={selectedOrder.id}
-          rating={selectedOrder.rating || null}
-          disabled={!!selectedOrder.rating}
-        />
-      )}
+      <OrderRatingSheet
+        ref={ratingSheetRef}
+        onClose={handleCloseRatingSheet}
+        orderId={selectedOrder?.id ?? 0}
+        rating={selectedOrder?.food_rating ? {
+          food_rating: selectedOrder.food_rating,
+          experience_rating: selectedOrder.experience_rating || 0,
+          service_rating: selectedOrder.service_rating || 0,
+          review_comment: selectedOrder.review_comment,
+        } : null}
+        disabled={!!selectedOrder?.food_rating}
+      />
     </View>
   );
 };
@@ -395,5 +411,49 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
     color: COLORS.darkColor,
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+  totalLabel: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 16,
+    color: COLORS.darkColor,
+  },
+  totalValue: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 16,
+    color: COLORS.primaryColor,
+  },
+  ratingDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  ratingText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 12,
+    color: COLORS.primaryColor,
+  },
+  itemsSummary: {
+    gap: 4,
+    paddingVertical: 8,
+  },
+  itemSummaryText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: COLORS.darkColor,
+  },
+  moreItemsText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: COLORS.foregroundColor,
+    fontStyle: 'italic',
   },
 });

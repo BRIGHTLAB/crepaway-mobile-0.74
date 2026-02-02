@@ -38,8 +38,13 @@ const Button: React.FC<ButtonProps> = ({
   textSize = 'medium',
   style,
   disabled,
+  backgroundColor,
   ...props
 }) => {
+  const customBackgroundStyle = backgroundColor
+    ? { backgroundColor }
+    : undefined;
+
   // Determine style for non-primary variants
   const getVariantStyle = (): ViewStyle => {
     switch (variant) {
@@ -108,14 +113,17 @@ const Button: React.FC<ButtonProps> = ({
           style={[
             getSizeStyle(),
             styles.button,
+            customBackgroundStyle,
             (disabled || isLoading) && styles.disabled,
           ]}
         >
           {/* Gradient background absolutely positioned */}
-          <LinearGradient
-            colors={COLORS.primaryGradient}
-            style={StyleSheet.absoluteFill}
-          />
+          {!customBackgroundStyle && (
+            <LinearGradient
+              colors={COLORS.primaryGradient}
+              style={StyleSheet.absoluteFill}
+            />
+          )}
           {renderContent()}
         </View>
       ) : (
@@ -124,6 +132,7 @@ const Button: React.FC<ButtonProps> = ({
             getSizeStyle(),
             styles.button,
             getVariantStyle(),
+            customBackgroundStyle,
             (disabled || isLoading) && styles.disabled,
           ]}
         >

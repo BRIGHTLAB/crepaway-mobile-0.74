@@ -33,6 +33,8 @@ const SearchScreen = () => {
   const { data: searchHistory, isLoading: isLoadingHistory } =
     useGetSearchHistoryQuery();
 
+  console.log('searchHistory', searchHistory);
+
 
   const userState = useSelector((state: RootState) => state.user)
 
@@ -99,12 +101,12 @@ const SearchScreen = () => {
       </View>
 
       {/* Header  */}
-      {searchHistory && (
+      {searchHistory && searchHistory?.length > 0 && (
         <View style={styles.header}>
           <Text style={styles.title}>History</Text>
           {/* Chips  */}
           <View style={styles.chips}>
-            {searchHistory?.length > 0 &&
+            {
               searchHistory?.map((el, idx) => {
                 return (
                   <TouchableOpacity
@@ -129,7 +131,7 @@ const SearchScreen = () => {
       {searchDebounceValue ? (
         isFetching ? (
           <MenuItemSkeleton />
-        ) : (
+        ) : searchResults?.data && searchResults?.data?.length > 0 ? (
           <FlatList
             data={searchResults?.data || []}
             renderItem={renderItem}
@@ -147,6 +149,10 @@ const SearchScreen = () => {
               gap: 16,
             }}
           />
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No results found</Text>
+          </View>
         )
       ) : (
         <View style={styles.emptyState}>

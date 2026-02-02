@@ -1,19 +1,46 @@
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import {
+  RouteProp,
+  useIsFocused,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import dayjs from 'dayjs';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import {
+  Dimensions,
+  FlatList,
+  Linking,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import FastImage from 'react-native-fast-image';
-import MapView, { AnimatedRegion, LatLng, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, {
+  AnimatedRegion,
+  LatLng,
+  Marker,
+  PROVIDER_GOOGLE,
+} from 'react-native-maps';
 import { useDispatch } from 'react-redux';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
 import Icon_Order_Accepted from '../../assets/SVG/Icon_Order_Accepted';
 import Icon_Spine from '../../assets/SVG/Icon_Spine';
-import { OrderStatusResponse, useGetOrderStatusQuery } from '../api/ordersApi';
 import {
-  OrdersStackParamList
-} from '../navigation/DeliveryTakeawayStack';
+  OrderStatusResponse,
+  useGetOrderQuery,
+  useGetOrderStatusQuery,
+} from '../api/ordersApi';
+import { OrdersStackParamList } from '../navigation/DeliveryTakeawayStack';
 import store from '../store/store';
 import { COLORS, DRIVER_SOCKET_URL, SCREEN_PADDING } from '../theme';
+import { formatNumberWithCommas } from '../utils/formatNumberWithCommas';
 import SocketService from '../utils/SocketService';
 
 type OrderScreenRouteProps = RouteProp<OrdersStackParamList, 'TrackOrder'>;
@@ -53,7 +80,8 @@ const OrderItem = ({
           padding: 10,
           backgroundColor: `${COLORS.primaryColor}20`,
           borderRadius: 100,
-        }}>
+        }}
+      >
         {icon}
       </View>
       <View style={{ gap: 2 }}>
@@ -123,8 +151,11 @@ const openWhatsApp = async (phoneNumber: string) => {
   }
 };
 
-const DriverHeader = ({ driver }: { driver: OrderStatusResponse['driver'] | null | undefined }) => {
-
+const DriverHeader = ({
+  driver,
+}: {
+  driver: OrderStatusResponse['driver'] | null | undefined;
+}) => {
   if (!driver) return null;
 
   return (
@@ -148,9 +179,13 @@ const DriverHeader = ({ driver }: { driver: OrderStatusResponse['driver'] | null
                 alignItems: 'center',
                 justifyContent: 'center',
               },
-            ]}>
+            ]}
+          >
             <Text style={styles.driverImageAltText}>
-              {driver.full_name.split(' ').map((str: string) => str.charAt(0)).join('')}
+              {driver.full_name
+                .split(' ')
+                .map((str: string) => str.charAt(0))
+                .join('')}
             </Text>
           </View>
         )}
@@ -177,7 +212,8 @@ const DriverHeader = ({ driver }: { driver: OrderStatusResponse['driver'] | null
 const TrackOrderScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const { orderId, order_type } = useRoute<OrderScreenRouteProps>().params;
+  const { orderId, order_type, addressLatitude, addressLongitude } =
+    useRoute<OrderScreenRouteProps>().params;
 
   const [region, setRegion] = useState(INITIAL_REGION);
   const [driverLocation, setDriverLocation] = useState<LatLng | null>(null);
@@ -201,33 +237,39 @@ const TrackOrderScreen = () => {
   // Debounce timer ref for driver location updates
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const isTakeaway = order_type
-    ? order_type === 'takeaway'
-    : userState.orderType === 'takeaway';
-
+  const isTakeaway = order_type === 'takeaway';
+  console.log('isTakeaway', isTakeaway);
+  console.log('userState.orderType', userState.orderType);
+  console.log('order_type', order_type);
+  const isFocused = useIsFocused();
   const { data: orderStatus, isLoading } = useGetOrderStatusQuery(orderId, {
-    pollingInterval: 2000,
+    pollingInterval: isFocused ? 2000 : undefined,
   });
 
-  // Debounced function to update driver location
-  const updateDriverLocation = useCallback((coordinates: { lat: number; long: number }) => {
-    // Clear existing timer
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
+  const { data: orderData } = useGetOrderQuery(orderId);
 
-    // Set new timer to update location after 500ms of no new updates
-    debounceTimerRef.current = setTimeout(() => {
-      setDriverLocation({
-        latitude: coordinates.lat,
-        longitude: coordinates.long,
-      });
-      console.log('newDriverLocation', {
-        latitude: coordinates.lat,
-        longitude: coordinates.long,
-      });
-    }, 1000);
-  }, []);
+  // Debounced function to update driver location
+  const updateDriverLocation = useCallback(
+    (coordinates: { lat: number; long: number }) => {
+      // Clear existing timer
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+
+      // Set new timer to update location after 500ms of no new updates
+      debounceTimerRef.current = setTimeout(() => {
+        setDriverLocation({
+          latitude: coordinates.lat,
+          longitude: coordinates.long,
+        });
+        console.log('newDriverLocation', {
+          latitude: coordinates.lat,
+          longitude: coordinates.long,
+        });
+      }, 1000);
+    },
+    []
+  );
 
   // Animate AnimatedRegion when driverLocation changes (smooth movement, prevents flicker)
   useEffect(() => {
@@ -235,12 +277,14 @@ const TrackOrderScreen = () => {
 
     try {
       if (driverRegionRef.current.timing) {
-        driverRegionRef.current.timing({
-          latitude: driverLocation.latitude,
-          longitude: driverLocation.longitude,
-          duration: 600,
-          useNativeDriver: false,
-        }).start();
+        driverRegionRef.current
+          .timing({
+            latitude: driverLocation.latitude,
+            longitude: driverLocation.longitude,
+            duration: 600,
+            useNativeDriver: false,
+          })
+          .start();
       } else if (driverRegionRef.current.setValue) {
         driverRegionRef.current.setValue({
           latitude: driverLocation.latitude,
@@ -255,19 +299,22 @@ const TrackOrderScreen = () => {
   // Memoize orderStatus to prevent unnecessary re-renders when data hasn't changed
   const memoizedOrderStatus = useMemo(() => {
     return orderStatus;
-  }, [orderStatus?.status_history, orderStatus?.estimated_delivery_time, orderStatus?.driver]);
+  }, [
+    orderStatus?.status_history,
+    orderStatus?.estimated_delivery_time,
+    orderStatus?.driver,
+  ]);
 
+  console.log('addressLatitude', addressLatitude);
+  console.log('addressLongitude', addressLongitude);
   // This effect will run when address coordinates change
   useEffect(() => {
-    // Only proceed if we have valid coordinates
-    if (
-      userState.addressLatitude != null &&
-      userState.addressLongitude != null
-    ) {
+    // Only proceed if we have valid coordinates from props
+    if (addressLatitude != null && addressLongitude != null) {
       // Create the new location
       const newAddressLocation = {
-        latitude: Number(userState.addressLatitude),
-        longitude: Number(userState.addressLongitude),
+        latitude: Number(addressLatitude),
+        longitude: Number(addressLongitude),
       };
 
       // Update address location state
@@ -275,8 +322,8 @@ const TrackOrderScreen = () => {
 
       // Also update region with the new coordinates
       const newRegion = {
-        latitude: Number(userState.addressLatitude),
-        longitude: Number(userState.addressLongitude),
+        latitude: Number(addressLatitude),
+        longitude: Number(addressLongitude),
         latitudeDelta: 0.015,
         longitudeDelta: 0.0121,
       };
@@ -289,50 +336,134 @@ const TrackOrderScreen = () => {
         setRegion(newRegion);
       }
     }
-  }, [userState.addressLatitude, userState.addressLongitude, initialMapLoad]);
+  }, [addressLatitude, addressLongitude, initialMapLoad]);
 
   useEffect(() => {
-    if (userState.orderType === 'delivery') {
+    if (!isTakeaway) {
+      console.log('[Socket Debug] Setting up socket connection...');
+      console.log('[Socket Debug] DRIVER_SOCKET_URL:', DRIVER_SOCKET_URL);
+      console.log('[Socket Debug] userState.jwt exists:', !!userState.jwt);
+      console.log('[Socket Debug] userState.id:', userState.id);
+      console.log('[Socket Debug] orderId:', orderId);
+
       const socketInstance = SocketService.getInstance();
+      console.log('[Socket Debug] SocketService instance obtained');
 
       socketInstance.connect(DRIVER_SOCKET_URL, {
         auth: userState.jwt || '',
       });
+      console.log('[Socket Debug] connect() called');
 
-      console.log('info', {
-        id: userState.id,
-        orderId: orderId.toString(),
-      });
-      socketInstance.emit('message', {
-        type: 'userJoin',
-        data: {
-          user: {
-            id: userState.id,
+      // Function to emit userJoin message
+      const emitUserJoin = () => {
+        const isConnected = socketInstance.isConnected();
+        console.log('[Socket Debug] Checking connection before emit. Connected?', isConnected);
+        
+        if (!isConnected) {
+          console.log('[Socket Debug] ⚠️ Socket not connected yet, will retry...');
+          return false;
+        }
+
+        console.log('[Socket Debug] Emitting userJoin message...');
+        const joinMessage = {
+          type: 'userJoin',
+          data: {
+            user: {
+              id: userState.id,
+            },
+            order_obj: {
+              id: orderId.toString(),
+              items: [],
+            },
           },
-          order_obj: {
-            id: orderId.toString(),
-            items: [],
-          },
-        },
+        };
+        console.log('[Socket Debug] Join message payload:', JSON.stringify(joinMessage, null, 2));
+
+        socketInstance.emit('message', joinMessage);
+        console.log('[Socket Debug] ✅ userJoin message emitted');
+        return true;
+      };
+
+      // Set up socket listeners
+      console.log('[Socket Debug] Setting up socket listeners...');
+
+      // Listen for connection events
+      socketInstance.on('connect', () => {
+        console.log('[Socket Debug] ✅ Socket connected event received in TrackOrderScreen');
+        console.log('[Socket Debug] Socket ID:', socketInstance.getSocket()?.id);
+        // Try to emit userJoin when connected
+        emitUserJoin();
       });
 
-      // Subscribe to location updates
-      socketInstance.on('onLocationUpdate', coordinates => {
+      socketInstance.on('connect_error', (error) => {
+        console.log('[Socket Debug] ❌ Socket connection error:', error);
+        console.log('[Socket Debug] Error details:', JSON.stringify(error, null, 2));
+      });
+
+      socketInstance.on('disconnect', (reason) => {
+        console.log('[Socket Debug] ⚠️ Socket disconnected:', reason);
+      });
+
+      socketInstance.on('error', (error) => {
+        console.log('[Socket Debug] ❌ Socket error event:', error);
+      });
+
+      // Listen for any message events to see what's coming through
+      socketInstance.on('message', (data) => {
+        console.log('[Socket Debug] 📨 Received message event:', JSON.stringify(data, null, 2));
+      });
+
+      // Subscribe to location updates (register this early, before connection)
+      console.log('[Socket Debug] Registering onLocationUpdate listener...');
+      socketInstance.on('onLocationUpdate', (coordinates) => {
+        console.log('[Socket Debug] 🎯 onLocationUpdate Called!');
+        console.log('[Socket Debug] 📍 Coordinates received:', JSON.stringify(coordinates, null, 2));
+        console.log('[Socket Debug] Coordinates type:', typeof coordinates);
+        console.log('[Socket Debug] Has lat?', !!coordinates?.lat);
+        console.log('[Socket Debug] Has long?', !!coordinates?.long);
+        
         if (coordinates && coordinates.lat && coordinates.long) {
+          console.log('[Socket Debug] ✅ Valid coordinates, calling updateDriverLocation');
           updateDriverLocation(coordinates);
+        } else {
+          console.log('[Socket Debug] ⚠️ Invalid coordinates format');
         }
       });
+      console.log('[Socket Debug] ✅ onLocationUpdate listener registered');
+
+      // Try to emit immediately if already connected, otherwise wait for connect event
+      const checkAndEmit = () => {
+        if (!emitUserJoin()) {
+          // If not connected, wait a bit and try again
+          const retryTimeout = setTimeout(() => {
+            console.log('[Socket Debug] Retrying emit after delay...');
+            if (!emitUserJoin()) {
+              console.log('[Socket Debug] ⚠️ Still not connected after retry. Will wait for connect event.');
+            }
+          }, 1000);
+          return retryTimeout;
+        }
+        return null;
+      };
+
+      const retryTimeoutId = checkAndEmit();
 
       return () => {
+        console.log('[Socket Debug] 🧹 Cleaning up socket connection...');
+        if (retryTimeoutId) {
+          clearTimeout(retryTimeoutId);
+        }
         socketInstance.disconnect();
         // Clear debounce timer on cleanup
         if (debounceTimerRef.current) {
           clearTimeout(debounceTimerRef.current);
         }
+        console.log('[Socket Debug] ✅ Cleanup complete');
       };
+    } else {
+      console.log('[Socket Debug] Skipping socket setup - isTakeaway is true');
     }
-  }, [orderId, updateDriverLocation]);
-
+  }, [orderId, updateDriverLocation, isTakeaway, userState.id, userState.jwt]);
 
   // zoom out so we can see both the driver and address at the same time
   useEffect(() => {
@@ -376,7 +507,6 @@ const TrackOrderScreen = () => {
     );
   }, [driverLocation]);
 
-
   return (
     <View style={styles.container}>
       {/* Map View */}
@@ -387,17 +517,20 @@ const TrackOrderScreen = () => {
           region={region} // Use region instead of initialRegion
           style={[styles.map, isTakeaway && { opacity: 0.9 }]}
           onMapReady={() => setInitialMapLoad(false)}
-        // onRegionChangeComplete={newRegion => {
-        //   // Only update region if not currently fitting coordinates
-        //   if (!isFitting) {
-        //     setRegion(newRegion);
-        //   }
-        // }}
+          // onRegionChangeComplete={newRegion => {
+          //   // Only update region if not currently fitting coordinates
+          //   if (!isFitting) {
+          //     setRegion(newRegion);
+          //   }
+          // }}
         >
           {/* User Marker */}
           {addressLocation && (
-            <Marker coordinate={addressLocation} title="Your Location" tracksViewChanges={false}
-              identifier='user-marker'
+            <Marker
+              coordinate={addressLocation}
+              title="Your Location"
+              tracksViewChanges={false}
+              identifier="user-marker"
             >
               <View style={styles.userMarker}>
                 <Text style={styles.markerText}>You</Text>
@@ -446,12 +579,24 @@ const TrackOrderScreen = () => {
               <DriverHeader driver={memoizedOrderStatus?.driver} />
             }
             ListFooterComponent={
-              <Text
-                style={{
-                  marginTop: 12,
-                }}>
-                Estimated {userState.orderType === 'delivery' ? 'arrival' : 'preparation time'}: {memoizedOrderStatus?.estimated_delivery_time} min
-              </Text>
+              <View style={{ marginTop: 12 }}>
+                <Text style={{ color: COLORS.darkColor, fontSize: 14 }}>
+                  Estimated{' '}
+                  {order_type === 'delivery' ? 'arrival' : 'preparation time'}:{' '}
+                  {memoizedOrderStatus?.estimated_delivery_time} min
+                </Text>
+                {orderData && (
+                  <View style={styles.totalContainer}>
+                    <Text style={styles.totalLabel}>Total</Text>
+                    <Text style={styles.totalValue}>
+                      {orderData.currency?.symbol}{' '}
+                      {formatNumberWithCommas(
+                        Number(orderData.total?.default_currency)
+                      )}
+                    </Text>
+                  </View>
+                )}
+              </View>
             }
           />
         )}
@@ -474,7 +619,7 @@ const styles = StyleSheet.create({
   mapContainer: {
     top: -10,
     position: 'relative',
-    flex: 1
+    flex: 1,
   },
   map: {
     width: Dimensions.get('window').width,
@@ -562,5 +707,24 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 20,
     backgroundColor: `${COLORS.primaryColor}20`,
+  },
+  totalContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  totalLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.darkColor,
+  },
+  totalValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.primaryColor,
   },
 });

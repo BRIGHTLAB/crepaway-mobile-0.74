@@ -88,6 +88,7 @@ export const loginUserThunk = createAsyncThunk(
     });
 
     if (response.status < 400 && response.data) {
+      console.log('response.data', response.data);
       return response.data;
     } else {
       return rejectWithValue(

@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "android": "react-native run-android",
+    "android:apk": "cd android && ./gradlew assembleRelease && node -e \"const path=require('path'); const {spawn}=require('child_process'); const apk=path.resolve('app/build/outputs/apk/release/app-release.apk'); const isMac=process.platform==='darwin'; const isWin=process.platform==='win32'; const cmd=isMac?'open':isWin?'explorer':'xdg-open'; const args=isMac?['-R', apk]:isWin?['/select,', apk]:[path.dirname(apk)]; const p=spawn(cmd,args,{stdio:'inherit'}); p.on('error',e=>{console.error('Failed to open file manager:', e.message); process.exit(0);});\"",
     "ios": "react-native run-ios --simulator='iPhone 16 Pro'",
     "lint": "eslint .",
     "start": "react-native start",
@@ -47,10 +48,10 @@
     "react-native-responsive-fontsize": "^0.5.1",
     "react-native-safe-area-context": "^5.2.0",
     "react-native-screens": "^4.6.0",
-    "react-native-simple-toast": "^3.3.2",
     "react-native-skeleton-placeholder": "^5.2.4",
     "react-native-svg": "^15.11.1",
     "react-native-svg-circular-progress": "^1.0.4",
+    "react-native-toast-message": "^2.3.3",
     "react-native-uuid": "^2.0.3",
     "react-native-vision-camera": "^4.6.4",
     "react-native-webview": "^13.13.4",
@@ -79,5 +80,6 @@
   },
   "engines": {
     "node": ">=18"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

@@ -1,7 +1,8 @@
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { CommonActions, RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Keyboard,
@@ -17,6 +18,7 @@ import FastImage from 'react-native-fast-image';
 import ReactNativeHapticFeedback from "react-native-haptic-feedback";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import Toast from 'react-native-toast-message';
 import { useSelector } from 'react-redux';
 import Icon_Cart from '../../assets/SVG/Icon_Cart';
 import Icon_Decrease_Quantity from '../../assets/SVG/Icon_Decrease_Quantity';
@@ -99,7 +101,7 @@ type MenuItemScreenRouteProp = RouteProp<
 >;
 
 const MenuItemScreen = ({ }: IProps) => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<MenuItemScreenRouteProp>();
   const { itemId, itemUuid } = route.params;
   const [quantity, setQuantity] = useState(1);
@@ -145,10 +147,10 @@ const MenuItemScreen = ({ }: IProps) => {
       const cartItem = cartState.items[itemUuid];
       setQuantity(cartItem.quantity);
       setSpecialInstruction(cartItem.special_instruction || '');
-      
+
       // Always initialize with an empty array first to ensure we're tracking edit mode
       setSelectedModifiers([]);
-      
+
       // Then add any modifier groups that exist in the cart item
       if (cartItem.modifier_groups && cartItem.modifier_groups.length > 0) {
         const formattedModifiers = cartItem.modifier_groups.map(group => ({
@@ -195,6 +197,30 @@ const MenuItemScreen = ({ }: IProps) => {
       } else {
         dispatch(addItem(cartItem));
       }
+
+      const toastMessage = itemUuid 
+        ? `${item.name} (x${quantity}) has been updated`
+        : `${item.name} (x${quantity}) has been added to your cart`;
+
+      // const toastMessage = `${!itemUuid ? 'New ' : ''}item has been ${itemUuid ? 'updated' : 'added'} to your cart`;
+      Toast.show({
+        type: 'success',
+        text1: toastMessage,
+        visibilityTime: 3000,
+        position: 'bottom',
+        ...( !itemUuid && {
+          props: {
+            onViewCart: () => {
+              navigation.navigate('DeliveryTakeaway', {
+                screen: 'HomeStack',
+                params: {
+                  screen: 'Cart',
+                },
+              });
+            },
+          }
+        }),
+      });
 
       // Trigger haptic feedback
       ReactNativeHapticFeedback.trigger("impactMedium", {
@@ -551,7 +577,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingHorizontal: SCREEN_PADDING.horizontal,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     backgroundColor: '#FFFFFF',
   },
   contentContainer: {

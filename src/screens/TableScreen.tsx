@@ -10,14 +10,17 @@ import {
   BackHandler,
   Dimensions,
   Easing,
-  FlatList,
   StyleSheet,
   Text,
   View
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
+import Toast from 'react-native-toast-message';
+import Icon_Cart from '../../assets/SVG/Icon_Cart';
+import Icon_Dine_In from '../../assets/SVG/Icon_Dine_In';
 import Icon_Sign_Out from '../../assets/SVG/Icon_Sign_Out';
 import BannedPopup from '../components/DineIn/BannedPopup';
 import OrderedItemsList from '../components/DineIn/OrderedItemsList';
@@ -47,10 +50,11 @@ import SocketService from '../utils/SocketService';
 
 export type OrderedItem = {
   id: number;
+  plu: string;
   name: string;
   image_url: string | null;
   quantity: number;
-  price: number | null
+  price: number | null;
   symbol: string;
   special_instruction?: string | null;
   added_by: {
@@ -63,6 +67,8 @@ export type OrderedItem = {
   deleted: number;
   is_disabled: boolean;
   status: 'pending' | 'in-kitchen';
+  isHiddenFromUser?: boolean | null;
+  order: number;
   modifier_groups: Array<{
     id: number;
     name: string;
@@ -136,6 +142,10 @@ const kingActions: Action[] = [
   { id: 2, key: 'make-table-admin', text: 'Make table admin' },
 ];
 
+const hapticOptions = {
+  enableVibrateFallback: true,
+  ignoreAndroidSystemSettings: false,
+};
 
 const TableScreen = () => {
   const dispatch = useDispatch();
@@ -162,6 +172,9 @@ const TableScreen = () => {
   const [showTableClosedPopup, setShowTableClosedPopup] = useState(false);
 
   const isTableLocked = useSelector((state: RootState) => state.dineIn.isTableLocked);
+  const previousTableLockRef = useRef<boolean | null>(null);
+  const previousOrderedItemsRef = useRef<OrderedItems | null>(null);
+  const previousIsKingRef = useRef<boolean | null>(null);
 
   const [pendingJoinRequests, setPendingJoinRequests] = useState<PendingJoinRequests>({});
 
@@ -310,13 +323,35 @@ const TableScreen = () => {
     socketInstance.on('tableUpdate', (message: TableUpdateMessage) => {
       console.log('tableUpdate ', message);
 
+      if (message.users && currentUser?.id) {
+        const currentUserData = message.users[currentUser.id];
+        const currentIsKing = currentUserData?.isKing || false;
+        const previousIsKing = previousIsKingRef.current;
+
+        if (previousIsKing !== null && !previousIsKing && currentIsKing) {
+          Toast.show({
+            type: 'success',
+            text1: 'You are now the king! 👑',
+            visibilityTime: 4000,
+            position: 'bottom',
+          });
+        }
+
+        previousIsKingRef.current = currentIsKing;
+      }
 
       if (message.users) {
         setTableUsers(message.users);
       }
 
       if (message.items) {
-        setOrderedItems(message.items as Record<string, OrderedItem>);
+        // Filter out items where isHiddenFromUser is true
+        const filteredItems = Object.fromEntries(
+          Object.entries(message.items as Record<string, OrderedItem>).filter(
+            ([key, value]) => value.isHiddenFromUser !== true
+          )
+        );
+        setOrderedItems(filteredItems);
       }
 
       dispatch(setIsTableLocked(message.isLocked))
@@ -346,6 +381,43 @@ const TableScreen = () => {
     //   socketInstance.disconnect();
     // };
   }, []);
+
+  useEffect(() => {
+    if (previousTableLockRef.current === null) {
+      previousTableLockRef.current = isTableLocked;
+      return;
+    }
+
+    if (!previousTableLockRef.current && isTableLocked) {
+      ReactNativeHapticFeedback.trigger('impactHeavy', hapticOptions);
+    }
+
+    previousTableLockRef.current = isTableLocked;
+  }, [isTableLocked]);
+
+  useEffect(() => {
+    const previousItems = previousOrderedItemsRef.current;
+
+    if (!previousItems || Object.keys(previousItems).length === 0) {
+      previousOrderedItemsRef.current = orderedItems;
+      return;
+    }
+
+    const hasNewInKitchen = Object.entries(orderedItems).some(([key, item]) => {
+      if (item.deleted === 1) return false;
+      const previousStatus = previousItems?.[key]?.status;
+      return item.status === 'in-kitchen' && previousStatus !== 'in-kitchen';
+    });
+
+    if (hasNewInKitchen) {
+      ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+      setTimeout(() => {
+        ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+      }, 150);
+    }
+
+    previousOrderedItemsRef.current = orderedItems;
+  }, [orderedItems]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -488,18 +560,73 @@ const TableScreen = () => {
       paddingTop: top
     }]}>
       <View style={styles.headerContainer}>
-        <FlatList
-          data={Object.values(tableWaiters)}
-          renderItem={renderWaiterItem}
-          keyExtractor={item => item.id.toString()}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.waitersList}
-          ItemSeparatorComponent={() => <View style={styles.waiterSeparator} />}
-        />
-        <TouchableOpacity onPress={handleLeaveTable}>
-          <Icon_Sign_Out color={COLORS.white} />
-        </TouchableOpacity>
+        {(() => {
+          const waiter = Object.values(tableWaiters)[0];
+          if (!waiter) return <View style={{ flex: 1 }} />;
+
+          const getInitials = (name: string) => {
+            return name.split(' ').map(str => str.charAt(0).toUpperCase()).join('');
+          };
+
+          return (
+            <TouchableOpacity
+              onPress={() => {
+                setSelectedWaiterId(waiter.id);
+                setTimeout(() => {
+                  waiterSheetRef.current?.expand();
+                }, 100);
+              }}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+              {waiter?.image_url ? (
+                <FastImage
+                  source={{ uri: waiter.image_url }}
+                  style={{ width: 44, height: 44, borderRadius: 22 }}
+                  resizeMode={FastImage.resizeMode.cover}
+                />
+              ) : (
+                <View style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  backgroundColor: COLORS.darkColor,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <Text style={{
+                    color: COLORS.white,
+                    fontSize: 16,
+                    fontWeight: 'bold',
+                    fontFamily: 'Poppins-SemiBold',
+                  }}>
+                    {getInitials(waiter?.name || '')}
+                  </Text>
+                </View>
+              )}
+              <Text style={{ color: COLORS.white, fontFamily: 'Poppins-SemiBold', fontSize: 16 }}>
+                {waiter?.name}
+              </Text>
+            </TouchableOpacity>
+          );
+        })()}
+
+        {/* Action icons */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <TouchableOpacity
+            onPress={handleOrderPress}
+            style={{ backgroundColor: COLORS.white, padding: 10, borderRadius: 27 }}>
+            <Icon_Dine_In color="#7CB342" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Checkout')}
+            style={{ backgroundColor: COLORS.white, padding: 10, borderRadius: 27 }}>
+            <Icon_Cart color="#FF6D00" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleLeaveTable}
+            style={{ backgroundColor: COLORS.white, padding: 10, borderRadius: 27 }}>
+            <Icon_Sign_Out color={COLORS.foregroundColor} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Main Content View */}
@@ -530,18 +657,30 @@ const TableScreen = () => {
         </View>
         <OrderedItemsList items={filteredOrderedItems} users={tableUsers} waiters={tableWaiters} />
         <View style={styles.orderButtonContainer}>
-          <Button onPress={handleOrderPress} disabled={isTableLocked}>Order</Button>
+          <Button
+            onPress={handleOrderPress}
+            disabled={isTableLocked}
+            variant={isTableLocked ? 'accent' : 'primary'}
+            backgroundColor={isTableLocked ? '#FF6D00' : undefined}
+          >
+            {isTableLocked ? 'Table is locked' : 'Add Items'}
+          </Button>
         </View>
       </Animated.View>
 
       {/* Waiter Instructions Sheet */}
-      {selectedWaiterId && tableWaiters?.[selectedWaiterId] && (
-        <WaiterInstructionsSheet
-          waiter={tableWaiters?.[selectedWaiterId]}
-          onSelectInstruction={handleInstructionSelect}
-          ref={waiterSheetRef}
-        />
-      )}
+      {(() => {
+        const waiter = Object.values(tableWaiters)[0];
+        const selectedWaiter = selectedWaiterId ? tableWaiters?.[selectedWaiterId] : waiter;
+        if (!selectedWaiter) return null;
+        return (
+          <WaiterInstructionsSheet
+            waiter={selectedWaiter}
+            onSelectInstruction={handleInstructionSelect}
+            ref={waiterSheetRef}
+          />
+        );
+      })()}
 
       {/* King Actions Popup */}
 
@@ -594,7 +733,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: 'row',
     height: 80,
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: SCREEN_PADDING.horizontal,
     gap: 10,

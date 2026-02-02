@@ -7,6 +7,7 @@ import {
   Dimensions,
   Image,
   StyleSheet,
+  Text,
   TouchableOpacity,
   View
 } from 'react-native';
@@ -149,6 +150,15 @@ const HomeScreen = () => {
     navigation.setOptions({
       headerTintColor: color,
       headerLeft: () => <CustomHeader color={color} clearOrderType />,
+      // headerTitle: () => (
+      //   <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      //     <Text style={{ color: color, fontSize: 16, fontFamily: 'Poppins-SemiBold', textTransform: 'uppercase', letterSpacing: 1 }}>
+      //       {/* {state.orderType === 'delivery' ? 'Delivery' : 'Takeaway'} */}
+      //       llll
+      //     </Text>
+      //   </View>
+      // ),
+      headerTitle: () => (<Text style={{backgroundColor: COLORS.primaryColor, borderRadius: 20, paddingVertical: 4 , paddingHorizontal: 8, marginTop:4,  lineHeight: 18, color: COLORS.white, fontSize: 14, fontFamily: 'Poppins-SemiBold', textTransform: 'uppercase', letterSpacing: 1 }}>{state.orderType === 'delivery' ? 'Delivery' : 'Takeaway'}</Text>),
       headerRight: () => (
         <View
           style={{
@@ -194,6 +204,7 @@ const HomeScreen = () => {
   // Update header opacity dynamically
   useLayoutEffect(() => {
     scrollY.value = 0; // reset on mount
+    updateHeaderColor('#fff'); // Set initial header with white color
   }, []);
 
   const headerBackgroundStyle = useAnimatedStyle(() => {
@@ -209,7 +220,7 @@ const HomeScreen = () => {
       headerStyle: {
         backgroundColor: `rgba(255,255,255,${opacity})`,
       },
-      headerTitle: opacity > 0.7 ? "" : "",
+      // headerTitle: opacity > 0.7 ? "" : "",
     });
 
     return {};

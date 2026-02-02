@@ -37,10 +37,11 @@ import SocketService from '../utils/SocketService';
 
 export type OrderedItem = {
     id: number;
+    plu: string;
     name: string;
     image_url: string | null;
     quantity: number;
-    price: number | null
+    price: number | null;
     symbol: string;
     special_instruction?: string | null;
     added_by: {
@@ -53,6 +54,8 @@ export type OrderedItem = {
     deleted: number;
     disabled: boolean;
     status: 'pending' | 'in-kitchen';
+    isHiddenFromUser?: boolean | null;
+    order: number;
     modifier_groups: Array<{
         id: number;
         name: string;

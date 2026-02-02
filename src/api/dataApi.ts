@@ -24,9 +24,6 @@ interface Content {
 
 export const dataApi = baseApi.injectEndpoints({
   endpoints: builder => ({
-    getCities: builder.query<City[], void>({
-      query: () => `/cities`,
-    }),
     getAllergens: builder.query<Allergen[], { search: string }>({
       query: ({ search }) => `/allergens?search=${search}`,
       providesTags: ['allergens'],
@@ -49,5 +46,5 @@ export const dataApi = baseApi.injectEndpoints({
   overrideExisting: true,
 });
 
-export const { useGetCitiesQuery, useGetAllergensQuery, useGetContentQuery, useGetZonesQuery, useGetWaiterInstructionsQuery } =
+export const { useGetAllergensQuery, useGetContentQuery, useGetZonesQuery, useGetWaiterInstructionsQuery } =
   dataApi;

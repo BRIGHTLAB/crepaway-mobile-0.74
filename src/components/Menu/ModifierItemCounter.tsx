@@ -1,6 +1,6 @@
 import React from 'react';
-import {View, Text, Pressable, StyleSheet} from 'react-native';
-import {COLORS} from '../../theme';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { COLORS } from '../../theme';
 
 interface ModifierItemCounterProps {
   itemId: number;
@@ -32,17 +32,19 @@ const ModifierItemCounter: React.FC<ModifierItemCounterProps> = ({
       <Pressable onPress={handlePress} style={styles.pressable}>
         <View style={[styles.checkbox, count > 0 && styles.checked]}>
           <Text style={styles.count}>{count > 0 ? count : ''}</Text>
+        </View>
+        <View style={styles.textContainer}>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
+              {title} {price ? `$${price}` : ''}
+            </Text>
+          </View>
           {count > 0 && (
-            <Pressable
-              onPress={() => onReset(itemId)}
-              style={styles.resetButton}>
-              <Text style={styles.resetText}>X</Text>
+            <Pressable onPress={() => onReset(itemId)}>
+              <Text style={styles.removeText}>remove</Text>
             </Pressable>
           )}
         </View>
-        <Text style={styles.title}>
-          {title} {price ? `$${price}` : ''}
-        </Text>
       </Pressable>
     </View>
   );
@@ -59,13 +61,11 @@ const styles = StyleSheet.create({
   pressable: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
   },
   checkbox: {
-    position: 'relative',
     width: 24,
     height: 24,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: COLORS.darkColor,
     justifyContent: 'center',
     alignItems: 'center',
@@ -81,23 +81,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
+  textContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  titleContainer: {
+    flexShrink: 1,
+  },
   title: {
     fontSize: 16,
   },
-  resetButton: {
-    position: 'absolute',
-    top: -8,
-    left: -11,
-    width: 16,
-    height: 16,
-    backgroundColor: 'black',
-    borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  resetText: {
-    color: 'white',
-    fontSize: 11,
-    fontWeight: 'bold',
+  removeText: {
+    fontSize: 16,
+    color: COLORS.primaryColor,
   },
 });

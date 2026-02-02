@@ -9,6 +9,7 @@ import {
   Dimensions,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
@@ -24,7 +25,6 @@ import { useGetContentQuery } from '../api/dataApi';
 import { useGetOrderTypesQuery } from '../api/ordersApi';
 import SelectSheet from '../components/Sheets/SelectSheet';
 import DeliverySheet from '../components/Sheets/ServiceSelection/DeliverySheet';
-import TakeawaySheet from '../components/Sheets/ServiceSelection/TakeawaySheet';
 import Button from '../components/UI/Button';
 import Tabs from '../components/UI/Tabs';
 import { RootStackParamList } from '../navigation/NavigationStack';
@@ -34,12 +34,14 @@ import {
   setCartOrderType,
 } from '../store/slices/cartSlice';
 import {
+  logoutUser,
   setAddress,
   setBranchName,
   setOrderType
 } from '../store/slices/userSlice';
 import store, { RootState } from '../store/store';
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
+import Icon_Sign_Out from '../../assets/SVG/Icon_Sign_Out';
 
 const { width, height } = Dimensions.get('window');
 
@@ -120,7 +122,6 @@ const ServiceSelectionScreen = () => {
   const currentBackgroundRef = useRef<any>(null);
 
   const addressSheetRef = useRef<BottomSheet>(null);
-  const takeawaySheetRef = useRef<BottomSheet>(null);
   const branchesSheetRef = useRef<BottomSheet>(null);
 
   const navigation = useNavigation<NavigationProp>();
@@ -333,7 +334,6 @@ const ServiceSelectionScreen = () => {
   // }, [selectedIdx, orderTypes]);
 
   const handleProceed = useCallback(() => {
-    console.log('handleProceed')
     if (!orderTypes || orderTypes.length === 0) return;
 
     const cartOrderType = store.getState().cart.orderType;
@@ -373,7 +373,7 @@ const ServiceSelectionScreen = () => {
           addressSheetRef.current?.expand();
           break;
         case 'takeaway':
-          takeawaySheetRef.current?.expand();
+          branchesSheetRef.current?.expand();
           break;
         case 'dine-in':
           dispatch(
@@ -410,19 +410,13 @@ const ServiceSelectionScreen = () => {
     [dispatch, orderTypes, selectedIdx],
   );
 
-  const handleSelectPress = () => {
-    takeawaySheetRef.current?.close();
-    setTimeout(() => {
-      branchesSheetRef.current?.expand();
-    }, 200);
-  };
-
   return (
     <>
       <View style={[styles.container, {
         paddingBottom: bottom,
         paddingTop: top
       }]}>
+
         {/* Previous background image (for crossfade) */}
         {prevBackground && (
           <Animated.View
@@ -455,12 +449,19 @@ const ServiceSelectionScreen = () => {
           <View style={[styles.backgroundImageContainer, styles.fallbackBackground]} />
         )}
 
+        <TouchableOpacity style={{ position: 'absolute', top: 16, right: SCREEN_PADDING.horizontal, zIndex: 100 }} onPress={() => dispatch(logoutUser())}>
+          <Icon_Sign_Out color="white" />
+        </TouchableOpacity>
+
+
         <LinearGradient
           style={styles.imageOverlay}
           colors={['rgba(0, 0, 0, 0.2)', 'black']}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
         />
+
+
 
         <View style={styles.contentContainer}>
           <Tabs
@@ -490,11 +491,6 @@ const ServiceSelectionScreen = () => {
       {showSheets && (
         <>
           <DeliverySheet ref={addressSheetRef} />
-          <TakeawaySheet
-            selectedBranch={userState.branchName}
-            ref={takeawaySheetRef}
-            onSelectPress={handleSelectPress}
-          />
           <SelectSheet
             ref={branchesSheetRef}
             value={selectedBranchId}

@@ -7,7 +7,6 @@ import { Portal } from '@gorhom/portal';
 import { useNavigation } from '@react-navigation/native';
 import React, { forwardRef, useCallback, useEffect, useRef } from 'react';
 import { Keyboard, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SCREEN_PADDING } from '../../theme';
 
 type Props = {
@@ -17,6 +16,7 @@ type Props = {
   disableCollapse?: boolean;
   footerComponent?: React.FC<BottomSheetFooterProps>;
   onClose?: () => void;
+  onChange?: (index: number) => void;
 };
 
 const DynamicSheet = forwardRef<BottomSheet, Props>(
@@ -27,6 +27,7 @@ const DynamicSheet = forwardRef<BottomSheet, Props>(
       maxDynamicContentSize = 800,
       disableCollapse = false,
       onClose,
+      onChange,
       footerComponent,
     }: Props,
     ref,
@@ -58,13 +59,14 @@ const DynamicSheet = forwardRef<BottomSheet, Props>(
           }
         }
         lastIndexRef.current = index;
+
+        // Call onChange callback if provided
+        if (onChange) {
+          onChange(index);
+        }
       },
-      [onClose],
+      [onClose, onChange],
     );
-
-    const { bottom, top } = useSafeAreaInsets();
-
-
     // TODO check for a better approach as this one overrides the navigation to cause a delay0
     useEffect(() => {
       if (!navigation) return;

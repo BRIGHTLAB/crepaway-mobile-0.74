@@ -2,6 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import { FlatList, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useSelector } from 'react-redux';
 import { DineInStackParamList } from '../../navigation/DineInStack';
 import { OrderedItem, OrderedItems, TableUsers, TableWaiters } from '../../screens/TableScreen';
@@ -18,6 +19,11 @@ type Props = {
 };
 
 type NavigationProp = NativeStackNavigationProp<DineInStackParamList>;
+
+const hapticOptions = {
+  enableVibrateFallback: true,
+  ignoreAndroidSystemSettings: false,
+};
 
 const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Props) => {
   const navigation = useNavigation<NavigationProp>();
@@ -40,6 +46,11 @@ const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Prop
   };
 
   const handleDecreaseQuantity = (itemUuid: string, item: OrderedItem) => {
+    const isOwnItem = item.added_by.type === 'user' && String(item.added_by.id) === String(userState.id);
+    if (isOwnItem) {
+      ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
+    }
+
     const newQuantity = item.quantity - 1; // FIXED: Added missing semicolon
     const messageData: {
       tableName: string | null;
@@ -65,6 +76,11 @@ const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Prop
   };
 
   const handleIncreaseQuantity = (itemUuid: string, item: OrderedItem) => {
+    const isOwnItem = item.added_by.type === 'user' && String(item.added_by.id) === String(userState.id);
+    if (isOwnItem) {
+      ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
+    }
+
     const newQuantity = item.quantity + 1;
     const messageData: {
       tableName: string | null;
@@ -94,25 +110,46 @@ const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Prop
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Ordered Items</Text>
       <FlatList
-        data={Object.entries(items).map(([key, value]) => ({
-          ...value,
-          uuid: key,
-        }))}
+          data={Object.entries(items)
+          .filter(([key, value]) => !value.isHiddenFromUser)
+          .map(([key, value]) => ({
+            ...value,
+            uuid: key,
+          }))
+          .sort((a, b) => (a.order || 0) - (b.order || 0))}
         keyExtractor={item => item.uuid.toString()}
         renderItem={({ item }) => {
-          const orderedByUser = Object.values(users).find(
-            user => user.id === item.added_by.id,
-          );
-          const orderedByWaiter = item.added_by.type === 'waiter'
-            ? Object.values(waiters).find(waiter => waiter.id === item.added_by.id)
+          const orderedByUser = item.added_by.type === 'user'
+            ? (users[String(item.added_by.id)] || Object.values(users).find(
+              user => String(user.id) === String(item.added_by.id),
+            ))
             : undefined;
-          const isItemDisabled = isTableLocked || item.is_disabled || (orderedByUser?.id !== userState.id && !isCurrentUserKing) || item.added_by.type === 'waiter'
+          const orderedByWaiter = item.added_by.type === 'waiter'
+            ? (waiters[String(item.added_by.id)] || Object.values(waiters).find(
+              waiter => String(waiter.id) === String(item.added_by.id),
+            ))
+            : undefined;
+          // Disable logic:
+          // - Always disabled if table is locked or item.is_disabled is true
+          // - Waiter items cannot be edited by anyone
+          // - King can edit all user items (not waiter items)
+          // - Normal user can only edit their own items
+          const isWaiterItem = item.added_by.type === 'waiter';
+          // Compare directly with item.added_by.id since orderedByUser might be undefined
+          const isOwnItem = item.added_by.type === 'user' && String(item.added_by.id) === String(userState.id);
+          const canKingEdit = isCurrentUserKing && !isWaiterItem;
+          const canUserEdit = isOwnItem;
+          const isItemDisabled = isTableLocked || item.is_disabled || isWaiterItem || (!canKingEdit && !canUserEdit);
+
           return (
             <OrderedItemCmp
               item={item}
               orderedByUser={orderedByUser}
               orderedByWaiter={orderedByWaiter}
               isDisabled={isItemDisabled}
+              currentUserId={userState.id}
+              isTableLocked={isTableLocked}
+              isCurrentUserKing={isCurrentUserKing}
               onQuantityDecrease={
                 !isItemDisabled
                   ? () => handleDecreaseQuantity(item.uuid, item)
@@ -146,6 +183,7 @@ export default OrderedItemsList;
 
 const styles = StyleSheet.create({
   container: {
+    marginTop: 16,
     flex: 1,
     backgroundColor: COLORS.white,
   },
@@ -154,6 +192,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SCREEN_PADDING.horizontal,
     paddingVertical: 8,
     backgroundColor: COLORS.white,
+    color: COLORS.darkColor,
   },
   contentContainer: {
     flexGrow: 1,

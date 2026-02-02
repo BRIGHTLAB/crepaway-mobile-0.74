@@ -8,7 +8,9 @@ import { View } from 'react-native';
 import { useSelector } from 'react-redux';
 import { RootState, useAppDispatch } from '../store/store';
 
+import { useGetPendingRatingQuery } from '../api/ordersApi';
 import CustomHeader from '../components/Header';
+import OrderRatingSheet, { OrderRatingSheetRef } from '../components/Sheets/OrderRatingSheet';
 import MenuItemScreen from '../screens/MenuItemScreen';
 import SplashScreen from '../screens/SplashScreen';
 import NotificationService from '../utils/NotificationService';
@@ -28,7 +30,10 @@ export type RootStackParamList = {
     screen: keyof LoginStackParamList;
     params?: LoginStackParamList[keyof LoginStackParamList];
   };
-  DeliveryTakeaway: undefined;
+  DeliveryTakeaway: {
+    screen?: keyof DeliveryTakeawayStackParamList;
+    params?: DeliveryTakeawayStackParamList[keyof DeliveryTakeawayStackParamList];
+  } | undefined;
   DineIn: undefined;
   MenuItem: { itemId: number; itemUuid?: string };
   Loyalty: undefined;
@@ -63,6 +68,25 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
   const dispatch = useAppDispatch();
   const notificationInstance = NotificationService.getInstance();
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
+  const ratingSheetRef = useRef<OrderRatingSheetRef>(null);
+  const [hasShownRating, setHasShownRating] = useState(false);
+  const [pendingOrderId, setPendingOrderId] = useState<number | null>(null);
+
+  const { data: pendingOrderToRate } = useGetPendingRatingQuery(undefined, {
+    skip: hasShownRating || !isSplashAnimationFinished || !isLoggedIn,
+  });
+
+  useEffect(() => {
+    if (pendingOrderToRate?.id && isSplashAnimationFinished && !hasShownRating) {
+      setPendingOrderId(pendingOrderToRate.id);
+      // Small delay to ensure the sheet ref is ready
+      setTimeout(() => {
+        ratingSheetRef.current?.expand();
+      }, 100);
+      setHasShownRating(true);
+    }
+    console.log('wehavePendingOrdertoRate', pendingOrderToRate)
+  }, [pendingOrderToRate, isSplashAnimationFinished, hasShownRating]);
 
   useEffect(() => {
     if (!isLoggedIn || !navigationRef.current) return;
@@ -187,6 +211,11 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
   return (
     <NavigationContainer ref={navigationRef}>
       {renderStack()}
+      <OrderRatingSheet
+        ref={ratingSheetRef}
+        orderId={pendingOrderId ?? 0}
+        title="Rate your last order"
+      />
     </NavigationContainer>
   );
 };
