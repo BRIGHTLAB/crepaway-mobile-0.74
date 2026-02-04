@@ -1,10 +1,18 @@
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
 import {NavigationContainerRef} from '@react-navigation/native';
-import {Platform} from 'react-native';
+import {AppState, Platform} from 'react-native';
 import PushNotification, {Importance} from 'react-native-push-notification';
 import {POST} from '../api';
+import type { NavParams } from './NavigationHelper';
 
-// Type definitions
+// Lazy import to avoid circular dependency
+const getNavigationHelper = () => require('./NavigationHelper').default;
+
+/**
+ * Backend must include "data" field in FCM payload for foreground notifications.
+ * Format: { "notification": {...}, "data": {...} } OR { "data": {...} }
+ * Pure "notification" payloads (without "data") won't trigger onNotification in foreground.
+ */
 interface NotificationOptions {
   data?: Record<string, unknown>;
   enableSound?: boolean;
@@ -15,13 +23,18 @@ interface NotificationOptions {
 
 interface NotificationData {
   screen?: string;
-  params?: Record<string, unknown>;
+  order_type?: string;
+  menu_type?: string;
+  id?: number;
   type?: string;
   count?: string;
+  params?: Record<string, unknown>;
   [key: string]: unknown;
 }
 
-interface Notification {
+type PushNotificationReceived = {
+  title?: string;
+  message?: string | object;
   data?: NotificationData | Record<string, unknown>;
   finish?: (fetchResult: string) => void;
   [key: string]: unknown;
@@ -30,8 +43,19 @@ interface Notification {
 class NotificationService {
   private token: string | null = null;
   private static instance: NotificationService | null = null;
+  private isInitialized: boolean = false;
+  private initTime: number = 0;
+  private navigationRef: NavigationContainerRef<Record<string, unknown>> | null = null;
+  private pendingNavigation: NavParams | null = null;
+  private appStateSubscription: {remove: () => void} | null = null;
 
   private constructor() {}
+
+  private log = (...args: unknown[]): void => {
+    if (__DEV__) {
+      console.log('[NotificationService]', ...args);
+    }
+  };
 
   static getInstance(): NotificationService {
     if (!NotificationService.instance) {
@@ -40,60 +64,84 @@ class NotificationService {
     return NotificationService.instance;
   }
 
-  init = (navigationRef: NavigationContainerRef<any>): void => {
-    // Configure the notification service
-    PushNotification.configure({
-      // Called when registered for remote notifications
-      onRegister: (tokenData: {token: string}): void => {
-        console.log('Device TOKEN:', tokenData);
-        this.token = tokenData.token;
+  init = (navigationRef: NavigationContainerRef<Record<string, unknown>>): void => {
+    if (this.isInitialized) {
+      return;
+    }
+    
+    this.navigationRef = navigationRef;
+    getNavigationHelper().getInstance().setNavigationRef(navigationRef);
 
-        // Optionally send token to backend
+    // Listen for app state changes to handle navigation when app becomes active
+    let previousAppState = AppState.currentState;
+    this.appStateSubscription = AppState.addEventListener('change', (nextAppState) => {
+      if (previousAppState.match(/inactive|background/) && nextAppState === 'active') {
+        if (this.pendingNavigation && this.navigationRef?.isReady()) {
+          this.processNavigation(this.pendingNavigation);
+          this.pendingNavigation = null;
+        }
+      }
+      previousAppState = nextAppState;
+    });
+
+    PushNotification.configure({
+      onRegister: (tokenData: {token: string}): void => {
+        this.token = tokenData.token;
         this.sendDeviceTokenToBackend();
       },
 
-      // Required for proper operation
-      onNotification: (notification: Notification): void => {
-        console.log('NOTIFICATION:', notification);
+      onNotification: (notification: PushNotificationReceived): void => {
+        try {
+          const appState = AppState.currentState;
+          const isInitialPop = Date.now() - this.initTime < 2000 && appState === 'active';
+          
+          const {title, message, notificationData} = this.extractNotificationData(notification);
 
-        // Get notification data based on platform
-        const notificationData: NotificationData =
-          Platform.OS === 'android'
-            ? (notification.data as NotificationData) || {}
-            : ((notification.data as Record<string, unknown>)
-                ?.data as NotificationData) ||
-              (notification.data as NotificationData) ||
-              {};
+          // Show local notification in foreground (except initial pop)
+          if (appState === 'active' && !isInitialPop) {
+            this.localNotification(title, message, {
+              data: notificationData,
+              enableSound: true,
+              channelId: 'default-channel',
+            });
+          }
 
-        // Handle navigation from notification
-        if (notificationData.screen && navigationRef.isReady()) {
-          // Cast params to appropriate type for navigation
-          navigationRef.navigate(
-            notificationData.screen,
-            notificationData.params,
-          );
+          // Handle navigation
+          if (notificationData.screen) {
+            const params: NavParams = {
+              screen: notificationData.screen,
+              order_type: notificationData.order_type || 'delivery',
+              menu_type: notificationData.menu_type || notificationData.order_type || 'delivery',
+              id: notificationData.id,
+              ...notificationData.params,
+            };
+            
+            this.pendingNavigation = params;
+            
+            if (appState === 'active' && this.navigationRef?.isReady()) {
+              this.processNavigation(params);
+              this.pendingNavigation = null;
+            }
+          }
+
+          // Handle custom actions
+          if (notificationData.type) {
+            this.handleNotificationAction(notificationData.type, notificationData);
+          }
+        } catch (e) {
+          this.log('Error handling notification:', e);
         }
 
-        // Handle custom actions based on notification type
-        if (notificationData.type) {
-          this.handleNotificationAction(
-            notificationData.type,
-            notificationData,
-          );
-        }
-
-        // Required on iOS only
+        // Required on iOS
         if (Platform.OS === 'ios' && notification.finish) {
           notification.finish(String(PushNotificationIOS.FetchResult.NoData));
         }
       },
 
-      // Called when registration fails
-      onRegistrationError: function (err: Error): void {
-        console.error('Registration Error:', err.message, err);
+      onRegistrationError: (err: Error): void => {
+        console.error('[NotificationService] Registration error:', err);
       },
 
-      // IOS ONLY
       permissions: {
         alert: true,
         badge: true,
@@ -104,92 +152,145 @@ class NotificationService {
       requestPermissions: true,
     });
 
-    // Create notification channels for Android
     if (Platform.OS === 'android') {
       this.createNotificationChannels();
     }
+    
+    this.isInitialized = true;
+    this.initTime = Date.now();
   };
 
-  // Create notification channels for Android
-  private createNotificationChannels(): void {
-    // Default channel with sound
-    // PushNotification.createChannel(
-    //   {
-    //     channelId: 'default-channel',
-    //     channelName: 'Default Channel',
-    //     channelDescription: 'Default notifications with sound',
-    //     soundName: 'default',
-    //     importance: Importance.HIGH,
-    //     vibrate: true,
-    //   },
-    //   (created: boolean) => console.log(`Default channel created: ${created}`),
-    // );
-    // // Silent channel
-    // PushNotification.createChannel(
-    //   {
-    //     channelId: 'silent-channel',
-    //     channelName: 'Silent Channel',
-    //     channelDescription: 'Notifications without sound',
-    //     soundName: undefined,
-    //     importance: Importance.HIGH,
-    //     vibrate: false,
-    //   },
-    //   (created: boolean) => console.log(`Silent channel created: ${created}`),
-    // );
+  private processNavigation(params: NavParams): void {
+    if (!this.navigationRef?.isReady()) return;
+    getNavigationHelper().getInstance().navigate(params);
   }
 
-  // Handle different notification action types
-  private handleNotificationAction = (
-    type: string,
-    data: NotificationData,
-  ): void => {
+  private extractNotificationData(notification: PushNotificationReceived): {
+    title: string;
+    message: string;
+    notificationData: NotificationData;
+  } {
+    const dataObj = notification.data as Record<string, unknown> | undefined;
+    
+    const getString = (obj: unknown, key: string): string | undefined => {
+      if (obj && typeof obj === 'object' && key in obj) {
+        const value = (obj as Record<string, unknown>)[key];
+        return typeof value === 'string' ? value : undefined;
+      }
+      return undefined;
+    };
+
+    const title =
+      (typeof notification.title === 'string' ? notification.title : undefined) ||
+      getString(dataObj, 'title') ||
+      getString(dataObj?.notification, 'title') ||
+      'Notification';
+
+    const message =
+      (typeof notification.message === 'string' ? notification.message : undefined) ||
+      getString(dataObj, 'body') ||
+      getString(dataObj, 'message') ||
+      getString(dataObj?.notification, 'body') ||
+      'You have a new notification';
+
+    // Extract notification data - handle app_custom_obj or direct data
+    let notificationData: NotificationData = {};
+    
+    if (Platform.OS === 'android') {
+      const data = notification.data as Record<string, unknown> | undefined;
+      if (data?.app_custom_obj && typeof data.app_custom_obj === 'object') {
+        notificationData = data.app_custom_obj as NotificationData;
+      } else {
+        notificationData = (data as NotificationData) || {};
+      }
+    } else {
+      const data = notification.data as Record<string, unknown> | undefined;
+      if (data?.data && typeof data.data === 'object') {
+        const nestedData = data.data as Record<string, unknown>;
+        if (nestedData.app_custom_obj && typeof nestedData.app_custom_obj === 'object') {
+          notificationData = nestedData.app_custom_obj as NotificationData;
+        } else {
+          notificationData = nestedData as NotificationData;
+        }
+      } else if (data?.app_custom_obj && typeof data.app_custom_obj === 'object') {
+        notificationData = data.app_custom_obj as NotificationData;
+      } else {
+        notificationData = (data as NotificationData) || {};
+      }
+    }
+
+    return {title, message, notificationData};
+  }
+
+  private createNotificationChannels(): void {
+    PushNotification.createChannel(
+      {
+        channelId: 'default-channel',
+        channelName: 'Default Channel',
+        channelDescription: 'Default notifications with sound',
+        soundName: 'default',
+        importance: Importance.HIGH,
+        vibrate: true,
+      },
+      () => {},
+    );
+    
+    PushNotification.createChannel(
+      {
+        channelId: 'silent-channel',
+        channelName: 'Silent Channel',
+        channelDescription: 'Notifications without sound',
+        soundName: undefined,
+        importance: Importance.HIGH,
+        vibrate: false,
+      },
+      () => {},
+    );
+  }
+
+  private handleNotificationAction = (type: string, data: NotificationData): void => {
     switch (type) {
       case 'refresh_data':
-        console.log('Refreshing data from notification');
-        // Implement your refresh logic
+        this.log('Refreshing data');
         break;
-
       case 'update_badge':
         if (Platform.OS === 'ios') {
           const count = parseInt((data.count as string) || '0') || 0;
           PushNotificationIOS.setApplicationIconBadgeNumber(count);
         }
         break;
-
-      default:
-        console.log(`Handling notification type: ${type}`);
     }
   };
 
-  // Send a notification with custom options
   localNotification = (
     title: string,
     message: string,
     options: NotificationOptions = {},
   ): void => {
-    const {
-      data = {},
-      enableSound = true,
-      channelId = enableSound ? 'default-channel' : 'silent-channel',
-      bigText,
-      subText,
-    } = options;
+    try {
+      const {
+        data = {},
+        enableSound = true,
+        channelId = enableSound ? 'default-channel' : 'silent-channel',
+        bigText,
+        subText,
+      } = options;
 
-    const notificationObj = {
-      channelId,
-      title,
-      message,
-      playSound: enableSound,
-      soundName: enableSound ? 'default' : undefined,
-      bigText,
-      subText,
-      userInfo: data,
-    };
-
-    PushNotification.localNotification(notificationObj);
+      PushNotification.localNotification({
+        channelId,
+        title,
+        message,
+        playSound: enableSound,
+        soundName: enableSound ? 'default' : undefined,
+        bigText,
+        subText,
+        userInfo: data,
+      });
+    } catch (error) {
+      this.log('Error showing local notification:', error);
+    }
   };
 
-  // Schedule a notification for later
   scheduleNotification = (
     title: string,
     message: string,
@@ -204,7 +305,7 @@ class NotificationService {
       subText,
     } = options;
 
-    const scheduledNotificationObj = {
+    PushNotification.localNotificationSchedule({
       channelId,
       title,
       message,
@@ -214,31 +315,27 @@ class NotificationService {
       bigText,
       subText,
       userInfo: data,
-    };
-
-    PushNotification.localNotificationSchedule(scheduledNotificationObj);
+    });
   };
 
-  // Get the device token
   getDeviceToken = (): string | null => {
     return this.token;
   };
 
-  // Send device token to backend
   async sendDeviceTokenToBackend() {
     if (!this.token) return null;
-
-    const response = await POST({
-      endpoint: '/users/tokens',
-      formData: {
-        token: this.token,
-        platform_os: Platform.OS,
-      },
-    });
-    console.log('responsesa', response);
-    if (response.status < 400) {
-      return response.data;
-    } else {
+    
+    try {
+      const response = await POST({
+        endpoint: '/users/tokens',
+        formData: {
+          token: this.token,
+          platform_os: Platform.OS,
+        },
+      });
+      return response.status < 400 ? response.data : null;
+    } catch (error) {
+      this.log('Error sending token to backend:', error);
       return null;
     }
   }
@@ -257,14 +354,13 @@ class NotificationService {
       PushNotification.abandonPermissions();
       PushNotification.unregister();
     }
-
+    this.appStateSubscription?.remove();
+    this.appStateSubscription = null;
+    this.pendingNavigation = null;
     this.token = null;
     this.clearAllNotifications();
-
-    console.log('Notification permissions abandoned');
   };
 
-  // Set badge count (iOS only)
   setBadgeCount = (count: number): void => {
     if (Platform.OS === 'ios') {
       PushNotificationIOS.setApplicationIconBadgeNumber(count);

@@ -33,14 +33,18 @@ export const homeApi = baseApi.injectEndpoints({
             providesTags: ['homepage'],
             keepUnusedDataFor: 10,
         }),
-        // getBanners: builder.query<{banners: Banner[]}, {branch: string}>({
-        //   query: ({branch}) => `/banners?branch=${branch}`,
-        // }),
+        getBanners: builder.query<{banners: any}, {branch: string}>({
+          query: ({branch}) => {
+            const params = new URLSearchParams();
+            if (branch) params.append('branch', branch);    
+            return `/banners?${params.toString()}`;
+          },
+        }),
     }),
 
     overrideExisting: true,
 });
 
 export const { useGetHomepageQuery,
-    // useGetBannersQuery
+    useGetBannersQuery,
 } = homeApi;

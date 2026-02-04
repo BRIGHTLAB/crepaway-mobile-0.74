@@ -27,7 +27,7 @@ export const baseApi = createApi({
     const result = await baseQueryWithAuth(args, api, extraOptions);
 
     // console.log('args:', api);
-    console.log('API Response:', result);
+    // console.log('API Response:', result);
     // console.log('Call Body:', args.body);
     // console.log('API Headers:', result.meta?.request.headers);
     // console.log('Error Object:', result.error);

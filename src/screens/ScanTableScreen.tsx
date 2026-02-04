@@ -27,9 +27,9 @@ const ScanTableScreen = () => {
   useFocusEffect(
     React.useCallback(() => {
 
-    //       setTimeout(() => {
-    //   dispatch(setBranchTable('ashrafieh.table1'));
-    // }, 100);
+          setTimeout(() => {
+      dispatch(setBranchTable('ashrafieh.table1'));
+    }, 100);
       if (userState.branchTable || userState.tableSessionId) {
         navigation.navigate('Pending');
         setMounted(false);

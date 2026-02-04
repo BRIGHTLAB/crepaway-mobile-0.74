@@ -32,19 +32,20 @@ const Banner: React.FC<BannerProps> = ({ data }) => {
   const { top } = useSafeAreaInsets()
 
   const renderItem = ({ item }: { item: BannerItem }) => {
+    const imageUri = item.image || 'https://d3vfh4cqgoixck.cloudfront.net/images/locations_placeholder1.webp';
+    
     return (
       <View style={[styles.slide]}>
         <FadeInFastImage
           source={{
-            uri: item.image ||
-              'https://d3vfh4cqgoixck.cloudfront.net/images/locations_placeholder1.webp',
-            priority: FastImage.priority.normal,
+            uri: imageUri,
+            priority: FastImage.priority.high,
           }}
           style={styles.image}
-          containerStyle={styles.image}
+          containerStyle={styles.imageContainer}
           duration={300}
           resizeMode={FastImage.resizeMode.cover}
-          placeholderColor="#f2f2f2"
+          placeholderColor="#e0e0e0"
         />
         <Text style={styles.title}>{item.title}</Text>
         <View
@@ -55,7 +56,7 @@ const Banner: React.FC<BannerProps> = ({ data }) => {
             right: 0,
             bottom: 0,
             backgroundColor: 'black',
-            opacity: 0.7,
+            opacity: 0.4,
             zIndex: 1,
             pointerEvents: 'none',
           }}></View>
@@ -86,6 +87,10 @@ const Banner: React.FC<BannerProps> = ({ data }) => {
     );
   };
 
+  if (!data || data.length === 0) {
+    return null;
+  }
+
   return (
     <View style={[styles.container,
     {
@@ -100,9 +105,15 @@ const Banner: React.FC<BannerProps> = ({ data }) => {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onScroll={handleScroll}
+        scrollEventThrottle={16}
         keyExtractor={(item, index) => index.toString()}
+        getItemLayout={(_, index) => ({
+          length: screenWidth,
+          offset: screenWidth * index,
+          index,
+        })}
       />
-      {renderPagination()}
+      {data.length > 1 && renderPagination()}
     </View>
   );
 };
@@ -118,15 +129,23 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     position: 'relative',
   },
-  image: {
+  imageContainer: {
     width: '100%',
     height: '100%',
     position: 'absolute',
-    resizeMode: 'cover',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#e0e0e0',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
   },
   title: {
     fontFamily: 'Poppins-Bold',
-    fontSize: 40,
+    fontSize: 28,
     fontWeight: 'bold',
     color: 'white',
     padding: 16,

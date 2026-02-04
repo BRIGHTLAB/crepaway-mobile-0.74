@@ -26,6 +26,19 @@
 	<string>AIzaSyA0IxviANpXAl-sTNcYjH1zU5cjgXimKuk</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.crepaway.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>crepaway</string>
+			</array>
+		</dict>
+	</array>
   <key>NSLocalNetworkUsageDescription</key>
   <string>This app needs access to local devices on your network.</string>
   <key>NSAppTransportSecurity</key>

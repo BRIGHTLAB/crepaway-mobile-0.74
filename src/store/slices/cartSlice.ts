@@ -89,6 +89,7 @@ const cartSlice = createSlice({
   initialState,
   reducers: {
     addItem: (state, action: PayloadAction<CartItem>) => {
+      console.log('addItem', action.payload);
       const uuidValue = uuid.v4().toString();
       const itemCopy = JSON.parse(JSON.stringify(action.payload));
       return {

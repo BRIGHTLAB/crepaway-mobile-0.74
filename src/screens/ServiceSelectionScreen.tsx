@@ -278,12 +278,12 @@ const ServiceSelectionScreen = () => {
         }),
       );
       // Clear address when selecting takeaway branch
-      dispatch(setAddress({
-        id: null,
-        title: null,
-        latitude: null,
-        longitude: null,
-      }));
+      // dispatch(setAddress({
+      //   id: null,
+      //   title: null,
+      //   latitude: null,
+      //   longitude: null,
+      // }));
       dispatch(setBranchName(selectedBranchName || null));
       dispatch(setCartBranchName(selectedBranchName || null));
     }
@@ -376,14 +376,14 @@ const ServiceSelectionScreen = () => {
           branchesSheetRef.current?.expand();
           break;
         case 'dine-in':
-          dispatch(
-            setAddress({
-              id: null,
-              title: null,
-              latitude: null,
-              longitude: null,
-            }),
-          );
+          // dispatch(
+          //   setAddress({
+          //     id: null,
+          //     title: null,
+          //     latitude: null,
+          //     longitude: null,
+          //   }),
+          // );
 
 
           // Alert.alert(

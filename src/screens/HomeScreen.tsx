@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import {
   BackHandler,
   Dimensions,
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -14,7 +13,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import { useGetContentQuery } from '../api/dataApi';
-import { useGetHomepageQuery } from '../api/homeApi';
+import { useGetBannersQuery, useGetHomepageQuery } from '../api/homeApi';
+import Banner from '../components/Banner';
 import FadeOverlay from '../components/FadeOverlay';
 import CartCounter from '../components/Menu/CartCounter';
 import CategoryList from '../components/Menu/CategoryList';
@@ -37,13 +37,6 @@ import Animated, {
 import CustomHeader from '../components/Header';
 import { COLORS } from '../theme';
 
-const { width } = Dimensions.get("window");
-const BANNER_HEIGHT = 350;
-
-const IMAGES = {
-  bannerBg: require('../../assets/images/banner.png')
-}
-
 // Define the navigation prop type
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -57,25 +50,18 @@ const HomeScreen = () => {
   const { data: content } = useGetContentQuery();
   const [showErrorPopup, setShowErrorPopup] = useState(false);
 
-  // Get banner data based on order type
   const bannerData = useMemo(() => {
-    const orderType = state.orderType;
-    let contentKey = 'home-delivery-swiper'; // default
-
-    if (orderType === 'takeaway') {
-      contentKey = 'home-takeaway-swiper';
-    } else if (orderType === 'delivery') {
-      contentKey = 'home-delivery-swiper';
-    }
-
-    // Find all content items with the matching key and extract image_url
-    const bannerItems = content?.filter(item => item.key === contentKey) || [];
-
-    return bannerItems.map(item => ({
-      image: item.image_url || '',
-      title: item.title || '',
-    }));
-  }, [content, state.orderType]);
+    return [
+      {
+        image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800',
+        title: 'Delicious Food',
+      },
+      {
+        image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800',
+        title: 'Fresh Ingredients',
+      },
+    ];
+  }, []);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -102,7 +88,11 @@ const HomeScreen = () => {
     addressId: state.addressId,
   });
 
+  // const { data: banners, isLoading: isBannersLoading, error: bannersError } = useGetBannersQuery({
+  //   branch: state.branchName ?? '',
+  // });
 
+  // console.log('banners', banners);
 
   // Handle error from useGetHomepageQuery
   React.useEffect(() => {
@@ -127,7 +117,6 @@ const HomeScreen = () => {
   const favoriteItems = data?.favorite_items?.filter(item => item.is_paused !== 1) ?? [];
   const bestSellers = data?.best_sellers?.filter(item => item.is_paused !== 1) ?? [];
 
-  /* */
   const scrollY = useSharedValue(0);
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -135,28 +124,19 @@ const HomeScreen = () => {
       // calculate color as string
       const iconColor = interpolateColor(
         scrollY.value,
-        [0, 100],
+        [0, 200],
         ["#fff", "#000"]
       );
 
       // pass the plain string to JS
       runOnJS(updateHeaderColor)(iconColor);
     },
-
   });
 
   function updateHeaderColor(color: string) {
     navigation.setOptions({
       headerTintColor: color,
       headerLeft: () => <CustomHeader color={color} clearOrderType />,
-      // headerTitle: () => (
-      //   <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      //     <Text style={{ color: color, fontSize: 16, fontFamily: 'Poppins-SemiBold', textTransform: 'uppercase', letterSpacing: 1 }}>
-      //       {/* {state.orderType === 'delivery' ? 'Delivery' : 'Takeaway'} */}
-      //       llll
-      //     </Text>
-      //   </View>
-      // ),
       headerTitle: () => (<Text style={{backgroundColor: COLORS.primaryColor, borderRadius: 20, paddingVertical: 4 , paddingHorizontal: 8, marginTop:4,  lineHeight: 18, color: COLORS.white, fontSize: 14, fontFamily: 'Poppins-SemiBold', textTransform: 'uppercase', letterSpacing: 1 }}>{state.orderType === 'delivery' ? 'Delivery' : 'Takeaway'}</Text>),
       headerRight: () => (
         <View
@@ -170,35 +150,10 @@ const HomeScreen = () => {
             }>
             <CartCounter color={color} />
           </TouchableOpacity>
-          {/* <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate('HomeStack', {
-                    screen: 'Notifications',
-                  })
-                }>
-                <NotificationsCounter color={color} />
-              </TouchableOpacity> */}
         </View>
       ),
     });
   }
-  const bannerStyle = useAnimatedStyle(() => {
-    let height = BANNER_HEIGHT;
-    let translateY = 0;
-
-    if (scrollY.value < 0) {
-      height = BANNER_HEIGHT - scrollY.value; // stretch down
-    } else {
-      translateY = interpolate(
-        scrollY.value,
-        [0, BANNER_HEIGHT],
-        [0, -BANNER_HEIGHT],
-        Extrapolation.CLAMP
-      );
-    }
-
-    return { height, transform: [{ translateY }] };
-  });
 
   // Update header opacity dynamically
   useLayoutEffect(() => {
@@ -209,8 +164,8 @@ const HomeScreen = () => {
   const headerBackgroundStyle = useAnimatedStyle(() => {
     const opacity = interpolate(
       scrollY.value,
-      [0, 100],   // smaller distance
-      [0, 1],     // fade fully
+      [0, 200],
+      [0, 1],
       Extrapolation.CLAMP
     );
 
@@ -219,7 +174,6 @@ const HomeScreen = () => {
       headerStyle: {
         backgroundColor: `rgba(255,255,255,${opacity})`,
       },
-      // headerTitle: opacity > 0.7 ? "" : "",
     });
 
     return {};
@@ -227,28 +181,14 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-
-      {/* Banner */}
-      <Animated.View style={[styles.bannerContainer, bannerStyle]}>
-        <Image
-          source={IMAGES.bannerBg}
-          style={styles.bannerImage}
-          blurRadius={3}
-        />
-        {/* Overlay */}
-        <View style={styles.overlay} />
-      </Animated.View>
-
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
-        contentContainerStyle={{ paddingTop: BANNER_HEIGHT - 100, marginTop: -20 }}
+        contentContainerStyle={styles.scrollContent}
       >
-
         <View style={styles.swiperContainer}>
-          <View style={{ width: '100%', height: 200, backgroundColor: 'red', borderRadius: 5, opacity: 0 }} />
-          {/* <Banner data={bannerData} /> */}
+          <Banner data={bannerData} />
         </View>
 
         <View style={styles.listsContainer}>
@@ -373,6 +313,9 @@ const styles = StyleSheet.create({
   cartButton: {
     padding: 8,
   },
+  scrollContent: {
+    paddingBottom: 20,
+  },
   listsContainer: {
     gap: 20,
     marginTop: 10,
@@ -381,36 +324,12 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 10,
     backgroundColor: COLORS.white
   },
-  /* */
-  bannerContainer: {
-    position: "absolute",
-    top: 0,
-    width: width,
-    height: BANNER_HEIGHT,
-    overflow: "hidden",
-  },
-  bannerImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-  overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.4)", // semi-transparent overlay
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  bannerStyle: {
-    position: "relative"
-  },
   swiperContainer: {
-    paddingHorizontal: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: -110
+    // marginTop: 60,
+    // paddingHorizontal: 10,
+    marginBottom: 10,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    overflow: 'hidden',
   }
 });
