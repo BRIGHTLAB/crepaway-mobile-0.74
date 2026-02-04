@@ -23,6 +23,15 @@
         android:name="com.google.android.geo.API_KEY"
         android:value="AIzaSyA0IxviANpXAl-sTNcYjH1zU5cjgXimKuk" />
 
+      <!-- Firebase Messaging Service for react-native-push-notification -->
+      <service
+        android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationListenerService"
+        android:exported="false">
+        <intent-filter>
+          <action android:name="com.google.firebase.MESSAGING_EVENT" />
+        </intent-filter>
+      </service>
+
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"

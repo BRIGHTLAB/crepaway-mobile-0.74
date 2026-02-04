@@ -1,17 +1,46 @@
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
 import {NavigationContainerRef} from '@react-navigation/native';
-import {AppState, Platform} from 'react-native';
+import {Alert, AppState, Platform} from 'react-native';
 import PushNotification, {Importance} from 'react-native-push-notification';
 import {POST} from '../api';
+import store from '../store/store';
 import type { NavParams } from './NavigationHelper';
 
 // Lazy import to avoid circular dependency
 const getNavigationHelper = () => require('./NavigationHelper').default;
 
 /**
- * Backend must include "data" field in FCM payload for foreground notifications.
- * Format: { "notification": {...}, "data": {...} } OR { "data": {...} }
- * Pure "notification" payloads (without "data") won't trigger onNotification in foreground.
+ * IMPORTANT: Foreground Notification Handling on Android
+ * 
+ * On Android, react-native-push-notification's onNotification callback is ONLY called
+ * when the app receives a DATA-ONLY payload (no "notification" field).
+ * 
+ * When AWS SNS sends a payload with BOTH "notification" and "data":
+ * - Background/Killed: System shows notification, onNotification called when user taps
+ * - Foreground: System shows notification automatically, onNotification is NOT called
+ * 
+ * When AWS SNS sends a DATA-ONLY payload (only "data" field):
+ * - Background/Killed: System may show notification (if configured), onNotification called
+ * - Foreground: onNotification SHOULD be called immediately
+ * 
+ * AWS SNS FCM Payload Format for Foreground Handling:
+ * {
+ *   "GCM": "{ \"data\": { \"title\": \"...\", \"body\": \"...\", \"screen\": \"...\", ... } }"
+ * }
+ * 
+ * OR for direct FCM:
+ * {
+ *   "data": {
+ *     "title": "...",
+ *     "body": "...",
+ *     "screen": "...",
+ *     "order_type": "...",
+ *     "menu_type": "...",
+ *     "id": 277
+ *   }
+ * }
+ * 
+ * Note: The "notification" field should be omitted for foreground handling.
  */
 interface NotificationOptions {
   data?: Record<string, unknown>;
@@ -37,6 +66,7 @@ type PushNotificationReceived = {
   message?: string | object;
   data?: NotificationData | Record<string, unknown>;
   finish?: (fetchResult: string) => void;
+  userInteraction?: boolean; // true when user taps notification, false when just received
   [key: string]: unknown;
 }
 
@@ -44,7 +74,6 @@ class NotificationService {
   private token: string | null = null;
   private static instance: NotificationService | null = null;
   private isInitialized: boolean = false;
-  private initTime: number = 0;
   private navigationRef: NavigationContainerRef<Record<string, unknown>> | null = null;
   private pendingNavigation: NavParams | null = null;
   private appStateSubscription: {remove: () => void} | null = null;
@@ -68,7 +97,8 @@ class NotificationService {
     if (this.isInitialized) {
       return;
     }
-    
+
+    this.log('Initializing NotificationService...');
     this.navigationRef = navigationRef;
     getNavigationHelper().getInstance().setNavigationRef(navigationRef);
 
@@ -87,26 +117,65 @@ class NotificationService {
     PushNotification.configure({
       onRegister: (tokenData: {token: string}): void => {
         this.token = tokenData.token;
+        this.log('Push notification token registered:', tokenData.token);
         this.sendDeviceTokenToBackend();
       },
 
       onNotification: (notification: PushNotificationReceived): void => {
         try {
           const appState = AppState.currentState;
-          const isInitialPop = Date.now() - this.initTime < 2000 && appState === 'active';
-          
-          const {title, message, notificationData} = this.extractNotificationData(notification);
+          const notificationData = this.extractNotificationData(notification);
 
-          // Show local notification in foreground (except initial pop)
-          if (appState === 'active' && !isInitialPop) {
-            this.localNotification(title, message, {
-              data: notificationData,
-              enableSound: true,
-              channelId: 'default-channel',
-            });
+          this.log('=== NOTIFICATION RECEIVED ===');
+          this.log('App state:', appState);
+          this.log('Platform:', Platform.OS);
+          this.log('User interaction (tapped):', notification.userInteraction);
+          this.log('Notification data:', notificationData);
+          this.log('Full notification object:', JSON.stringify(notification, null, 2));
+
+          // On Android, when app is in foreground, manually show notification
+          if (Platform.OS === 'android' && appState === 'active') {
+            // Extract title and message from notification payload
+            // AWS SNS may put title/message in notification object or data payload
+            const dataPayload = notification.data as Record<string, unknown> | undefined;
+            
+            // Try to get title from multiple sources (AWS SNS structure)
+            const title = notification.title || 
+                         dataPayload?.title as string ||
+                         (notificationData.title as string) || 
+                         'Notification';
+            
+            // Try to get message from multiple sources (AWS SNS uses "message" field)
+            const message = (typeof notification.message === 'string' ? notification.message : String(notification.message || '')) ||
+                           dataPayload?.body as string ||
+                           dataPayload?.message as string ||
+                           (notificationData.body as string) ||
+                           (notificationData.message as string) ||
+                           '';
+
+            // Show local notification when app is in foreground
+            // Only show if we have at least a message (title can be default)
+            if (message) {
+              this.log('Showing foreground notification - Title:', title, 'Message:', message);
+              this.localNotification(
+                String(title),
+                String(message),
+                {
+                  data: notificationData,
+                  enableSound: true,
+                  channelId: 'default-channel',
+                }
+              );
+            } else {
+              this.log('No message found in notification payload, skipping foreground notification display');
+              this.log('Available keys in dataPayload:', dataPayload ? Object.keys(dataPayload) : 'none');
+              this.log('Available keys in notification:', Object.keys(notification));
+            }
           }
 
           // Handle navigation
+          // Only navigate when user taps the notification (userInteraction === true)
+          // When notification is just received in foreground (userInteraction === false), don't navigate
           if (notificationData.screen) {
             const params: NavParams = {
               screen: notificationData.screen,
@@ -116,11 +185,24 @@ class NotificationService {
               ...notificationData.params,
             };
             
-            this.pendingNavigation = params;
+            // Check if user tapped the notification
+            const userTapped = notification.userInteraction === true;
             
-            if (appState === 'active' && this.navigationRef?.isReady()) {
-              this.processNavigation(params);
-              this.pendingNavigation = null;
+            if (userTapped) {
+              // User tapped the notification - navigate immediately
+              this.log('User tapped notification - navigating to:', params.screen);
+              if (appState === 'active' && this.navigationRef?.isReady()) {
+                this.processNavigation(params);
+                this.pendingNavigation = null;
+              } else {
+                // App is opening from background/killed - store for when app becomes active
+                this.pendingNavigation = params;
+              }
+            } else {
+              // Notification was just received, not tapped
+              // Store navigation params for when user taps the notification later
+              this.pendingNavigation = params;
+              this.log('Notification received (not tapped) - navigation will happen when user taps notification');
             }
           }
 
@@ -157,69 +239,76 @@ class NotificationService {
     }
     
     this.isInitialized = true;
-    this.initTime = Date.now();
   };
 
   private processNavigation(params: NavParams): void {
     if (!this.navigationRef?.isReady()) return;
+    
+    // Validate navigation requirements based on order type
+    if (!this.validateNavigationRequirements(params)) {
+      return; // Validation failed, alert already shown
+    }
+    
     getNavigationHelper().getInstance().navigate(params);
   }
 
-  private extractNotificationData(notification: PushNotificationReceived): {
-    title: string;
-    message: string;
-    notificationData: NotificationData;
-  } {
-    const dataObj = notification.data as Record<string, unknown> | undefined;
+  private validateNavigationRequirements(params: NavParams): boolean {
+    const state = store.getState();
+    const orderType = params.order_type || state.user.orderType || 'delivery';
     
-    const getString = (obj: unknown, key: string): string | undefined => {
-      if (obj && typeof obj === 'object' && key in obj) {
-        const value = (obj as Record<string, unknown>)[key];
-        return typeof value === 'string' ? value : undefined;
+    // For delivery: check if address exists
+    if (orderType === 'delivery') {
+      const hasAddress = state.user.addressId !== null && state.user.addressTitle !== null;
+      if (!hasAddress) {
+        Alert.alert(
+          'Address Required',
+          'Please select a delivery address to continue.',
+          [{ text: 'OK' }]
+        );
+        this.log('Navigation blocked: No delivery address selected');
+        return false;
       }
-      return undefined;
-    };
-
-    const title =
-      (typeof notification.title === 'string' ? notification.title : undefined) ||
-      getString(dataObj, 'title') ||
-      getString(dataObj?.notification, 'title') ||
-      'Notification';
-
-    const message =
-      (typeof notification.message === 'string' ? notification.message : undefined) ||
-      getString(dataObj, 'body') ||
-      getString(dataObj, 'message') ||
-      getString(dataObj?.notification, 'body') ||
-      'You have a new notification';
-
-    // Extract notification data - handle app_custom_obj or direct data
-    let notificationData: NotificationData = {};
+    }
     
+    // For takeaway: check if branch exists
+    if (orderType === 'takeaway') {
+      const hasBranch = state.user.branchName !== null;
+      if (!hasBranch) {
+        Alert.alert(
+          'Branch Required',
+          'Please select a branch to continue.',
+          [{ text: 'OK' }]
+        );
+        this.log('Navigation blocked: No branch selected');
+        return false;
+      }
+    }
+    
+    return true;
+  }
+
+  private extractNotificationData(notification: PushNotificationReceived): NotificationData {
+    // Extract notification data - handle app_custom_obj or direct data
     if (Platform.OS === 'android') {
       const data = notification.data as Record<string, unknown> | undefined;
       if (data?.app_custom_obj && typeof data.app_custom_obj === 'object') {
-        notificationData = data.app_custom_obj as NotificationData;
-      } else {
-        notificationData = (data as NotificationData) || {};
+        return data.app_custom_obj as NotificationData;
       }
+      return (data as NotificationData) || {};
     } else {
       const data = notification.data as Record<string, unknown> | undefined;
       if (data?.data && typeof data.data === 'object') {
         const nestedData = data.data as Record<string, unknown>;
         if (nestedData.app_custom_obj && typeof nestedData.app_custom_obj === 'object') {
-          notificationData = nestedData.app_custom_obj as NotificationData;
-        } else {
-          notificationData = nestedData as NotificationData;
+          return nestedData.app_custom_obj as NotificationData;
         }
-      } else if (data?.app_custom_obj && typeof data.app_custom_obj === 'object') {
-        notificationData = data.app_custom_obj as NotificationData;
-      } else {
-        notificationData = (data as NotificationData) || {};
+        return nestedData as NotificationData;
       }
+      if (data?.app_custom_obj && typeof data.app_custom_obj === 'object') {
+        return data.app_custom_obj as NotificationData;
+      }
+      return (data as NotificationData) || {};
     }
-
-    return {title, message, notificationData};
   }
 
   private createNotificationChannels(): void {
