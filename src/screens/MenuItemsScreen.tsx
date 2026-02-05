@@ -47,7 +47,7 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
     const handleWishList = async () => {
       try {
         setFavorite(prev => !prev);
-        await toggleFavorite({ itemId: item.id, branch: userState.branchName, menuType: userState.menuType, addressId: userState.addressId });
+        await toggleFavorite({ itemId: item.id, branch: userState.branchAlias, menuType: userState.menuType, addressId: userState.addressId });
       } catch (error) {
         setFavorite(prev => !prev);
       }
@@ -138,7 +138,7 @@ const CategorySection = React.memo(
             isFavorite={item?.is_favorite === 1}
           />
         ))}
-        <View style={{height: CATEGORY_FOOTER_HEIGHT }} />
+        <View style={{ height: CATEGORY_FOOTER_HEIGHT }} />
       </View>
     );
   },
@@ -178,13 +178,13 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
   const { data: categories = [], isLoading: isCategoriesLoading } =
     useGetCategoriesQuery({
       menuType: userState.menuType,
-      branch: userState.branchName,
+      branch: userState.branchAlias,
       addressId: userState.addressId,
     });
 
   const { data: items, isLoading: isItemsLoading } = useGetItemsQuery({
     menuType: userState.menuType,
-    branch: userState.branchName,
+    branch: userState.branchAlias,
     addressId: userState.addressId,
   });
 
@@ -523,7 +523,7 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
             data={groupedItems}
             renderItem={renderCategorySection}
             keyExtractor={item => item.id.toString()}
-            style={{ paddingHorizontal: SCREEN_PADDING.horizontal, zIndex: 2}}
+            style={{ paddingHorizontal: SCREEN_PADDING.horizontal, zIndex: 2 }}
             showsVerticalScrollIndicator={false}
             onScrollToIndexFailed={info => {
               const wait = new Promise(resolve => setTimeout(resolve, 50));
@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
     // marginTop: SCREEN_PADDING.vertical,
     maxHeight: 50,
     backgroundColor: 'white',
-    
+
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2
 
   },
-  activeCategoryTitle:{
+  activeCategoryTitle: {
     fontWeight: '600',
     color: COLORS.darkColor,
   },

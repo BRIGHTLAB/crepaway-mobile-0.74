@@ -16,13 +16,13 @@ export const cartApi = baseApi.injectEndpoints({
         }),
         addToCart: builder.mutation<void, { items: CartItem[], menu_type: string }>({
             query: ({ items, menu_type }) => {
-                const branchName = store.getState().user.branchName;
+                const branchAlias = store.getState().user.branchAlias;
                 const addressId = store.getState().user.addressId;
                 const baseUrl = '/cart';
 
                 const params = new URLSearchParams();
-                if (menu_type === 'takeaway' && branchName) {
-                    params.append('branch', branchName);
+                if (menu_type === 'takeaway' && branchAlias) {
+                    params.append('branch', branchAlias);
                 }
                 if (menu_type === 'delivery' && addressId) {
                     params.append('address_id', addressId.toString());

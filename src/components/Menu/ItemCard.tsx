@@ -64,7 +64,7 @@ const ItemCard = ({
         itemId: id, menuType: userState.menuType,
         branch: userState.menuType === 'dine-in' ? userState.branchTable
           ? userState.branchTable.split('.')?.[0]?.toLowerCase()
-          : null : userState.branchName
+          : null : userState.branchAlias
         , addressId: userState.addressId
       });
     } catch (error) {

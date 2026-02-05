@@ -98,7 +98,7 @@ const HomeScreen = () => {
 
   const { data, isLoading, error } = useGetHomepageQuery({
     menuType: state.menuType,
-    branch: state.branchName,
+    branch: state.branchAlias,
     addressId: state.addressId,
   });
 
@@ -157,7 +157,7 @@ const HomeScreen = () => {
       //     </Text>
       //   </View>
       // ),
-      headerTitle: () => (<Text style={{backgroundColor: COLORS.primaryColor, borderRadius: 20, paddingVertical: 4 , paddingHorizontal: 8, marginTop:4,  lineHeight: 18, color: COLORS.white, fontSize: 14, fontFamily: 'Poppins-SemiBold', textTransform: 'uppercase', letterSpacing: 1 }}>{state.orderType === 'delivery' ? 'Delivery' : 'Takeaway'}</Text>),
+      headerTitle: () => (<Text style={{ backgroundColor: COLORS.primaryColor, borderRadius: 20, paddingVertical: 4, paddingHorizontal: 8, marginTop: 4, lineHeight: 18, color: COLORS.white, fontSize: 14, fontFamily: 'Poppins-SemiBold', textTransform: 'uppercase', letterSpacing: 1 }}>{state.orderType === 'delivery' ? 'Delivery' : 'Takeaway'}</Text>),
       headerRight: () => (
         <View
           style={{

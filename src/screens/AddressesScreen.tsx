@@ -95,7 +95,7 @@ const AddressScreen = () => {
       }),
     );
     // Clear branch when selecting delivery address
-    dispatch(setBranchName(null));
+    dispatch(setBranchName({ name: null, alias: null }));
     dispatch(
       setOrderType({
         menuType: 'delivery',

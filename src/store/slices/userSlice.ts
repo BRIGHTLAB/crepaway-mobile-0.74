@@ -26,6 +26,7 @@ interface IUser {
   orderType: OrderType['alias'] | null;
   menuType: OrderType['menu_type'] | null;
   branchName: string | null;
+  branchAlias: string | null;
   addressId: number | null;
   addressLatitude: number | null;
   addressLongitude: number | null;
@@ -49,6 +50,7 @@ const initialState: IUser = {
   isLoggedIn: false,
   orderType: null,
   branchName: null,
+  branchAlias: null,
   addressTitle: null,
   addressLatitude: null,
   addressLongitude: null,
@@ -115,10 +117,11 @@ const userSlice = createSlice({
         menuType: action.payload.menuType,
       };
     },
-    setBranchName: (state, action: PayloadAction<string | null>) => {
+    setBranchName: (state, action: PayloadAction<{ name: string | null; alias: string | null }>) => {
       return {
         ...state,
-        branchName: action.payload ? action.payload.toLowerCase() : null,
+        branchName: action.payload.name,
+        branchAlias: action.payload.alias ? action.payload.alias.toLowerCase() : null,
       };
     },
     setAddress: (

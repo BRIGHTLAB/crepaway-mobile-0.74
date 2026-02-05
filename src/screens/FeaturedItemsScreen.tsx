@@ -16,7 +16,7 @@ const FeaturedItemsScreen = () => {
 
   const { data: featuredItems, isLoading } = useFeaturedItemsQuery({
     menuType: userState.menuType || '',
-    branch: userState.branchName,
+    branch: userState.branchAlias,
     addressId: userState.addressId,
   });
 

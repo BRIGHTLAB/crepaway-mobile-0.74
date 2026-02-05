@@ -159,10 +159,10 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
           navigation.goBack();
         } else {
           const response = await addAddresses({ addresses: [data] }).unwrap();
-          
+
 
           const newAddress = response.user_address?.[0];
-          
+
           if (newAddress) {
             dispatch(
               setAddress({
@@ -172,9 +172,9 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
                 longitude: newAddress.longitude,
               })
             );
-            
-            dispatch(setBranchName(null));
-            
+
+            dispatch(setBranchName({ name: null, alias: null }));
+
             dispatch(
               setOrderType({
                 menuType: 'delivery',

@@ -35,7 +35,7 @@ const DeliverySheet = forwardRef<BottomSheet, Props>(({ }, ref) => {
   const handleProceedPress = () => {
     console.log('proceed');
     // Clear branch when selecting delivery
-    dispatch(setBranchName(null));
+    dispatch(setBranchName({ name: null, alias: null }));
     dispatch(
       setOrderType({
         menuType: 'delivery',

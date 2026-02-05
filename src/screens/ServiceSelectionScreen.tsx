@@ -228,7 +228,9 @@ const ServiceSelectionScreen = () => {
     const cartBranchName = store.getState().cart.branchName;
     const cartItems = store.getState().cart.items;
     const hasCartItems = Object.keys(cartItems).length > 0;
-    const selectedBranchName = branches?.find(br => br.id === value)?.name;
+    const selectedBranch = branches?.find(br => br.id === value);
+    const selectedBranchName = selectedBranch?.name || null;
+    const selectedBranchAlias = selectedBranch?.alias || null;
 
 
     if (
@@ -262,9 +264,10 @@ const ServiceSelectionScreen = () => {
                 longitude: null,
               }));
               dispatch(
-                setBranchName(
-                  branches?.find(br => br.id === value)?.name || null,
-                ),
+                setBranchName({
+                  name: selectedBranchName,
+                  alias: selectedBranchAlias,
+                }),
               );
             },
           },
@@ -284,8 +287,8 @@ const ServiceSelectionScreen = () => {
         latitude: null,
         longitude: null,
       }));
-      dispatch(setBranchName(selectedBranchName || null));
-      dispatch(setCartBranchName(selectedBranchName || null));
+      dispatch(setBranchName({ name: selectedBranchName, alias: selectedBranchAlias }));
+      dispatch(setCartBranchName(selectedBranchName));
     }
   };
 

@@ -16,7 +16,7 @@ const FavoritesScreen = () => {
 
   const { data: favoriteItems, isLoading } = useGetFavoritesQuery({
     menuType: userState.menuType,
-    branch: userState.branchName,
+    branch: userState.branchAlias,
     addressId: userState.addressId,
   });
 

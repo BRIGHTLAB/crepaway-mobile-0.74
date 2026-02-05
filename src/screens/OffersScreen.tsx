@@ -19,7 +19,7 @@ const OffersScreen = () => {
 
   const { data, isLoading, error } = useGetOffersQuery({
     menuType: userState.menuType,
-    branch: userState.branchName,
+    branch: userState.branchAlias,
     addressId: userState.addressId,
   });
 

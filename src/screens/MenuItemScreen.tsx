@@ -121,7 +121,7 @@ const MenuItemScreen = ({ }: IProps) => {
     data: item,
     isLoading,
     error,
-  } = useGetItemDetailsQuery({ itemId, menuType: userState.menuType, branch: userState.branchName, addressId: userState.addressId });
+  } = useGetItemDetailsQuery({ itemId, menuType: userState.menuType, branch: userState.branchAlias, addressId: userState.addressId });
 
   const [toggleFavorite, { isLoading: isTogglingFavorite }] =
     useToggleFavoriteMutation();
@@ -129,7 +129,7 @@ const MenuItemScreen = ({ }: IProps) => {
   const handleWishList = async () => {
     try {
       setFavorite(prev => !prev);
-      await toggleFavorite({ itemId, menuType: userState.menuType, branch: userState.branchName, addressId: userState.addressId });
+      await toggleFavorite({ itemId, menuType: userState.menuType, branch: userState.branchAlias, addressId: userState.addressId });
     } catch (error) {
       setFavorite(prev => !prev);
       console.error('Error toggling favorite:', error);

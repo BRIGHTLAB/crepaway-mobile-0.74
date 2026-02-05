@@ -40,7 +40,7 @@ const SearchScreen = () => {
 
   const { data: searchResults, isFetching } = useGetItemsQuery({
     menuType: userState.menuType,
-    branch: userState.branchName,
+    branch: userState.branchAlias,
     addressId: userState.addressId,
     search: searchDebounceValue, // Add search parameter
   });
