@@ -82,11 +82,11 @@ const ProfileSettingsScreen = () => {
           navigation.navigate('Addresses');
         },
       },
-      {
-        icon: <Icon_Credit_Card />,
-        text: 'Payment methods',
-        onPress: () => navigation.navigate('PaymentMethods'),
-      },
+      // {
+      //   icon: <Icon_Credit_Card />,
+      //   text: 'Payment methods',
+      //   onPress: () => navigation.navigate('PaymentMethods'),
+      // },
       {
         icon: <Icon_Wishlist_Filled color={COLORS.darkColor} />,
         text: 'Favorites',

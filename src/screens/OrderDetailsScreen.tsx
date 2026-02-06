@@ -3,12 +3,12 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import React, { useCallback } from 'react';
 import {
-  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import Icon_Calendar from '../../assets/SVG/Icon_Calendar';
 import Icon_Delivery from '../../assets/SVG/Icon_Delivery';
 import Icon_Driver_Id from '../../assets/SVG/Icon_Driver_Id';
@@ -194,9 +194,128 @@ const OrderDetailsScreen = () => {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primaryColor} />
-      </View>
+      <ScrollView style={styles.container}>
+        <SkeletonPlaceholder>
+          <SkeletonPlaceholder.Item gap={16}>
+            {/* Order Number */}
+            <SkeletonPlaceholder.Item width={180} height={24} borderRadius={4} />
+
+            {/* Order Info Card */}
+            <SkeletonPlaceholder.Item
+              backgroundColor={COLORS.white}
+              paddingHorizontal={16}
+              borderRadius={8}>
+              {[...Array(6)].map((_, index) => (
+                <SkeletonPlaceholder.Item
+                  key={index}
+                  flexDirection="row"
+                  alignItems="center"
+                  gap={10}
+                  paddingVertical={16}
+                  borderBottomWidth={index < 5 ? 1 : 0}
+                  borderBottomColor="#F0F0F0">
+                  <SkeletonPlaceholder.Item width={24} height={24} borderRadius={12} />
+                  <SkeletonPlaceholder.Item flex={1}>
+                    <SkeletonPlaceholder.Item
+                      width={index % 2 === 0 ? '50%' : '40%'}
+                      height={12}
+                      borderRadius={4}
+                      marginBottom={6}
+                    />
+                    <SkeletonPlaceholder.Item
+                      width={index % 3 === 0 ? '85%' : index % 3 === 1 ? '70%' : '75%'}
+                      height={12}
+                      borderRadius={4}
+                    />
+                  </SkeletonPlaceholder.Item>
+                </SkeletonPlaceholder.Item>
+              ))}
+            </SkeletonPlaceholder.Item>
+
+            {/* Order Items Card */}
+            <SkeletonPlaceholder.Item
+              backgroundColor={COLORS.white}
+              paddingHorizontal={16}
+              borderRadius={8}>
+              {/* Section Title */}
+              <SkeletonPlaceholder.Item
+                paddingVertical={12}
+                borderBottomWidth={1}
+                borderBottomColor="#F0F0F0">
+                <SkeletonPlaceholder.Item width={110} height={16} borderRadius={4} />
+              </SkeletonPlaceholder.Item>
+              {/* Order Items */}
+              {[...Array(3)].map((_, index) => (
+                <SkeletonPlaceholder.Item
+                  key={index}
+                  paddingVertical={12}
+                  borderBottomWidth={index < 2 ? 1 : 0}
+                  borderBottomColor="#F0F0F0">
+                  <SkeletonPlaceholder.Item
+                    flexDirection="row"
+                    justifyContent="space-between"
+                    alignItems="center">
+                    <SkeletonPlaceholder.Item
+                      width={index === 0 ? '55%' : index === 1 ? '65%' : '45%'}
+                      height={14}
+                      borderRadius={4}
+                    />
+                    <SkeletonPlaceholder.Item width={70} height={14} borderRadius={4} />
+                  </SkeletonPlaceholder.Item>
+                  {/* Modifier placeholder for first item */}
+                  {index === 0 && (
+                    <SkeletonPlaceholder.Item marginTop={6} marginLeft={16}>
+                      <SkeletonPlaceholder.Item width="35%" height={11} borderRadius={4} marginBottom={4} />
+                      <SkeletonPlaceholder.Item width="25%" height={11} borderRadius={4} />
+                    </SkeletonPlaceholder.Item>
+                  )}
+                </SkeletonPlaceholder.Item>
+              ))}
+            </SkeletonPlaceholder.Item>
+
+            {/* Total Section */}
+            <SkeletonPlaceholder.Item marginBottom={50}>
+              <SkeletonPlaceholder.Item
+                backgroundColor={COLORS.white}
+                paddingHorizontal={16}
+                borderRadius={8}
+                paddingVertical={12}>
+                {['Subtotal', 'Delivery', 'Points', 'Total'].map(
+                  (label, index) => (
+                    <SkeletonPlaceholder.Item
+                      key={label}
+                      flexDirection="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      paddingVertical={8}
+                      borderTopWidth={index === 3 ? 1 : 0}
+                      borderTopColor="#F0F0F0"
+                      marginTop={index === 3 ? 4 : 0}>
+                      <SkeletonPlaceholder.Item
+                        width={index === 3 ? 60 : index === 2 ? 110 : 80}
+                        height={index === 3 ? 16 : 14}
+                        borderRadius={4}
+                      />
+                      <SkeletonPlaceholder.Item
+                        width={index === 2 ? 60 : 75}
+                        height={index === 3 ? 16 : 14}
+                        borderRadius={4}
+                      />
+                    </SkeletonPlaceholder.Item>
+                  ),
+                )}
+              </SkeletonPlaceholder.Item>
+              {/* Track Order Button */}
+              <SkeletonPlaceholder.Item
+                width="100%"
+                height={48}
+                borderRadius={8}
+                marginTop={20}
+              />
+            </SkeletonPlaceholder.Item>
+          </SkeletonPlaceholder.Item>
+        </SkeletonPlaceholder>
+      </ScrollView>
     );
   }
 

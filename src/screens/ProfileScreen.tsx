@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import FastImage from 'react-native-fast-image';
 import Icon_Camera from '../../assets/SVG/Icon_Camera';
 import Icon_Faq from '../../assets/SVG/Icon_Faq';
@@ -114,8 +115,66 @@ const ProfileScreen = () => {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={COLORS.primaryColor} />
+      <View style={styles.container}>
+        <View style={{ width: '100%' }}>
+          <SkeletonPlaceholder>
+            <SkeletonPlaceholder.Item>
+              {/* Profile Info Section */}
+              <SkeletonPlaceholder.Item
+                flexDirection="row"
+                gap={16}
+                alignItems="center"
+                marginBottom={24}>
+                {/* Profile Image - uses flex:1 to match actual layout */}
+                <SkeletonPlaceholder.Item flex={1}>
+                  <SkeletonPlaceholder.Item
+                    width="100%"
+                    aspectRatio={1}
+                    borderRadius={65}
+                  />
+                </SkeletonPlaceholder.Item>
+                {/* Name and Email */}
+                <SkeletonPlaceholder.Item flex={2} gap={8}>
+                  <SkeletonPlaceholder.Item width="75%" height={24} borderRadius={4} />
+                  <SkeletonPlaceholder.Item width="90%" height={14} borderRadius={4} />
+                </SkeletonPlaceholder.Item>
+              </SkeletonPlaceholder.Item>
+
+              {/* Options List */}
+              <SkeletonPlaceholder.Item
+                backgroundColor={COLORS.card}
+                width="100%"
+                borderRadius={8}>
+                {[...Array(8)].map((_, index) => (
+                  <SkeletonPlaceholder.Item key={index}>
+                    <SkeletonPlaceholder.Item
+                      flexDirection="row"
+                      alignItems="center"
+                      padding={16}
+                      gap={12}>
+                      <SkeletonPlaceholder.Item width={24} height={24} borderRadius={12} />
+                      <SkeletonPlaceholder.Item
+                        width={index % 3 === 0 ? '55%' : index % 3 === 1 ? '65%' : '50%'}
+                        height={16}
+                        borderRadius={4}
+                      />
+                    </SkeletonPlaceholder.Item>
+                    {index < 7 && (
+                      <SkeletonPlaceholder.Item paddingHorizontal={16}>
+                        <SkeletonPlaceholder.Item
+                          width="100%"
+                          height={1}
+                          backgroundColor="#8391A1"
+                          opacity={0.1}
+                        />
+                      </SkeletonPlaceholder.Item>
+                    )}
+                  </SkeletonPlaceholder.Item>
+                ))}
+              </SkeletonPlaceholder.Item>
+            </SkeletonPlaceholder.Item>
+          </SkeletonPlaceholder>
+        </View>
       </View>
     );
   }

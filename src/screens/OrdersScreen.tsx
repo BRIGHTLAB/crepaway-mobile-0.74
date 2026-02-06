@@ -3,13 +3,13 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   SectionList,
   StyleSheet,
   Text,
   TouchableOpacity,
   View
 } from 'react-native';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import Icon_Arrow_Right from '../../assets/SVG/Icon_Arrow_Right';
 import Icon_Location from '../../assets/SVG/Icon_Location';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
@@ -231,11 +231,70 @@ const OrdersScreen = () => {
     () => {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primaryColor} />
+          <SkeletonPlaceholder>
+            <SkeletonPlaceholder.Item>
+              {/* Section Title */}
+              <SkeletonPlaceholder.Item
+                width={160}
+                height={24}
+                borderRadius={4}
+                marginBottom={10}
+                marginTop={16}
+              />
+
+              {[...Array(3)].map((_, index) => (
+                <SkeletonPlaceholder.Item
+                  key={index}
+                  backgroundColor={COLORS.lightColor}
+                  borderRadius={12}
+                  padding={16}
+                  marginBottom={8}
+                  gap={10}>
+                  {/* Order Header */}
+                  <SkeletonPlaceholder.Item
+                    flexDirection="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    marginBottom={8}>
+                    <SkeletonPlaceholder.Item flexDirection="row" alignItems="center" gap={6}>
+                      <SkeletonPlaceholder.Item width={24} height={24} borderRadius={12} />
+                      <SkeletonPlaceholder.Item>
+                        <SkeletonPlaceholder.Item width={120} height={16} borderRadius={4} marginBottom={4} />
+                        <SkeletonPlaceholder.Item width={200} height={10} borderRadius={4} />
+                      </SkeletonPlaceholder.Item>
+                    </SkeletonPlaceholder.Item>
+                    <SkeletonPlaceholder.Item width={20} height={20} borderRadius={10} />
+                  </SkeletonPlaceholder.Item>
+
+                  {/* Items Summary */}
+                  <SkeletonPlaceholder.Item gap={4} paddingVertical={8}>
+                    <SkeletonPlaceholder.Item width="75%" height={12} borderRadius={4} />
+                    <SkeletonPlaceholder.Item width="60%" height={12} borderRadius={4} />
+                    <SkeletonPlaceholder.Item width="45%" height={12} borderRadius={4} />
+                  </SkeletonPlaceholder.Item>
+
+                  {/* Total Row */}
+                  <SkeletonPlaceholder.Item
+                    flexDirection="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    paddingTop={12}
+                    borderTopWidth={1}
+                    borderTopColor="#F0F0F0">
+                    <SkeletonPlaceholder.Item width={50} height={16} borderRadius={4} />
+                    <SkeletonPlaceholder.Item width={90} height={16} borderRadius={4} />
+                  </SkeletonPlaceholder.Item>
+
+                  {/* Action Button */}
+                  <SkeletonPlaceholder.Item width="100%" height={48} borderRadius={8} marginTop={8} />
+                </SkeletonPlaceholder.Item>
+              ))}
+            </SkeletonPlaceholder.Item>
+          </SkeletonPlaceholder>
         </View>
-      )
+      );
     },
-    []
+    [],
   );
 
   const allOrdersSections = useMemo(() => {
@@ -340,8 +399,6 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   noOrdersContainer: {
     flex: 1,

@@ -614,7 +614,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     margin: 0,
     padding: 0,
-    backgroundColor: 'red',
+    // backgroundColor: 'red',
   },
   mapContainer: {
     top: -10,
