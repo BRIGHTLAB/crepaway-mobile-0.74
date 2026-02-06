@@ -75,21 +75,30 @@ const PaymentWebViewModal: React.FC<PaymentWebViewModalProps> = ({
                     </TouchableOpacity>
                 </View>
 
-                {/* WebView */}
+                {/* WebView - only render when URL is valid */}
                 <View style={styles.webViewContainer}>
-                    <WebView
-                        source={{ uri: paymentUrl }}
-                        onMessage={handleMessage}
-                        onLoadStart={handleLoadStart}
-                        onLoadEnd={handleLoadEnd}
-                        javaScriptEnabled={true}
-                        domStorageEnabled={true}
-                        startInLoadingState={false}
-                        style={styles.webView}
-                    />
+                    {paymentUrl ? (
+                        <WebView
+                            source={{ uri: paymentUrl }}
+                            onMessage={handleMessage}
+                            onLoadStart={handleLoadStart}
+                            onLoadEnd={handleLoadEnd}
+                            javaScriptEnabled={true}
+                            domStorageEnabled={true}
+                            startInLoadingState={false}
+                            style={styles.webView}
+                            // Android-specific props for production builds
+                            mixedContentMode="compatibility"
+                            allowsInlineMediaPlayback={true}
+                            originWhitelist={['*']}
+                            // Additional props for better compatibility
+                            sharedCookiesEnabled={true}
+                            thirdPartyCookiesEnabled={true}
+                        />
+                    ) : null}
 
                     {/* Loading Overlay */}
-                    {isLoading && (
+                    {isLoading && paymentUrl && (
                         <View style={styles.loadingOverlay}>
                             <ActivityIndicator size="large" color={COLORS.primaryColor} />
                             <Text style={styles.loadingText}>Loading payment page...</Text>

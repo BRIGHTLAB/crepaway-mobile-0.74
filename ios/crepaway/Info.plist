@@ -43,21 +43,10 @@
   <string>This app needs access to local devices on your network.</string>
   <key>NSAppTransportSecurity</key>
   <dict>
+    <key>NSAllowsArbitraryLoads</key>
+    <true/>
     <key>NSAllowsLocalNetworking</key>
     <true/>
-
-    <key>NSExceptionDomains</key>
-    <dict>
-      <key>chris.pc</key>
-      <dict>
-        <key>NSIncludesSubdomains</key>
-        <true/>
-        <key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
-        <true/>
-        <key>NSTemporaryExceptionMinimumTLSVersion</key>
-        <string>TLSv1.0</string>
-      </dict>
-    </dict>
   </dict>
 	<key>NSCameraUsageDescription</key>
 	<string>We need access to your camera to take photos for your profile and orders.</string>

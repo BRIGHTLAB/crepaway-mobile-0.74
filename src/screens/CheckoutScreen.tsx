@@ -766,15 +766,13 @@ const CheckoutScreen = () => {
       </DynamicSheet>
 
       {/* Payment WebView Modal for card payments */}
-      {paymentWebViewUrl && (
-        <PaymentWebViewModal
-          visible={!!paymentWebViewUrl}
-          paymentUrl={paymentWebViewUrl}
-          onPaymentSuccess={handlePaymentSuccess}
-          onPaymentFailure={handlePaymentFailure}
-          onClose={handlePaymentWebViewClose}
-        />
-      )}
+      <PaymentWebViewModal
+        visible={!!paymentWebViewUrl}
+        paymentUrl={paymentWebViewUrl || ''}
+        onPaymentSuccess={handlePaymentSuccess}
+        onPaymentFailure={handlePaymentFailure}
+        onClose={handlePaymentWebViewClose}
+      />
     </>
   );
 };
