@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import { useGetContentQuery } from '../api/dataApi';
 import { useGetHomepageQuery } from '../api/homeApi';
+import { useGetTierProgressQuery } from '../api/loyaltyApi';
 import FadeOverlay from '../components/FadeOverlay';
 import CartCounter from '../components/Menu/CartCounter';
 import CategoryList from '../components/Menu/CategoryList';
@@ -57,6 +58,12 @@ const HomeScreen = () => {
   const { bottom, top } = useSafeAreaInsets();
   const { data: content } = useGetContentQuery();
   const [showErrorPopup, setShowErrorPopup] = useState(false);
+
+  // Fetch tier progress data
+  const { data: tierProgress, isLoading: isTierProgressLoading } = useGetTierProgressQuery(
+    { unitKey: 'orders' },
+    { skip: !state.id || !state.isLoggedIn }
+  );
 
   // Get banner data based on order type
   const bannerData = useMemo(() => {
@@ -158,7 +165,7 @@ const HomeScreen = () => {
       //     </Text>
       //   </View>
       // ),
-      headerTitle: () => (<Text style={{backgroundColor: COLORS.primaryColor, borderRadius: 20, paddingVertical: 4 , paddingHorizontal: 8, marginTop:4,  lineHeight: 18, color: COLORS.white, fontSize: 14, fontFamily: 'Poppins-SemiBold', textTransform: 'uppercase', letterSpacing: 1 }}>{state.orderType === 'delivery' ? 'Delivery' : 'Takeaway'}</Text>),
+      headerTitle: () => (<Text style={{ backgroundColor: COLORS.primaryColor, borderRadius: 20, paddingVertical: 4, paddingHorizontal: 8, marginTop: 4, lineHeight: 18, color: COLORS.white, fontSize: 14, fontFamily: 'Poppins-SemiBold', textTransform: 'uppercase', letterSpacing: 1 }}>{state.orderType === 'delivery' ? 'Delivery' : 'Takeaway'}</Text>),
       headerRight: () => (
         <View
           style={{
@@ -265,27 +272,40 @@ const HomeScreen = () => {
             }}
           />
 
-          {/* Loyalty  Tier Progress */}
-
-
-          <View style={{
-            paddingHorizontal: SCREEN_PADDING.horizontal,
-
-          }}>
-            <LoyaltyProgressCard
-              tierName="Gold"
-              totalDashes={10}
-              filledDashes={5}
-              progressColor="#FFD700"
-              description="Complete 9 more orders this month maintain Gold in November"
-              pointsCount="372K"
-              pointsUnit="Pts"
-              scrollY={scrollY}
-              onPress={() => {
-                navigation.navigate('Loyalty');
-              }}
-            />
-          </View>
+          {/* Loyalty Tier Progress */}
+          {state.isLoggedIn && tierProgress?.current_tier && (
+            <View style={{
+              paddingHorizontal: SCREEN_PADDING.horizontal,
+            }}>
+              <LoyaltyProgressCard
+                tierName={tierProgress.current_tier.name}
+                totalDashes={
+                  tierProgress.is_max_tier
+                    ? 10
+                    : tierProgress.next_tier
+                      ? Math.round(tierProgress.next_tier.threshold - tierProgress.current_tier.threshold)
+                      : 10
+                }
+                filledDashes={
+                  tierProgress.is_max_tier
+                    ? 10
+                    : Math.round(tierProgress.current_balance - tierProgress.current_tier.threshold)
+                }
+                progressColor={tierProgress.current_tier.extras?.color || COLORS.primaryColor}
+                description={
+                  tierProgress.is_max_tier
+                    ? `You've reached the highest tier!`
+                    : `Complete ${tierProgress.remaining_to_next_tier.toFixed(0)} more ${tierProgress.unit?.key || 'orders'} to reach ${tierProgress.next_tier?.name}`
+                }
+                pointsCount={tierProgress.current_balance >= 1000 ? `${(tierProgress.current_balance / 1000).toFixed(1)}K` : tierProgress.current_balance.toFixed(0)}
+                pointsUnit={tierProgress.unit?.name || 'Pts'}
+                scrollY={scrollY}
+                onPress={() => {
+                  navigation.navigate('Loyalty');
+                }}
+              />
+            </View>
+          )}
 
 
 

@@ -30,7 +30,8 @@ export const INPUT_HEIGHT = 53;
 // export const BASE_URL = 'http://192.168.10.151:8080/api/app';
 // export const BASE_URL = 'https://cc9099b8927d.ngrok-free.app/api/app';
 export const BASE_URL = 'https://dev.staging-api.thenewexperience.app/api/app';
-export const LOYALTY_BASE_URL = 'https://dev.api.grantloyalty.com/api';
+// export const LOYALTY_BASE_URL = 'https://dev.api.grantloyalty.com/api';
+// export const LOYALTY_BASE_URL = 'http://192.168.18.70:8000/api';
 
 export const API_MAP_KEY = 'AIzaSyA0IxviANpXAl-sTNcYjH1zU5cjgXimKuk';
 export const DRIVER_SOCKET_URL = 'wss://dev.realtime.driver-tracking.com';

@@ -7,19 +7,16 @@ import SegmentedControl, { TabType } from '../UI/SegmentedControl';
 interface PointsData {
   id: number;
   date: string;
-  amount: string;
   points: number;
 }
 
 interface TrackYourPointsProps {
   pointsData: PointsData[];
-  overallAmount: string;
   overallPoints: string;
 }
 
 const TrackYourPoints: React.FC<TrackYourPointsProps> = ({
   pointsData,
-  overallAmount,
   overallPoints,
 }) => {
   const tabs: TabType[] = [
@@ -43,7 +40,7 @@ const TrackYourPoints: React.FC<TrackYourPointsProps> = ({
         onTabChange={setSelectedTab}
       />
 
-      {/* Three Lists Container */}
+      {/* Two Lists Container */}
       <View style={styles.listsContainer}>
         {/* Date List */}
         <View style={styles.listCard}>
@@ -54,20 +51,6 @@ const TrackYourPoints: React.FC<TrackYourPointsProps> = ({
             {pointsData.map((item) => (
               <Text key={item.id} style={styles.listItemText}>
                 {item.date}
-              </Text>
-            ))}
-          </View>
-        </View>
-
-        {/* Amount List */}
-        <View style={styles.listCard}>
-          <View style={styles.listHeader}>
-            <Text style={styles.listHeaderText}>Amount</Text>
-          </View>
-          <View style={styles.listContent}>
-            {pointsData.map((item) => (
-              <Text key={item.id} style={styles.listItemText}>
-                {item.amount}
               </Text>
             ))}
           </View>
@@ -91,7 +74,6 @@ const TrackYourPoints: React.FC<TrackYourPointsProps> = ({
       {/* Overall Summary */}
       <View style={styles.overallSummary}>
         <Text style={styles.overallText}>Overall</Text>
-        <Text style={{ ...TYPOGRAPHY.BODY, color: COLORS.white, opacity: 0.8 }}>{overallAmount}</Text>
         <Text style={{ ...TYPOGRAPHY.BODY, color: COLORS.white, opacity: 0.8 }}>{overallPoints}</Text>
       </View>
     </View>

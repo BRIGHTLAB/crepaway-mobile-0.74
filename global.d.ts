@@ -256,16 +256,40 @@ interface Content {
 
 // Loyalty
 
+interface TierProgressUnit {
+  id: number;
+  key: string;
+  name: string;
+}
+
+interface TierProgressTier {
+  id: number;
+  name: string;
+  threshold: number;
+  extras?: {
+    color?: string;
+  }
+}
+
+interface TierProgress {
+  unit: TierProgressUnit | null;
+  current_balance: number;
+  current_tier: TierProgressTier | null;
+  next_tier: TierProgressTier | null;
+  remaining_to_next_tier: number;
+  is_max_tier: boolean;
+}
+
 interface LoyaltyTier {
   id: number;
   name: string;
   threshold: number;
-  extras: {
-    earned_points: number;
-    orders: number;
-    points_redemption: string;
-    benefits: string[];
-    color: string;
+  extras?: {
+    earned_points?: number;
+    orders?: number;
+    points_redemption?: string;
+    benefits?: string[];
+    color?: string;
   }
 }
 
