@@ -5,7 +5,6 @@ import {
     SafeAreaView,
     StyleSheet,
     Text,
-    TouchableOpacity,
     View,
 } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
@@ -22,7 +21,6 @@ interface PaymentWebViewModalProps {
     paymentUrl: string;
     onPaymentSuccess: (orderId: number | null, paymentId: number) => void;
     onPaymentFailure: (paymentId: number) => void;
-    onClose: () => void;
 }
 
 const PaymentWebViewModal: React.FC<PaymentWebViewModalProps> = ({
@@ -30,7 +28,6 @@ const PaymentWebViewModal: React.FC<PaymentWebViewModalProps> = ({
     paymentUrl,
     onPaymentSuccess,
     onPaymentFailure,
-    onClose,
 }) => {
     const [isLoading, setIsLoading] = useState(true);
 
@@ -64,15 +61,14 @@ const PaymentWebViewModal: React.FC<PaymentWebViewModalProps> = ({
             visible={visible}
             animationType="slide"
             presentationStyle="fullScreen"
-            onRequestClose={onClose}
+            onRequestClose={() => {
+                // Intentionally empty - prevent back button from closing the modal
+            }}
         >
             <SafeAreaView style={styles.container}>
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>Complete Payment</Text>
-                    <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                        <Text style={styles.closeButtonText}>✕</Text>
-                    </TouchableOpacity>
                 </View>
 
                 {/* WebView - only render when URL is valid */}
@@ -131,16 +127,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: COLORS.darkColor,
     },
-    closeButton: {
-        position: 'absolute',
-        right: 16,
-        padding: 8,
-    },
-    closeButtonText: {
-        fontSize: 20,
-        color: COLORS.darkColor,
-        fontWeight: '600',
-    },
+
     webViewContainer: {
         flex: 1,
     },

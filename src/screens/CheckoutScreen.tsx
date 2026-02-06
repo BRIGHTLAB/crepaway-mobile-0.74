@@ -463,11 +463,7 @@ const CheckoutScreen = () => {
     });
   };
 
-  const handlePaymentWebViewClose = () => {
-    // User manually closed the WebView
-    setPaymentWebViewUrl(null);
-    setPaymentId(null);
-  };
+
 
   return (
     <>
@@ -771,7 +767,6 @@ const CheckoutScreen = () => {
         paymentUrl={paymentWebViewUrl || ''}
         onPaymentSuccess={handlePaymentSuccess}
         onPaymentFailure={handlePaymentFailure}
-        onClose={handlePaymentWebViewClose}
       />
     </>
   );
