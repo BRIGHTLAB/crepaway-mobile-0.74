@@ -23,6 +23,38 @@ export interface OrderFormData {
   order_type: string | null;
 }
 
+export interface PaymentMethod {
+  id: number;
+  type: string;
+  title: string;
+  pos_payment_type_id: number;
+  removed: number;
+  created_at: string | null;
+  updated_at: string | null;
+  deleted_at: string | null;
+  image_url?: string | null;
+}
+
+export interface PaymentMethodsResponse {
+  current_page: number;
+  data: PaymentMethod[];
+  first_page_url: string;
+  from: number;
+  last_page: number;
+  last_page_url: string;
+  links: Array<{
+    url: string | null;
+    label: string;
+    active: boolean;
+  }>;
+  next_page_url: string | null;
+  path: string;
+  per_page: number;
+  prev_page_url: string | null;
+  to: number;
+  total: number;
+}
+
 export const checkoutApi = baseApi.injectEndpoints({
   endpoints: builder => ({
     getCheckout: builder.query<Checkout, { promoCode: string | void }>({
@@ -39,6 +71,11 @@ export const checkoutApi = baseApi.injectEndpoints({
       },
       // providesTags: ['checkout'],
       keepUnusedDataFor: 1,
+    }),
+
+    getPaymentMethods: builder.query<PaymentMethodsResponse, void>({
+      query: () => `/payment_methods`,
+      keepUnusedDataFor: 60, // Cache for 60 seconds
     }),
 
     // TO CHECK null type
@@ -64,4 +101,4 @@ export const checkoutApi = baseApi.injectEndpoints({
   overrideExisting: true,
 });
 
-export const { useGetCheckoutQuery, usePlaceOrderMutation } = checkoutApi;
+export const { useGetCheckoutQuery, usePlaceOrderMutation, useGetPaymentMethodsQuery } = checkoutApi;

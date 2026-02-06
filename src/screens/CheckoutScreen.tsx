@@ -23,7 +23,7 @@ import Icon_Checkout from '../../assets/SVG/Icon_Checkout';
 import Icon_Location from '../../assets/SVG/Icon_Location';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
 import Icon_Paper_Edit from '../../assets/SVG/Icon_Paper_Edit';
-import { useGetCheckoutQuery, usePlaceOrderMutation } from '../api/checkoutApi';
+import { useGetCheckoutQuery, usePlaceOrderMutation, useGetPaymentMethodsQuery } from '../api/checkoutApi';
 import DeliveryInstructionsSheet from '../components/Checkout/DeliveryInstructionsSheet';
 import TotalSection from '../components/Menu/TotalSection';
 import DynamicSheet from '../components/Sheets/DynamicSheet';
@@ -53,6 +53,7 @@ const CheckoutScreen = () => {
   const [sendCutlery, setSendCutlery] = useState<string>('no');
   const [deliveryInstructions, setDeliveryInstructions] = useState<DeliveryInstruction[]>([]);
   const [specialDeliveryInstructions, setSpecialDeliveryInstructions] = useState<string>('');
+  const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<number | null>(null);
 
   // Promo code state (local state, resets on mount)
   const [promoCode, setPromoCode] = useState<string>('');
@@ -70,8 +71,17 @@ const CheckoutScreen = () => {
     promoCode: debouncedPromoCode,
   });
 
+  const { data: paymentMethodsData } = useGetPaymentMethodsQuery();
+
   const [placeOrder, { isLoading: isSubmitLoading, error: placeOrderError }] =
     usePlaceOrderMutation();
+
+  // Set default payment method when payment methods are loaded
+  useEffect(() => {
+    if (paymentMethodsData?.data && paymentMethodsData.data.length > 0 && !selectedPaymentMethodId) {
+      setSelectedPaymentMethodId(paymentMethodsData.data[0].id);
+    }
+  }, [paymentMethodsData, selectedPaymentMethodId]);
 
 
   // Handle API errors from useGetCheckoutQuery
@@ -185,9 +195,20 @@ const CheckoutScreen = () => {
       }
     }
 
+    // Validate payment method is selected
+    if (!selectedPaymentMethodId) {
+      Toast.show({
+        type: 'error',
+        text1: 'Please select a payment method',
+        visibilityTime: 3000,
+        position: 'bottom',
+      });
+      return;
+    }
+
     const formData = {
       special_delivery_instructions: specialDeliveryInstructions,
-      users_payment_methods_id: 1,
+      users_payment_methods_id: selectedPaymentMethodId,
       address_id: user?.addressId,
       promo_code: debouncedPromoCode,
       is_scheduled: scheduleOrder === 'yes' ? 1 : 0,
@@ -418,13 +439,30 @@ const CheckoutScreen = () => {
               ></View>
 
               <View style={styles.paymentMethodContainer}>
-                <View style={styles.paymentMethodItem}>
-                  <RadioButton onPress={() => {}} checked={true} title="Cash on delivery" />
-                  <FastImage
-                    source={require('../../assets/images/payment/cash.png')}
-                    style={{ width: 48, height: 28 }}
-                  />
-                </View>
+                {paymentMethodsData?.data?.map((method) => (
+                  <View key={method.id} style={styles.paymentMethodItem}>
+                    <RadioButton
+                      onPress={() => setSelectedPaymentMethodId(method.id)}
+                      checked={selectedPaymentMethodId === method.id}
+                      title={method.title}
+                    />
+                    {method.image_url ? (
+                      <FastImage
+                        source={{ uri: method.image_url }}
+                        style={{ width: 48, height: 28 }}
+                        resizeMode={FastImage.resizeMode.contain}
+                      />
+                    ) : (
+                      // Fallback to local image if no image_url
+                      method.type === 'cash' && (
+                        <FastImage
+                          source={require('../../assets/images/payment/cash.png')}
+                          style={{ width: 48, height: 28 }}
+                        />
+                      )
+                    )}
+                  </View>
+                ))}
               </View>
             </View>
 
