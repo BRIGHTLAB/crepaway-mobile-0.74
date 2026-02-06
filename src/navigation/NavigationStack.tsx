@@ -6,19 +6,21 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React, { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { useSelector } from 'react-redux';
-import { RootState, useAppDispatch } from '../store/store';
+import store, { RootState, useAppDispatch } from '../store/store';
 
 import { useGetPendingRatingQuery } from '../api/ordersApi';
 import CustomHeader from '../components/Header';
 import OrderRatingSheet, { OrderRatingSheetRef } from '../components/Sheets/OrderRatingSheet';
 import MenuItemScreen from '../screens/MenuItemScreen';
 import SplashScreen from '../screens/SplashScreen';
+import NavigationHelper from '../utils/NavigationHelper';
 import NotificationService from '../utils/NotificationService';
 import DeliveryTakeawayStack, {
   DeliveryTakeawayStackParamList,
   ProfileStackParamList,
 } from './DeliveryTakeawayStack';
 import DineInStack from './DineInStack';
+import linking, { processPendingDeepLink } from './linking';
 import LoginStack, { LoginStackParamList } from './LoginStack';
 import ServiceSelectionStack, {
   ServiceSelectionStackParamList,
@@ -65,7 +67,7 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
   const { isLoggedIn, orderType, id, name } = useSelector((state: RootState) => state.user);
   const dispatch = useAppDispatch();
   const notificationInstance = NotificationService.getInstance();
-  const navigationRef = useRef<NavigationContainerRef<any>>(null);
+  const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
   const ratingSheetRef = useRef<OrderRatingSheetRef>(null);
   const [hasShownRating, setHasShownRating] = useState(false);
   const [pendingOrderId, setPendingOrderId] = useState<number | null>(null);
@@ -86,10 +88,11 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
     console.log('wehavePendingOrdertoRate', pendingOrderToRate)
   }, [pendingOrderToRate, isSplashAnimationFinished, hasShownRating]);
 
+  // Initialize notification service when user logs in
   useEffect(() => {
     if (!isLoggedIn || !navigationRef.current) return;
     notificationInstance.init(navigationRef.current);
-  }, [isLoggedIn, navigationRef]);
+  }, [isLoggedIn]);
 
 
   useEffect(() => {
@@ -200,7 +203,23 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
   };
 
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer
+      ref={navigationRef}
+      linking={linking}
+      onReady={() => {
+        if (!navigationRef.current) return;
+        
+        NavigationHelper.getInstance().setNavigationRef(navigationRef.current);
+        
+        // Initialize notification service if user is logged in
+        const { isLoggedIn: currentIsLoggedIn } = store.getState().user;
+        if (currentIsLoggedIn) {
+          notificationInstance.init(navigationRef.current);
+        }
+        
+        setTimeout(() => processPendingDeepLink(), 100);
+      }}
+    >
       {renderStack()}
       <OrderRatingSheet
         ref={ratingSheetRef}
