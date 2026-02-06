@@ -154,7 +154,7 @@ const OrdersScreen = () => {
     isLoading: loading,
     refetch: fetchOrders,
   } = useGetOrdersQuery(undefined, {
-    // pollingInterval: isFocused ? 2000 : undefined,
+    pollingInterval: isFocused ? 2000 : undefined,
   });
 
   const ratingSheetRef = useRef<OrderRatingSheetRef>(null);
