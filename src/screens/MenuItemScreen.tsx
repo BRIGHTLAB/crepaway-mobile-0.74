@@ -172,8 +172,54 @@ const MenuItemScreen = ({ }: IProps) => {
     }
   }, [itemUuid, cartState.items]);
 
+  const validateModifierGroups = (): { isValid: boolean; errorMessage?: string } => {
+    if (!item || !item.modifier_groups) {
+      return { isValid: true };
+    }
+
+    for (const group of item.modifier_groups) {
+      // Skip validation if group is disabled or has no minimum requirement
+      if (!group.enabled || group.min_quantity === 0) {
+        continue;
+      }
+
+      // Find the selected modifier group for this group
+      const selectedGroup = selectedModifiers.find(
+        sm => sm.modifier_groups_id === group.modifier_groups_id
+      );
+
+      // Calculate total quantity selected for this group
+      const totalQuantity = selectedGroup
+        ? selectedGroup.modifier_items.reduce((sum, item) => sum + item.quantity, 0)
+        : 0;
+
+      // Check if minimum quantity requirement is met
+      if (totalQuantity < group.min_quantity) {
+        return {
+          isValid: false,
+          errorMessage: `${group.name} requires at least ${group.min_quantity} item${group.min_quantity > 1 ? 's' : ''} to be selected.`,
+        };
+      }
+    }
+
+    return { isValid: true };
+  };
+
   const handleAddToCart = () => {
     if (item) {
+      // Validate modifier groups before adding to cart
+      const validation = validateModifierGroups();
+      if (!validation.isValid) {
+        Toast.show({
+          type: 'error',
+          text1: 'Validation Error',
+          text2: validation.errorMessage,
+          visibilityTime: 3000,
+          position: 'bottom',
+        });
+        return;
+      }
+
       const cartItem = {
         id: item.id,
         categories_id: item.categories_id,
@@ -514,10 +560,10 @@ const MenuItemScreen = ({ }: IProps) => {
               style={styles.addToCartButton}>
 
               <Button
-
                 icon={<Icon_Cart />}
                 iconPosition="right"
                 textSize="large"
+                disabled={!validateModifierGroups().isValid}
                 onPress={handleAddToCart}>
 
                 {!!itemUuid ? 'Update Cart' : 'Add to Cart'} - {item?.symbol}{' '}

@@ -1,8 +1,14 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Text, View } from 'react-native';
+import { Text, View, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { COLORS } from '../../theme';
 import Checkbox from '../UI/Checkbox';
 import ModifierItemCounter from './ModifierItemCounter';
+import Icon_Arrow_Right from '../../../assets/SVG/Icon_Arrow_Right';
+
+// Enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 interface ModifierGroupProps {
   group: ModifierGroup;
@@ -22,6 +28,12 @@ const ModifierGroup: React.FC<ModifierGroupProps> = ({
   const [selectedItems, setSelectedItems] = useState<SelectedModifierItem[]>(
     [],
   );
+  const [expanded, setExpanded] = useState(!group.collapsed);
+
+  const toggleExpanded = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded((prev) => !prev);
+  };
 
 
 
@@ -237,30 +249,49 @@ const ModifierGroup: React.FC<ModifierGroupProps> = ({
 
   //TODO check is_available logic
 
-  // if (group.is_available) return null; // had do it this way because the backend returns false
+
+if (!group.enabled) return null;
 
   return (
     <View style={{ gap: 8, opacity: isGroupDisabled ? 0.5 : 1 }}>
-      {!group.hide_label && ( // had to do it this way because the backend returns false
-        <Text
+      {!group.hide_label && ( 
+        <TouchableOpacity
+          onPress={toggleExpanded}
           style={{
-            color: isGroupDisabled ? COLORS.foregroundColor : COLORS.darkColor,
-            fontSize: 16,
-            fontWeight: '500',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
             paddingHorizontal: 16,
           }}>
-          {group.name}
+          <Text
+            style={{
+              color: isGroupDisabled ? COLORS.foregroundColor : COLORS.darkColor,
+              fontSize: 16,
+              fontWeight: '500',
+              flex: 1,
+            }}>
+            {group.name}
 
-          <Text style={{ fontSize: 12, fontWeight: '400' }}>
-            &nbsp; (Max Item Quantity: {group?.max_quantity})
+            <Text style={{ fontSize: 12, fontWeight: '400' }}>
+              &nbsp; (Maximum Quantity: {group?.max_quantity})
+            </Text>
           </Text>
-        </Text>
+          <View style={{ transform: [{ rotate: expanded ? '90deg' : '0deg' }] }}>
+            <Icon_Arrow_Right width={20} height={20} color={isGroupDisabled ? COLORS.foregroundColor : COLORS.darkColor} />
+          </View>
+        </TouchableOpacity>
       )}
 
-      {/* TODO add collapsed logic */}
-      {/* {!group.collapsed && (  */}
-      <View style={{ gap: 8 }}>
-        {group.modifier_items.map(item => {
+
+
+      {expanded && (
+        <View style={{ gap: 8 }}>
+                {group.min_quantity === 0 && (
+        <Text style={{ fontSize: 12, fontWeight: '500', paddingHorizontal: 16, marginBottom: 4,  }}>
+      At least {group?.min_quantity} quantity are required to be added.
+        </Text>
+      )}
+          {group.modifier_items.map(item => {
           // Check if item is disabled (max_quantity is 0)
           const isItemDisabled = item.max_quantity === 0;
 
@@ -299,8 +330,8 @@ const ModifierGroup: React.FC<ModifierGroupProps> = ({
             </View>
           )
         })}
-      </View>
-      {/* )} */}
+        </View>
+      )}
     </View>
   );
 };
