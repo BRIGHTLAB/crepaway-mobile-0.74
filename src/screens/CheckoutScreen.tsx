@@ -23,8 +23,9 @@ import Icon_Checkout from '../../assets/SVG/Icon_Checkout';
 import Icon_Location from '../../assets/SVG/Icon_Location';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
 import Icon_Paper_Edit from '../../assets/SVG/Icon_Paper_Edit';
-import { useGetCheckoutQuery, usePlaceOrderMutation, useGetPaymentMethodsQuery } from '../api/checkoutApi';
+import { useGetCheckoutQuery, usePlaceOrderMutation, useGetPaymentMethodsQuery, useLazyGetPaymentStatusQuery } from '../api/checkoutApi';
 import DeliveryInstructionsSheet from '../components/Checkout/DeliveryInstructionsSheet';
+import PaymentWebViewModal from '../components/Checkout/PaymentWebViewModal';
 import TotalSection from '../components/Menu/TotalSection';
 import DynamicSheet from '../components/Sheets/DynamicSheet';
 import Button from '../components/UI/Button';
@@ -60,6 +61,14 @@ const CheckoutScreen = () => {
   const [promoError, setPromoError] = useState<string | null>(null);
   const [debouncedPromoCode, setDebouncedPromoCode] = useState<string>('');
 
+  // Payment WebView state (for card payments)
+  const [paymentWebViewUrl, setPaymentWebViewUrl] = useState<string | null>(null);
+  const [paymentId, setPaymentId] = useState<number | null>(null);
+
+  // Payment polling state (waiting for order_id after successful card payment)
+  const [isWaitingForOrder, setIsWaitingForOrder] = useState(false);
+  const [pendingPaymentId, setPendingPaymentId] = useState<number | null>(null);
+
   const { bottom } = useSafeAreaInsets();
 
   const {
@@ -75,6 +84,9 @@ const CheckoutScreen = () => {
 
   const [placeOrder, { isLoading: isSubmitLoading, error: placeOrderError }] =
     usePlaceOrderMutation();
+
+  // Lazy query for polling payment status
+  const [getPaymentStatus] = useLazyGetPaymentStatusQuery();
 
   // Set default payment method when payment methods are loaded
   useEffect(() => {
@@ -134,6 +146,70 @@ const CheckoutScreen = () => {
       }
     }
   }, [placeOrderError, navigation]);
+
+  // Polling for payment status after successful card payment
+  useEffect(() => {
+    let pollingInterval: NodeJS.Timeout | null = null;
+
+    if (isWaitingForOrder && pendingPaymentId) {
+      const pollPaymentStatus = async () => {
+        try {
+          const result = await getPaymentStatus(pendingPaymentId).unwrap();
+
+          if (result.payment?.orders_id) {
+            // Order has been created - stop polling and navigate
+            const orderId = result.payment.orders_id;
+            setIsWaitingForOrder(false);
+            setPendingPaymentId(null);
+            dispatch(clearCart());
+            refetch();
+
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
+                  name: 'OrderStack',
+                  state: {
+                    routes: [
+                      { name: 'Orders' },
+                      { name: 'OrderDetails', params: { id: orderId } },
+                      {
+                        name: 'TrackOrder',
+                        params: {
+                          orderId: orderId,
+                          order_type: user?.orderType,
+                          addressLatitude: user?.addressLatitude,
+                          addressLongitude: user?.addressLongitude,
+                        },
+                      },
+                    ],
+                    index: 2,
+                  },
+                },
+              ],
+            });
+          }
+          // If no orders_id yet, the interval will poll again
+        } catch (error) {
+          console.error('Payment status poll error:', error);
+          // Continue polling on error, don't stop
+        }
+      };
+
+      // Initial poll
+      pollPaymentStatus();
+
+      // Set up interval for subsequent polls (every 2 seconds)
+      pollingInterval = setInterval(pollPaymentStatus, 2000);
+    }
+
+    // Cleanup: clear interval when component unmounts or polling stops
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    };
+  }, [isWaitingForOrder, pendingPaymentId, getPaymentStatus, dispatch, refetch, navigation, user]);
 
   const handleScheduleConfirm = () => {
     scheduleOrderRef?.current?.close();
@@ -208,65 +284,77 @@ const CheckoutScreen = () => {
 
     const formData = {
       special_delivery_instructions: specialDeliveryInstructions,
-      users_payment_methods_id: selectedPaymentMethodId,
+      payment_methods_id: selectedPaymentMethodId,
       address_id: user?.addressId,
       promo_code: debouncedPromoCode,
       is_scheduled: scheduleOrder === 'yes' ? 1 : 0,
       scheduled_date: scheduledDateTime
         ? scheduledDateTime
-            .toLocaleDateString('en-US', {
-              month: '2-digit',
-              day: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-              hour12: false,
-            })
-            .replace(',', '')
+          .toLocaleDateString('en-US', {
+            month: '2-digit',
+            day: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+          })
+          .replace(',', '')
         : null,
       order_type: user?.orderType,
       ...(user.orderType === 'delivery'
         ? {
-            delivery_instructions: deliveryInstructions?.map((el) => {
-              return {
-                id: el.id,
-              };
-            }),
-          }
+          delivery_instructions: deliveryInstructions?.map((el) => {
+            return {
+              id: el.id,
+            };
+          }),
+        }
         : {}),
       cutleries: sendCutlery === 'yes' ? 1 : 0,
     };
 
     try {
       const resp = await placeOrder(formData).unwrap();
-      dispatch(clearCart()); // This will also clear promoCode
-      refetch();
 
-      navigation.reset({
-        index: 0,
-        routes: [
-          {
-            name: 'OrderStack',
-            state: {
-              routes: [
-                { name: 'Orders' },
-                { name: 'OrderDetails', params: { id: resp?.order_id } },
-                {
-                  name: 'TrackOrder',
-                  params: {
-                    orderId: resp?.order_id,
-                    order_type: user?.orderType,
-                    addressLatitude: user?.addressLatitude,
-                    addressLongitude: user?.addressLongitude,
+      // Check if this is a card payment (has payment_url)
+      if (resp.payment_url && resp.payment_id) {
+        // Card payment - open WebView for payment
+        setPaymentWebViewUrl(resp.payment_url);
+        setPaymentId(resp.payment_id);
+        return; // Don't navigate yet, wait for WebView callback
+      }
+
+      // COD/Cash payment - navigate directly to confirmation
+      if (resp.order_id) {
+        dispatch(clearCart());
+        refetch();
+
+        navigation.reset({
+          index: 0,
+          routes: [
+            {
+              name: 'OrderStack',
+              state: {
+                routes: [
+                  { name: 'Orders' },
+                  { name: 'OrderDetails', params: { id: resp.order_id } },
+                  {
+                    name: 'TrackOrder',
+                    params: {
+                      orderId: resp.order_id,
+                      order_type: user?.orderType,
+                      addressLatitude: user?.addressLatitude,
+                      addressLongitude: user?.addressLongitude,
+                    },
                   },
-                },
-              ],
-              index: 2, // This will make TrackOrder the visible screen
+                ],
+                index: 2,
+              },
             },
-          },
-        ],
-      });
+          ],
+        });
+      }
     } catch (err) {
       const error = err as { data: { message: string } };
       const errorMessage = error?.data?.message || 'Something went wrong!';
@@ -348,6 +436,39 @@ const CheckoutScreen = () => {
     return maxDate;
   };
 
+  // Payment WebView callbacks
+  const handlePaymentSuccess = (_orderId: number | null, successPaymentId: number) => {
+    // Close the WebView modal
+    setPaymentWebViewUrl(null);
+    setPaymentId(null);
+
+    // Start polling for order_id
+    setIsWaitingForOrder(true);
+    setPendingPaymentId(successPaymentId);
+  };
+
+  const handlePaymentFailure = (_paymentId: number) => {
+    // Close the WebView modal
+    setPaymentWebViewUrl(null);
+    setPaymentId(null);
+
+    // Navigate back to cart and show error
+    navigation.navigate('Cart');
+    Toast.show({
+      type: 'error',
+      text1: 'Payment failed',
+      text2: 'Please try again.',
+      visibilityTime: 4000,
+      position: 'bottom',
+    });
+  };
+
+  const handlePaymentWebViewClose = () => {
+    // User manually closed the WebView
+    setPaymentWebViewUrl(null);
+    setPaymentId(null);
+  };
+
   return (
     <>
       <KeyboardAvoidingView
@@ -363,7 +484,7 @@ const CheckoutScreen = () => {
 
             {/* Delivery Address or Takeaway Branch */}
             {(user.orderType === 'delivery' && user.addressTitle) ||
-            (user.orderType === 'takeaway' && cart.branchName) ? (
+              (user.orderType === 'takeaway' && cart.branchName) ? (
               <View style={styles.boxContainer}>
                 <Text style={styles.boxContainerTitle}>
                   {user.orderType === 'delivery' ? 'Delivery Address' : 'Pickup Branch'}
@@ -478,9 +599,8 @@ const CheckoutScreen = () => {
                   checked={scheduleOrder === 'no'}
                   onPress={() => setScheduleOrder('no')}
                   title="No"
-                  description={`Estimated ${
-                    user?.orderType === 'delivery' ? 'delivery' : 'pickup'
-                  } time 30 minutes`}
+                  description={`Estimated ${user?.orderType === 'delivery' ? 'delivery' : 'pickup'
+                    } time 30 minutes`}
                 />
                 <View
                   style={{
@@ -505,12 +625,12 @@ const CheckoutScreen = () => {
                     description={
                       scheduledDateTime
                         ? scheduledDateTime.toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
                         : 'Select Date and Time'
                     }
                   />
@@ -539,24 +659,20 @@ const CheckoutScreen = () => {
 
             <TotalSection
               orderType={user?.orderType ?? 'delivery'}
-              subtotal={`${data?.currency?.symbol ?? ''} ${
-                data?.summary?.original_sub_total ?? ''
-              }`}
-              deliveryCharge={`${data?.currency?.symbol ?? ''} ${
-                data?.delivery_charge ?? ''
-              }`}
+              subtotal={`${data?.currency?.symbol ?? ''} ${data?.summary?.original_sub_total ?? ''
+                }`}
+              deliveryCharge={`${data?.currency?.symbol ?? ''} ${data?.delivery_charge ?? ''
+                }`}
               pointsRewarded={`+ ${data?.points_rewarded ?? ''} pts`}
               promoCode={promoCode}
               promoCodeError={promoError}
               onPromoCodeChange={handlePromoCodeChange}
-              total={`${data?.currency?.symbol ?? ''} ${
-                data?.summary?.final_total ?? ''
-              }`}
+              total={`${data?.currency?.symbol ?? ''} ${data?.summary?.final_total ?? ''
+                }`}
               discount={
                 data?.summary?.total_discount
-                  ? `${data?.currency?.symbol ?? ''} ${
-                      data?.summary?.total_discount
-                    }`
+                  ? `${data?.currency?.symbol ?? ''} ${data?.summary?.total_discount
+                  }`
                   : ''
               }
               isLoading={isLoading}
@@ -566,30 +682,30 @@ const CheckoutScreen = () => {
             {/* Delivery instructions  */}
             {(deliveryInstructions?.length > 0 ||
               specialDeliveryInstructions) && (
-              <View style={styles.boxContainer}>
-                <Text style={styles.boxContainerTitle}>
-                  Delivery Instructions
-                </Text>
+                <View style={styles.boxContainer}>
+                  <Text style={styles.boxContainerTitle}>
+                    Delivery Instructions
+                  </Text>
 
-                <View style={{ gap: 8 }}>
-                  {deliveryInstructions?.map((el) => {
-                    return (
-                      <Text key={el.id} style={{}}>
-                        {el.title}
+                  <View style={{ gap: 8 }}>
+                    {deliveryInstructions?.map((el) => {
+                      return (
+                        <Text key={el.id} style={{}}>
+                          {el.title}
+                        </Text>
+                      );
+                    })}
+                    {specialDeliveryInstructions && (
+                      <Text style={{}}>
+                        <Text style={{ fontWeight: 700 }}>
+                          Special Instructions:
+                        </Text>{' '}
+                        {specialDeliveryInstructions}
                       </Text>
-                    );
-                  })}
-                  {specialDeliveryInstructions && (
-                    <Text style={{}}>
-                      <Text style={{ fontWeight: 700 }}>
-                        Special Instructions:
-                      </Text>{' '}
-                      {specialDeliveryInstructions}
-                    </Text>
-                  )}
+                    )}
+                  </View>
                 </View>
-              </View>
-            )}
+              )}
 
             <View style={{ gap: 12 }}>
               {user.orderType === 'delivery' && (
@@ -608,7 +724,7 @@ const CheckoutScreen = () => {
                 </Button>
               )}
               <Button
-                isLoading={isSubmitLoading}
+                isLoading={isSubmitLoading || isWaitingForOrder}
                 icon={<Icon_Checkout />}
                 onPress={handlerOrder}
               >
@@ -648,6 +764,17 @@ const CheckoutScreen = () => {
           <Button onPress={handleScheduleConfirm}>Confirm Schedule</Button>
         </BottomSheetView>
       </DynamicSheet>
+
+      {/* Payment WebView Modal for card payments */}
+      {paymentWebViewUrl && (
+        <PaymentWebViewModal
+          visible={!!paymentWebViewUrl}
+          paymentUrl={paymentWebViewUrl}
+          onPaymentSuccess={handlePaymentSuccess}
+          onPaymentFailure={handlePaymentFailure}
+          onClose={handlePaymentWebViewClose}
+        />
+      )}
     </>
   );
 };

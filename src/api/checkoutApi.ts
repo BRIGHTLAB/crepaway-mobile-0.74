@@ -15,12 +15,14 @@ export interface Checkout {
 
 export interface OrderFormData {
   special_delivery_instructions: string;
-  users_payment_methods_id: number;
+  payment_methods_id: number | null; // Renamed from users_payment_methods_id to match backend
   address_id: number | null;
   delivery_instructions?: { id: number }[];
   is_scheduled: number;
   scheduled_date: string | null;
   order_type: string | null;
+  cutleries?: number;
+  promo_code?: string;
 }
 
 export interface PaymentMethod {
@@ -55,6 +57,25 @@ export interface PaymentMethodsResponse {
   total: number;
 }
 
+// Response from GET /payments/{id} for polling
+export interface PaymentStatusResponse {
+  success: boolean;
+  payment: {
+    id: number;
+    status: string; // 'pending' | 'success' | 'failed'
+    orders_id: number | null; // null until webhook creates the order
+    amount: string;
+    currency: string;
+    description: string | null;
+    order_type: string;
+    payment_provider: string;
+    users_id: number;
+    tips_amount: string | null;
+    delete_reason: string | null;
+    deleted_by: string | null;
+  };
+}
+
 export const checkoutApi = baseApi.injectEndpoints({
   endpoints: builder => ({
     getCheckout: builder.query<Checkout, { promoCode: string | void }>({
@@ -78,9 +99,12 @@ export const checkoutApi = baseApi.injectEndpoints({
       keepUnusedDataFor: 60, // Cache for 60 seconds
     }),
 
-    // TO CHECK null type
+    // Updated to handle both COD and card payment flows
     placeOrder: builder.mutation<{
-      order_id: number;
+      message: string;
+      order_id?: number;       // Present for COD/cash payments
+      payment_url?: string;    // Present for card payments
+      payment_id?: number;     // Present for card payments
     }, OrderFormData>({
       query: formData => {
         const baseUrl = '/orders';
@@ -96,9 +120,20 @@ export const checkoutApi = baseApi.injectEndpoints({
       },
       invalidatesTags: ['Order', 'checkout'],
     }),
+
+    // Get payment status (for polling after card payment success)
+    getPaymentStatus: builder.query<PaymentStatusResponse, number>({
+      query: (paymentId) => `/payments/${paymentId}`,
+      keepUnusedDataFor: 0, // Don't cache - always fetch fresh
+    }),
   }),
 
   overrideExisting: true,
 });
 
-export const { useGetCheckoutQuery, usePlaceOrderMutation, useGetPaymentMethodsQuery } = checkoutApi;
+export const {
+  useGetCheckoutQuery,
+  usePlaceOrderMutation,
+  useGetPaymentMethodsQuery,
+  useLazyGetPaymentStatusQuery,
+} = checkoutApi;
