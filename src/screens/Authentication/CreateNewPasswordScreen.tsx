@@ -18,6 +18,7 @@ import Input from '../../components/UI/Input';
 import { COLORS, REGEX } from '../../theme';
 
 import { useHeaderHeight } from '@react-navigation/elements';
+import Toast from 'react-native-toast-message';
 
 type LoginStackParamList = {
   CreateNewPassword: {
@@ -46,8 +47,6 @@ type NewPasswordForm = z.infer<typeof newPasswordSchema>;
 const CreateNewPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
   const { phone_number, otp } = route.params;
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [showErrorPopup, setShowErrorPopup] = useState(false);
 
   const {
     control,
@@ -71,11 +70,19 @@ const CreateNewPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
 
     if (response.status < 400) {
       navigation.navigate('Login');
+      Toast.show({
+        type: 'success',
+        text1: response?.message || 'Your password has been reset successfully.',
+        visibilityTime: 2000,
+        position: 'bottom',
+      });
     } else {
-      setErrorMessage(
-        response?.message || 'An error occurred while resetting password',
-      );
-      setShowErrorPopup(true);
+      Toast.show({
+        type: 'error',
+        text1: response?.message || 'An error occurred while resetting password. Please try again.',
+        visibilityTime: 2000,
+        position: 'bottom',
+      });
     }
     setIsLoading(false);
   };
@@ -141,25 +148,7 @@ const CreateNewPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
       </View>
 
-      <DynamicPopup
-        visible={showErrorPopup}
-        onClose={() => {
-          setShowErrorPopup(false);
-          setErrorMessage('');
-        }}>
-        <View style={styles.popupContent}>
-          <Text style={styles.errorText}>{errorMessage}</Text>
-          <Button
-            variant="primary"
-            size="medium"
-            onPress={() => {
-              setShowErrorPopup(false);
-              setErrorMessage('');
-            }}>
-            OK
-          </Button>
-        </View>
-      </DynamicPopup>
+
     </KeyboardAvoidingView>
   );
 };

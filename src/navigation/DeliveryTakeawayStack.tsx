@@ -36,6 +36,7 @@ import PaymentMethodsScreen from '../screens/PaymentMethodsScreen';
 import ProfileAddressesScreen from '../screens/ProfileAddressesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ProfileSettingsScreen from '../screens/ProfileSettingsScreen';
+import DeleteAccountOTPScreen from '../screens/DeleteAccountOTPScreen';
 import SearchScreen from '../screens/SearchScreen';
 import TrackOrderScreen from '../screens/TrackOrderScreen';
 import WalletScreen from '../screens/WalletScreen';
@@ -422,6 +423,7 @@ export type ProfileStackParamList = {
   Allergies: undefined;
   FavoriteItems: undefined;
   Wallet: undefined;
+  DeleteAccountOTP: undefined;
 };
 
 const ProfileStack = () => {
@@ -449,6 +451,16 @@ const ProfileStack = () => {
           headerLeft: () => <CustomHeader />,
           headerTitleAlign: 'center',
           headerTitle: 'Profile Settings',
+        }}
+      />
+      <Stack.Screen
+        name="DeleteAccountOTP"
+        component={DeleteAccountOTPScreen}
+        options={{
+          headerBackVisible: false,
+          headerLeft: () => <CustomHeader />,
+          headerTitleAlign: 'center',
+          headerTitle: 'Confirm Deletion',
         }}
       />
       <Stack.Screen

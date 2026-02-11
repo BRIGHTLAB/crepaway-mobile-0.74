@@ -14,11 +14,14 @@ export const profileApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['profile'],
     }),
-    deleteAccount: builder.mutation<{message: string}, void>({
-      query: () => ({
-        url: `/delete_account`,
-        method: 'DELETE',
-      }),
+    deleteAccount: builder.mutation<{message: string}, {otp?: string}>({
+      query: body => {
+        return {
+          url: `/delete_account`,
+          method: 'DELETE',
+          ...(body?.otp ? { body } : {}),
+        };
+      },
       invalidatesTags: ['profile'],
     }),
     getSignedUrl: builder.query<

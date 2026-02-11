@@ -2,22 +2,21 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useEffect, useRef, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
   Text,
-  TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { z } from 'zod';
 import { POST } from '../../api';
 import Button from '../../components/UI/Button';
-import DynamicPopup from '../../components/UI/DynamicPopup';
+import OtpInputs from '../../components/OTP/OtpInputs';
+import ResendOtpSection from '../../components/OTP/ResendOtpSection';
 import { autoLoginUser } from '../../store/slices/userSlice';
 import { useAppDispatch } from '../../store/store';
 import { COLORS } from '../../theme';
@@ -66,21 +65,13 @@ const RESEND_TIME = 60;
 const OTPScreen: React.FC<Props> = ({ navigation, route }) => {
   const { phone_number, from } = route.params;
   const dispatch = useAppDispatch();
-  const [showErrorPopup, setShowErrorPopup] = useState(false);
-  const [countdown, setCountdown] = useState(RESEND_TIME);
-  const [canResend, setCanResend] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [isResending, setIsResending] = useState(false);
-
 
   const {
     control,
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<OTPForm>({
     resolver: zodResolver(otpSchema),
     defaultValues: {
@@ -88,54 +79,36 @@ const OTPScreen: React.FC<Props> = ({ navigation, route }) => {
     },
   });
 
-  // Add refs for input fields
-  const inputRefs = useRef<Array<TextInput | null>>([null, null, null, null]);
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (countdown > 0 && !canResend) {
-      timer = setInterval(() => {
-        setCountdown(prev => prev - 1);
-      }, 1000);
-    } else if (countdown === 0) {
-      setCanResend(true);
-    }
-    return () => clearInterval(timer);
-  }, [countdown, canResend]);
-
   const handleResendOtp = async () => {
-    if (!canResend) return;
-
-    setIsResending(true);
     const response = await POST({
       endpoint: '/reset-password',
       formData: { phone_number },
     });
 
     if (response.status < 400) {
-      setCountdown(RESEND_TIME);
-      setCanResend(false);
-    } else {
-      setErrorMessage(
-        response?.message || 'An error has occurred. Please try again.',
-      );
-      setShowErrorPopup(true);
+      return;
     }
-    setIsResending(false);
+    Toast.show({
+      type: 'error',
+      text1: response?.message || 'An error has occurred. Please try again.',
+      visibilityTime: 2000,
+      position: 'bottom',
+    });
+    throw new Error('Failed to resend OTP');
   };
 
   const handleVerify = async (data: OTPForm) => {
     const otpString = data.otp.join('');
-    setIsLoading(true);
 
     try {
       const endpoint =
-        from === 'reset-password' ? '/verify-pass-otp' : '/verify-otp';
+        from === 'reset-password' ? '/reset-password' : '/verify-otp';
       const response = await POST<VerifyResponse>({
         endpoint,
         formData: { phone_number, otp: otpString },
       });
 
+      console.log('response', JSON.stringify(response));
       if (response.status < 400) {
         if (from === 'reset-password') {
           navigation.navigate('CreateNewPassword', {
@@ -152,37 +125,44 @@ const OTPScreen: React.FC<Props> = ({ navigation, route }) => {
 
               // Update Redux state
               dispatch(autoLoginUser(response.data));
+
             } catch (storageError) {
               console.error('Error saving auth data:', storageError);
-              setErrorMessage('Failed to login. Please try again.');
-              setShowErrorPopup(true);
+              Toast.show({
+                type: 'error',
+                text1: 'Failed to login. Please try again.',
+                visibilityTime: 2000,
+                position: 'bottom',
+              });
             }
           } else {
-            setErrorMessage('Invalid server response. Please try again.');
-            setShowErrorPopup(true);
+            Toast.show({
+              type: 'error',
+              text1: 'Invalid server response. Please try again.',
+              visibilityTime: 2000,
+              position: 'bottom',
+            });
           }
         }
       } else {
-        setErrorMessage(
-          response?.message || 'Invalid verification code. Please try again.',
-        );
-        setShowErrorPopup(true);
+        Toast.show({
+          type: 'error',
+          text1:
+            response?.message ||
+            'Invalid verification code. Please try again.',
+          visibilityTime: 2000,
+          position: 'bottom',
+        });
       }
     } catch (error) {
       console.error('Verification error:', error);
-      setErrorMessage(
-        'An error occurred during verification. Please try again.',
-      );
-      setShowErrorPopup(true);
-    } finally {
-      setIsLoading(false);
+      Toast.show({
+        type: 'error',
+        text1: 'An error occurred during verification. Please try again.',
+        visibilityTime: 2000,
+        position: 'bottom',
+      });
     }
-  };
-
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
   const headerHeight = useHeaderHeight();
@@ -202,109 +182,21 @@ const OTPScreen: React.FC<Props> = ({ navigation, route }) => {
           provided
         </Text>
 
-        <View style={styles.otpContainer}>
-          {[0, 1, 2, 3].map(index => (
-            <Controller
-              key={index}
-              control={control}
-              name={`otp.${index}`}
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  ref={ref => (inputRefs.current[index] = ref)}
-                  style={[
-                    styles.otpInput,
-                    errors.otp?.[index] && styles.otpInputError,
-                  ]}
-                  value={value}
-                  onChangeText={text => {
-                    // Only allow numbers
-                    if (text && !/^[0-9]$/.test(text)) {
-                      return;
-                    }
+        <OtpInputs control={control} errors={errors} setValue={setValue} />
 
-                    // If text is empty and we're not at first input, move back
-                    if (!text && index > 0) {
-                      setValue(`otp.${index}`, '');
-                      inputRefs.current[index - 1]?.focus();
-                    } else {
-                      onChange(text);
-                      if (text && index < 3) {
-                        // Focus next input
-                        inputRefs.current[index + 1]?.focus();
-                      }
-                    }
-                  }}
-                  onKeyPress={e => {
-                    if (
-                      e.nativeEvent.key === 'Backspace' &&
-                      !value &&
-                      index > 0
-                    ) {
-                      // Focus previous input on backspace
-                      setValue(`otp.${index}`, '');
-                      inputRefs.current[index - 1]?.focus();
-                    }
-                  }}
-                  keyboardType="number-pad"
-                  maxLength={1}
-                  selectTextOnFocus
-                />
-              )}
-            />
-          ))}
-        </View>
-
-        <View style={styles.resendContainer}>
-          <Text style={styles.resendText}>Didn't receive an OTP? </Text>
-          <TouchableOpacity
-            onPress={handleResendOtp}
-            disabled={!canResend || isResending}>
-            <View style={styles.resendButtonContainer}>
-              {isResending ? (
-                <ActivityIndicator size="small" color={COLORS.primaryColor} />
-              ) : (
-                <Text
-                  style={[
-                    styles.resendButton,
-                    (!canResend || isResending) && styles.resendButtonDisabled,
-                  ]}>
-                  Resend Now {!canResend && `(${formatTime(countdown)})`}
-                </Text>
-              )}
-            </View>
-          </TouchableOpacity>
-        </View>
+        <ResendOtpSection initialSeconds={RESEND_TIME} onResend={handleResendOtp} />
 
         <View style={styles.buttonContainer}>
           <Button
             variant="primary"
             size="large"
             onPress={handleSubmit(handleVerify)}
-            isLoading={isLoading}>
+            isLoading={isSubmitting}>
             Verify
           </Button>
         </View>
       </View>
 
-      <DynamicPopup
-        visible={showErrorPopup}
-        onClose={() => {
-          setShowErrorPopup(false);
-          setErrorMessage('');
-        }}>
-        <View style={styles.popupContent}>
-          <Text style={styles.errorText}>{errorMessage}</Text>
-          <Button
-            variant="primary"
-            size="medium"
-            onPress={() => {
-              setShowErrorPopup(false);
-              setErrorMessage('');
-            }}>
-            OK
-          </Button>
-        </View>
-      </DynamicPopup>
     </KeyboardAvoidingView>
   );
 };
@@ -349,39 +241,8 @@ const styles = StyleSheet.create({
   otpInputError: {
     borderColor: COLORS.errorColor,
   },
-  resendContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 24,
-  },
-  resendText: {
-    color: COLORS.foregroundColor,
-    fontSize: 14,
-  },
-  resendButton: {
-    // color: COLORS.primaryColor,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  resendButtonDisabled: {
-    color: COLORS.foregroundColor,
-  },
   buttonContainer: {
     marginTop: 16,
-  },
-  popupContent: {
-    alignItems: 'center',
-    padding: 16,
-  },
-  errorText: {
-    fontSize: 16,
-    color: COLORS.errorColor,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  resendButtonContainer: {
-    minWidth: 100,
-    alignItems: 'center',
   },
 });
 

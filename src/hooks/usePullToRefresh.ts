@@ -23,7 +23,7 @@ export const usePullToRefresh = ({
   }, [refetch]);
 
   return {
-    refreshing: refreshing || !!isFetching || !!isLoading,
+    refreshing: refreshing ,
     onRefresh,
   };
 };

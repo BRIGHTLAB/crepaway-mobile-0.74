@@ -36,6 +36,7 @@ import { ProfileStackParamList } from '../navigation/DeliveryTakeawayStack';
 import { logoutUser } from '../store/slices/userSlice';
 import { useAppDispatch } from '../store/store';
 import { COLORS, INPUT_HEIGHT, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
+import { isAxiosError } from 'axios';
 
 const profileSchema = z.object({
   name: z.string().nonempty('Name is required'),
@@ -130,22 +131,28 @@ const ProfileSettingsScreen = () => {
 
   const handleConfirmDeleteAccount = async () => {
     try {
-      await deleteAccount();
+      const response = await deleteAccount({}).unwrap();
+
       Toast.show({
         type: 'success',
-        text1: 'Your account has been deleted successfully',
+        text1: response?.message || 'We sent you a verification code',
         visibilityTime: 2000,
         position: 'bottom',
       });
-      dispatch(logoutUser());
-    } catch (error) {
-      console.log(error);
+
+      setShowDeleteModal(false);
+      navigation.navigate('DeleteAccountOTP');
+    } catch (error : any) {
+      // const axiosError = isAxiosError(error);
+      // console.log('error is here', error);
       Toast.show({
-        type: 'success',
-        text1: 'Failed to delete your account. Please try again.',
+        type: 'error',
+        text1:  error.data?.message || 'Failed to start account deletion. Please try again.',
         visibilityTime: 2000,
         position: 'bottom',
       });
+
+      setShowDeleteModal(false);
     }
   };
 
