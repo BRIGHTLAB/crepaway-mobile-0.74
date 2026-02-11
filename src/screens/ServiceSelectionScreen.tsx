@@ -27,21 +27,21 @@ import SelectSheet from '../components/Sheets/SelectSheet';
 import DeliverySheet from '../components/Sheets/ServiceSelection/DeliverySheet';
 import Button from '../components/UI/Button';
 import Tabs from '../components/UI/Tabs';
-import { RootStackParamList } from '../navigation/NavigationStack';
+import { ServiceSelectionStackParamList } from '../navigation/ServiceSelectionStack';
 import {
   clearCart,
   setCartBranchName,
   setCartOrderType,
 } from '../store/slices/cartSlice';
 import {
-  logoutUser,
   setAddress,
   setBranchName,
   setOrderType
 } from '../store/slices/userSlice';
 import store, { RootState } from '../store/store';
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
-import Icon_Sign_Out from '../../assets/SVG/Icon_Sign_Out';
+import { useGetProfileQuery } from '../api/profileApi';
+import ProfileAvatar from '../components/Profile/ProfileAvatar';
 
 const { width, height } = Dimensions.get('window');
 
@@ -92,7 +92,7 @@ const ContentSkeleton = () => (
   </SkeletonPlaceholder>
 );
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Delivery'>;
+type NavigationProp = NativeStackNavigationProp<ServiceSelectionStackParamList>;
 
 const ServiceSelectionScreen = () => {
   const { t } = useTranslation();
@@ -100,6 +100,7 @@ const ServiceSelectionScreen = () => {
     useGetOrderTypesQuery();
   const { data: branches, isLoading: branchesLoading } =
     useGetMenuBranchesQuery('takeaway');
+  const { data: profileData } = useGetProfileQuery();
 
   const userState = useSelector((state: RootState) => state.user);
   const [selectedIdx, setSelectedIdx] = useState(0);
@@ -452,8 +453,13 @@ const ServiceSelectionScreen = () => {
           <View style={[styles.backgroundImageContainer, styles.fallbackBackground]} />
         )}
 
-        <TouchableOpacity style={{ position: 'absolute', top: 16, right: SCREEN_PADDING.horizontal, zIndex: 100 }} onPress={() => dispatch(logoutUser())}>
-          <Icon_Sign_Out color="white" />
+        <TouchableOpacity style={{ position: 'absolute', top: 16, right: SCREEN_PADDING.horizontal, zIndex: 100 }} onPress={() => navigation.navigate('Profile')}>
+          <ProfileAvatar
+            imageUrl={profileData?.image_url}
+            name={profileData?.name}
+            size={40}
+            backgroundColor={COLORS.black}
+          />
         </TouchableOpacity>
 
 

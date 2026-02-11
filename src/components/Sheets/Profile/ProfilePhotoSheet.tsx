@@ -16,6 +16,7 @@ import {
 } from 'react-native-image-picker';
 import { useDispatch } from 'react-redux';
 import Icon_Camera from '../../../../assets/SVG/Icon_Camera';
+import Icon_Delete from '../../../../assets/SVG/Icon_Delete';
 import Icon_Gallery from '../../../../assets/SVG/Icon_Gallery';
 import { RootStackParamList } from '../../../navigation/NavigationStack';
 import { COLORS, TYPOGRAPHY } from '../../../theme';
@@ -25,6 +26,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Props = {
   onImageSelected?: (imageUri: string) => void;
+  onPhotoRemoved?: () => void;
+  hasPhoto?: boolean;
 };
 
 const cameraOptions: CameraOptions = {
@@ -38,7 +41,7 @@ const cameraOptions: CameraOptions = {
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const ProfilePhotoSheet = forwardRef<BottomSheet, Props>(
-  ({ onImageSelected }, ref) => {
+  ({ onImageSelected, onPhotoRemoved, hasPhoto }, ref) => {
     const navigation = useNavigation<NavigationProp>();
     const dispatch = useDispatch();
 
@@ -150,6 +153,20 @@ const ProfilePhotoSheet = forwardRef<BottomSheet, Props>(
             iconPosition="left">
             Gallery
           </Button>
+          {hasPhoto && (
+            <Button
+              onPress={() => {
+                if (ref && 'current' in ref && ref.current) {
+                  ref.current.close();
+                }
+                onPhotoRemoved?.();
+              }}
+              isLoading={false}
+              icon={<Icon_Delete color={COLORS.lightColor} />}
+              iconPosition="left">
+              Remove Photo
+            </Button>
+          )}
         </BottomSheetView>
       </DynamicSheet>
     );

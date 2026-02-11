@@ -10,8 +10,7 @@ import {
   View,
 } from 'react-native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
-import FastImage from 'react-native-fast-image';
-import Icon_Camera from '../../assets/SVG/Icon_Camera';
+import Icon_Edit from '../../assets/SVG/Icon_Edit';
 import Icon_Faq from '../../assets/SVG/Icon_Faq';
 import Icon_Legal from '../../assets/SVG/Icon_Legal';
 import Icon_Profile_Settings from '../../assets/SVG/Icon_Profile_Settings';
@@ -28,6 +27,7 @@ import {
 import { useUploadImageMutation } from '../api/s3UploaderApi';
 import OptionRow from '../components/Profile/OptionRow';
 import ProfilePhotoSheet from '../components/Sheets/Profile/ProfilePhotoSheet';
+import ProfileAvatar from '../components/Profile/ProfileAvatar';
 import { ProfileStackParamList } from '../navigation/DeliveryTakeawayStack';
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
 
@@ -58,6 +58,10 @@ const ProfileScreen = () => {
       await uploadImage({ url: resp.signedUrl, file: blob });
       await updateProfile({ image_url: resp.key });
     }
+  };
+
+  const handlePhotoRemoved = async () => {
+    await updateProfile({ image_url: null });
   };
 
   const options = useMemo(
@@ -185,30 +189,11 @@ const ProfileScreen = () => {
         {/* user info section */}
         <View style={styles.infoContainer}>
           <View style={styles.imageContainer}>
-            {data?.image_url ? (
-              <FastImage
-                source={{
-                  uri: data.image_url,
-                  priority: FastImage.priority.normal,
-                }}
-                resizeMode={FastImage.resizeMode.cover}
-                style={styles.image}
-              />
-            ) : (
-              <View
-                style={[
-                  styles.image,
-                  {
-                    backgroundColor: COLORS.darkColor,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  },
-                ]}>
-                <Text style={styles.imageAltText}>
-                  {data?.name.split(' ').map(str => str.charAt(0))}
-                </Text>
-              </View>
-            )}
+            <ProfileAvatar
+              imageUrl={data?.image_url}
+              name={data?.name}
+              style={{ width: '100%', aspectRatio: 1 }}
+            />
             <TouchableOpacity
               style={styles.cameraIcon}
               onPress={() => sheetRef.current?.expand()}
@@ -220,7 +205,7 @@ const ProfileScreen = () => {
                 uploadImageLoading ? (
                 <ActivityIndicator size="small" color={COLORS.darkColor} />
               ) : (
-                <Icon_Camera color={'black'} width={15} height={15} />
+                <Icon_Edit color={'black'} width={15} height={15} />
               )}
             </TouchableOpacity>
           </View>
@@ -248,6 +233,8 @@ const ProfileScreen = () => {
       <ProfilePhotoSheet
         ref={sheetRef}
         onImageSelected={handleImageSelection}
+        onPhotoRemoved={handlePhotoRemoved}
+        hasPhoto={!!data?.image_url}
       />
     </>
   );
@@ -273,11 +260,6 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     flex: 1,
-  },
-  image: {
-    width: '100%',
-    aspectRatio: 1 / 1,
-    borderRadius: 65,
   },
   cameraIcon: {
     padding: 8.5,
@@ -308,10 +290,5 @@ const styles = StyleSheet.create({
     height: 2,
     backgroundColor: '#8391A1',
     opacity: 0.1,
-  },
-  imageAltText: {
-    ...TYPOGRAPHY.TITLE,
-    textTransform: 'uppercase',
-    color: COLORS.lightColor,
   },
 });
