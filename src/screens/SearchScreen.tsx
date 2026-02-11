@@ -5,6 +5,7 @@ import React, { useCallback, useState } from 'react';
 import {
   FlatList,
   Keyboard,
+  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -20,6 +21,7 @@ import Input from '../components/UI/Input';
 import { RootStackParamList } from '../navigation/NavigationStack';
 import { RootState } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 
 const SearchScreen = () => {
   const [searchValue, setSearchValue] = useState('');
@@ -38,13 +40,24 @@ const SearchScreen = () => {
 
   const userState = useSelector((state: RootState) => state.user)
 
-  const { data: searchResults, isFetching } = useGetItemsQuery({
+  const {
+    data: searchResults,
+    isFetching,
+    isLoading,
+    refetch,
+  } = useGetItemsQuery({
     menuType: userState.menuType,
     branch: userState.branchAlias,
     addressId: userState.addressId,
     search: searchDebounceValue, // Add search parameter
   });
   console.log('searchResults', searchResults);
+
+  const { refreshing, onRefresh } = usePullToRefresh({
+    refetch,
+    isFetching,
+    isLoading,
+  });
 
   const handleChangeSearch = (value: string) => {
     setSearchValue(value);
@@ -148,6 +161,14 @@ const SearchScreen = () => {
             columnWrapperStyle={{
               gap: 16,
             }}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={COLORS.primaryColor}
+                colors={[COLORS.primaryColor]}
+              />
+            }
           />
         ) : (
           <View style={styles.emptyState}>

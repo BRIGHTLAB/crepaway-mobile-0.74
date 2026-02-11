@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import {
   BackHandler,
   Dimensions,
+  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -36,6 +37,7 @@ import Animated, {
 } from "react-native-reanimated";
 import CustomHeader from '../components/Header';
 import { COLORS } from '../theme';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 
 // Define the navigation prop type
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -82,7 +84,7 @@ const HomeScreen = () => {
     }, [dispatch])
   );
 
-  const { data, isLoading, error } = useGetHomepageQuery({
+  const { data, isLoading, error, refetch, isFetching } = useGetHomepageQuery({
     menuType: state.menuType,
     branch: state.branchAlias,
     addressId: state.addressId,
@@ -109,6 +111,12 @@ const HomeScreen = () => {
       orderTypeAlias: null,
     }));
   };
+
+  const { refreshing, onRefresh } = usePullToRefresh({
+    refetch,
+    isFetching,
+    isLoading,
+  });
 
   const categories = data?.categories;
   const newItems = data?.new_items?.filter(item => item.is_paused !== 1) ?? [];
@@ -186,6 +194,14 @@ const HomeScreen = () => {
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={COLORS.primaryColor}
+            colors={[COLORS.primaryColor]}
+          />
+        }
       >
         <View style={styles.swiperContainer}>
           <Banner data={bannerData} />

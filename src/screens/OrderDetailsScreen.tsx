@@ -3,6 +3,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import React, { useCallback } from 'react';
 import {
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,6 +20,7 @@ import TotalSection from '../components/Menu/TotalSection';
 import Button from '../components/UI/Button';
 import { DeliveryTakeawayStackParamList, OrdersStackParamList } from '../navigation/DeliveryTakeawayStack';
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { formatNumberWithCommas } from '../utils/formatNumberWithCommas';
 
 type OrderDetailsRouteProp = RouteProp<OrdersStackParamList, 'OrderDetails'>;
@@ -174,13 +176,25 @@ const OrderDetailsScreen = () => {
   const orderId = route.params?.id || 0;
   const orderType = route.params?.order_type || 'delivery';
 
-  const { data: order, isLoading, error } = useGetOrderQuery(orderId, {
+  const {
+    data: order,
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+  } = useGetOrderQuery(orderId, {
     refetchOnMountOrArgChange: true,
     refetchOnFocus: true,
     refetchOnReconnect: true,
   });
   const navigation =
     useNavigation<NativeStackNavigationProp<DeliveryTakeawayStackParamList>>();
+
+  const { refreshing, onRefresh } = usePullToRefresh({
+    refetch,
+    isFetching,
+    isLoading,
+  });
 
   console.log('order.address?.latitude', order);
   const handleTrackOrder = useCallback((order: Order) => {
@@ -328,7 +342,17 @@ const OrderDetailsScreen = () => {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={COLORS.primaryColor}
+          colors={[COLORS.primaryColor]}
+        />
+      }
+    >
       <Text
         style={{
           ...TYPOGRAPHY.HEADLINE,

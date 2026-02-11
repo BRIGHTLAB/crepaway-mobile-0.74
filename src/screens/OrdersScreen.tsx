@@ -3,6 +3,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
+  RefreshControl,
   SectionList,
   StyleSheet,
   Text,
@@ -22,6 +23,7 @@ import OrderRatingSheet, { OrderRatingSheetRef } from '../components/Sheets/Orde
 import Button from '../components/UI/Button';
 import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
 import { COLORS, SCREEN_PADDING } from '../theme';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 
 const OrderComponent = React.memo(
   ({
@@ -152,9 +154,16 @@ const OrdersScreen = () => {
   const {
     data: orders,
     isLoading: loading,
-    refetch: fetchOrders,
+    refetch,
+    isFetching,
   } = useGetOrdersQuery(undefined, {
     pollingInterval: isFocused ? 2000 : undefined,
+  });
+
+  const { refreshing, onRefresh } = usePullToRefresh({
+    refetch,
+    isFetching,
+    isLoading: loading,
   });
 
   const ratingSheetRef = useRef<OrderRatingSheetRef>(null);
@@ -347,6 +356,14 @@ const OrdersScreen = () => {
         initialNumToRender={5}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={COLORS.primaryColor}
+            colors={[COLORS.primaryColor]}
+          />
+        }
         ListHeaderComponent={() => <View style={{ height: 16 }} />}
         ListFooterComponent={() => (
           <View style={{ height: SCREEN_PADDING.vertical }} />
@@ -362,6 +379,8 @@ const OrdersScreen = () => {
     keyExtractor,
     EmptyState,
     LoadingState,
+    refreshing,
+    onRefresh,
   ]);
 
   return (

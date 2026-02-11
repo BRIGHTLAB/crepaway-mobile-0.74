@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   Pressable,
+  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -19,6 +20,7 @@ import {
 } from '../api/menuApi';
 import { RootState } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 
 // Fixed heights for more accurate calculations
 const ITEM_HEIGHT = 120; // Height of each menu item
@@ -175,17 +177,32 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
   const userState = useSelector((state: RootState) => state.user);
   const selectedCategory = route?.params?.item;
 
-  const { data: categories = [], isLoading: isCategoriesLoading } =
-    useGetCategoriesQuery({
-      menuType: userState.menuType,
-      branch: userState.branchAlias,
-      addressId: userState.addressId,
-    });
-
-  const { data: items, isLoading: isItemsLoading } = useGetItemsQuery({
+  const {
+    data: categories = [],
+    isLoading: isCategoriesLoading,
+    refetch: refetchCategories,
+    isFetching: isCategoriesFetching,
+  } = useGetCategoriesQuery({
     menuType: userState.menuType,
     branch: userState.branchAlias,
     addressId: userState.addressId,
+  });
+
+  const {
+    data: items,
+    isLoading: isItemsLoading,
+    refetch: refetchItems,
+    isFetching: isItemsFetching,
+  } = useGetItemsQuery({
+    menuType: userState.menuType,
+    branch: userState.branchAlias,
+    addressId: userState.addressId,
+  });
+
+  const { refreshing, onRefresh } = usePullToRefresh({
+    refetch: () => Promise.all([refetchCategories(), refetchItems()]),
+    isFetching: isCategoriesFetching || isItemsFetching,
+    isLoading: isCategoriesLoading || isItemsLoading,
   });
 
 
@@ -525,6 +542,14 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
             keyExtractor={item => item.id.toString()}
             style={{ paddingHorizontal: SCREEN_PADDING.horizontal, zIndex: 2 }}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={COLORS.primaryColor}
+                colors={[COLORS.primaryColor]}
+              />
+            }
             onScrollToIndexFailed={info => {
               const wait = new Promise(resolve => setTimeout(resolve, 50));
               wait.then(() => {

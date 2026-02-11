@@ -8,6 +8,7 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -39,6 +40,7 @@ import { RootStackParamList } from '../navigation/NavigationStack';
 import { addItem, updateItem } from '../store/slices/cartSlice';
 import { RootState, useAppDispatch } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 
 const SkeletonLoader = () => {
   return (
@@ -121,10 +123,23 @@ const MenuItemScreen = ({ }: IProps) => {
     data: item,
     isLoading,
     error,
-  } = useGetItemDetailsQuery({ itemId, menuType: userState.menuType, branch: userState.branchAlias, addressId: userState.addressId });
+    refetch,
+    isFetching,
+  } = useGetItemDetailsQuery({
+    itemId,
+    menuType: userState.menuType,
+    branch: userState.branchAlias,
+    addressId: userState.addressId,
+  });
 
   const [toggleFavorite, { isLoading: isTogglingFavorite }] =
     useToggleFavoriteMutation();
+
+  const { refreshing, onRefresh } = usePullToRefresh({
+    refetch,
+    isFetching,
+    isLoading,
+  });
 
   const handleWishList = async () => {
     try {
@@ -356,7 +371,21 @@ const MenuItemScreen = ({ }: IProps) => {
             behavior={"padding"}
             keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight + 10 : 0}
           >
-            <ScrollView style={{ backgroundColor: '#fff' }}>
+            <ScrollView
+              style={{ backgroundColor: '#fff' }}
+              contentContainerStyle={{ flexGrow: 1 }}
+              alwaysBounceVertical={true}
+              bounces={true}
+              overScrollMode="always"
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  tintColor={COLORS.primaryColor}
+                  colors={[COLORS.primaryColor]}
+                />
+              }
+            >
 
               <FastImage
                 source={{

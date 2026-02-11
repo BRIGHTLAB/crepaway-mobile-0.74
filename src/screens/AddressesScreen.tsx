@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import DeleteAnimation from '../../assets/lotties/Delete.json';
 import {
@@ -20,6 +20,7 @@ import {
 } from '../store/slices/userSlice';
 import { RootState } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 
 type NavigationProp = NativeStackNavigationProp<ServiceSelectionStackParamList>;
 
@@ -44,11 +45,22 @@ const AddressScreen = () => {
     useDeleteAddressMutation();
 
   const navigation = useNavigation<NavigationProp>();
-  const { data, isLoading } = useGetAddressesQuery();
+  const {
+    data,
+    isLoading,
+    refetch,
+    isFetching,
+  } = useGetAddressesQuery();
   const dispatch = useDispatch();
   const selectedAddressId = useSelector(
     (state: RootState) => state.user.addressId,
   );
+
+  const { refreshing, onRefresh } = usePullToRefresh({
+    refetch,
+    isFetching,
+    isLoading,
+  });
 
   const handleConfirmDelete = async (id: number | null) => {
     if (!id) return;
@@ -149,6 +161,14 @@ const AddressScreen = () => {
           keyExtractor={item => item.id.toString()}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={COLORS.primaryColor}
+              colors={[COLORS.primaryColor]}
+            />
+          }
         />
       )}
       <AddAddressButton onPress={handleAddAddressPress} />

@@ -1,23 +1,35 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { useSelector } from 'react-redux';
 import { useGetFavoritesQuery } from '../api/favoriteApi';
 import ItemCard from '../components/Menu/ItemCard';
 import MenuItemSkeleton from '../components/SkeletonLoader/MenuItemSkeleton';
 import { RootStackParamList } from '../navigation/NavigationStack';
 import { RootState } from '../store/store';
-import { SCREEN_PADDING } from '../theme';
+import { COLORS, SCREEN_PADDING } from '../theme';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 
 const FavoritesScreen = () => {
 
   const userState = useSelector((state: RootState) => state.user)
 
-  const { data: favoriteItems, isLoading } = useGetFavoritesQuery({
+  const {
+    data: favoriteItems,
+    isLoading,
+    refetch,
+    isFetching,
+  } = useGetFavoritesQuery({
     menuType: userState.menuType,
     branch: userState.branchAlias,
     addressId: userState.addressId,
+  });
+
+  const { refreshing, onRefresh } = usePullToRefresh({
+    refetch,
+    isFetching,
+    isLoading,
   });
 
   const navigation =
@@ -57,6 +69,14 @@ const FavoritesScreen = () => {
           keyExtractor={item => item.id?.toString()}
           numColumns={2}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={COLORS.primaryColor}
+              colors={[COLORS.primaryColor]}
+            />
+          }
           contentContainerStyle={{ gap: 16 }}
           ListHeaderComponent={() => (
             <View style={{ height: SCREEN_PADDING.vertical }} />
