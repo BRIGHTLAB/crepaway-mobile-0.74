@@ -101,7 +101,7 @@ const HomeStack = () => {
   return (
     <Stack.Navigator
       screenOptions={{
-
+        headerShadowVisible: false
       }}
     >
       <Stack.Screen
@@ -365,6 +365,7 @@ const SearchStack = () => {
   return (
     <Stack.Navigator
       screenOptions={{
+        headerShadowVisible: false,
 
       }}
     >
@@ -394,7 +395,7 @@ const FavoritesStack = () => {
   return (
     <Stack.Navigator
       screenOptions={{
-
+        headerShadowVisible: false,
       }}
     >
       <Stack.Screen
@@ -432,7 +433,7 @@ const ProfileStack = () => {
   return (
     <Stack.Navigator
       screenOptions={{
-
+        headerShadowVisible: false,
       }}
     >
       <Stack.Screen
@@ -562,6 +563,7 @@ const OrderStack = () => {
   return (
     <Stack.Navigator
       screenOptions={{
+        headerShadowVisible: false,
       }}>
       <Stack.Screen
         name="Orders"

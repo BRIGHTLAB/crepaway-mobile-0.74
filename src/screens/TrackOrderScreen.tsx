@@ -4,10 +4,12 @@ import {
   useNavigation,
   useRoute,
 } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -29,10 +31,12 @@ import MapView, {
   PROVIDER_GOOGLE,
 } from 'react-native-maps';
 import { useDispatch } from 'react-redux';
+import Icon_Branch from '../../assets/SVG/Icon_Branch';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
 import Icon_Order_Accepted from '../../assets/SVG/Icon_Order_Accepted';
 import Icon_Spine from '../../assets/SVG/Icon_Spine';
 import {
+  ordersApi,
   OrderStatusResponse,
   useGetOrderQuery,
   useGetOrderStatusQuery,
@@ -209,22 +213,91 @@ const DriverHeader = ({
   );
 };
 
+// Unified Map Marker Component
+type MarkerType = 'user' | 'driver' | 'branch';
+
+const MapMarker = ({
+  type,
+  coordinate,
+  animatedRegion,
+  title,
+}: {
+  type: MarkerType;
+  coordinate: LatLng | null;
+  animatedRegion?: any;
+  title?: string;
+}) => {
+  if (!coordinate && !animatedRegion) return null;
+
+  const getMarkerContent = () => {
+    switch (type) {
+      case 'user':
+        return (
+          <View style={styles.userMarker}>
+            <Text style={styles.markerText}>You</Text>
+          </View>
+        );
+      case 'driver':
+        return (
+          <View style={styles.driverMarker}>
+            <Icon_Motorcycle width={20} height={20} />
+          </View>
+        );
+      case 'branch':
+        return (
+          <View style={styles.branchMarker}>
+            <Icon_Branch width={20} height={20} color={COLORS.white} />
+          </View>
+        );
+    }
+  };
+
+  // Use animated marker for driver, regular marker for others
+  if (type === 'driver' && animatedRegion) {
+    return (
+      <Marker.Animated 
+        coordinate={animatedRegion}
+        title={title}
+        tracksViewChanges={false}
+        identifier={`${type}-marker`}
+      >
+        {getMarkerContent()}
+      </Marker.Animated>
+    );
+  }
+
+  return (
+    <Marker
+      coordinate={coordinate!}
+      title={title}
+      tracksViewChanges={false}
+      identifier={`${type}-marker`}
+    >
+      {getMarkerContent()}
+    </Marker>
+  );
+};
+
 const TrackOrderScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<OrdersStackParamList>>();
   const dispatch = useDispatch();
   const { orderId, order_type, addressLatitude, addressLongitude } =
     useRoute<OrderScreenRouteProps>().params;
 
-  const [region, setRegion] = useState(INITIAL_REGION);
-  const [driverLocation, setDriverLocation] = useState<LatLng | null>(null);
-  const [addressLocation, setAddressLocation] = useState<LatLng | null>(null);
-  const [isFitting, setIsFitting] = useState(false);
-  const [initialMapLoad, setInitialMapLoad] = useState(true);
-  const [hasFittedOnce, setHasFittedOnce] = useState(false);
+  const isTakeaway = order_type === 'takeaway';
+  const isFocused = useIsFocused();
   const userState = store.getState().user;
   const mapRef = useRef<MapView>(null);
 
-  // AnimatedRegion ref for smooth driver movement (prevents remount flicker)
+  // State
+  const [region, setRegion] = useState(INITIAL_REGION);
+  const [driverLocation, setDriverLocation] = useState<LatLng | null>(null);
+  const [addressLocation, setAddressLocation] = useState<LatLng | null>(null);
+  const [branchLocation, setBranchLocation] = useState<LatLng | null>(null);
+  const [initialMapLoad, setInitialMapLoad] = useState(true);
+  const [hasFittedOnce, setHasFittedOnce] = useState(false);
+
+  // Refs
   const driverRegionRef = useRef<any>(
     new AnimatedRegion({
       latitude: INITIAL_REGION.latitude,
@@ -233,20 +306,22 @@ const TrackOrderScreen = () => {
       longitudeDelta: 0,
     })
   );
-
-  // Debounce timer ref for driver location updates
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const isTakeaway = order_type === 'takeaway';
-  console.log('isTakeaway', isTakeaway);
-  console.log('userState.orderType', userState.orderType);
-  console.log('order_type', order_type);
-  const isFocused = useIsFocused();
+  // API Queries
   const { data: orderStatus, isLoading } = useGetOrderStatusQuery(orderId, {
     pollingInterval: isFocused ? 2000 : undefined,
   });
-
   const { data: orderData } = useGetOrderQuery(orderId);
+
+  useLayoutEffect(() => {
+    if (!orderId) return;
+
+    navigation.setOptions({
+      headerTitle: `Order #${orderId}`,
+    });
+
+  }, [orderId]);
 
   // Debounced function to update driver location
   const updateDriverLocation = useCallback(
@@ -259,10 +334,6 @@ const TrackOrderScreen = () => {
       // Set new timer to update location after 500ms of no new updates
       debounceTimerRef.current = setTimeout(() => {
         setDriverLocation({
-          latitude: coordinates.lat,
-          longitude: coordinates.long,
-        });
-        console.log('newDriverLocation', {
           latitude: coordinates.lat,
           longitude: coordinates.long,
         });
@@ -305,38 +376,78 @@ const TrackOrderScreen = () => {
     orderStatus?.driver,
   ]);
 
-  console.log('addressLatitude', addressLatitude);
-  console.log('addressLongitude', addressLongitude);
-  // This effect will run when address coordinates change
   useEffect(() => {
-    // Only proceed if we have valid coordinates from props
-    if (addressLatitude != null && addressLongitude != null) {
-      // Create the new location
-      const newAddressLocation = {
-        latitude: Number(addressLatitude),
-        longitude: Number(addressLongitude),
+    const statusHistory = memoizedOrderStatus?.status_history;
+    if (!statusHistory || statusHistory.length === 0) return;
+
+    const latestStatus = statusHistory[statusHistory.length - 1];
+    const isDelivered = latestStatus?.key === 'delivered';
+
+    if (isDelivered) {
+      dispatch(ordersApi.util.invalidateTags(['Order']));
+      const navigationTimeout = setTimeout(() => {
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        } else {
+          navigation.navigate('OrderDetails', {
+            id: orderId,
+            order_type: order_type,
+
+          });
+        }
+      }, 5000);
+
+      return () => {
+        clearTimeout(navigationTimeout);
       };
-
-      // Update address location state
-      setAddressLocation(newAddressLocation);
-
-      // Also update region with the new coordinates
-      const newRegion = {
-        latitude: Number(addressLatitude),
-        longitude: Number(addressLongitude),
-        latitudeDelta: 0.015,
-        longitudeDelta: 0.0121,
-      };
-
-      // If the map is already loaded, animate to the new region
-      if (mapRef.current && !initialMapLoad) {
-        mapRef.current.animateToRegion(newRegion, 1000);
-      } else {
-        // First load, just set the region state
-        setRegion(newRegion);
-      }
     }
-  }, [addressLatitude, addressLongitude, initialMapLoad]);
+  }, [memoizedOrderStatus?.status_history, navigation, orderId, order_type, dispatch]);
+
+  // Helper function to update map region
+  const updateMapRegion = useCallback((location: LatLng) => {
+    const newRegion = {
+      ...location,
+      latitudeDelta: 0.015,
+      longitudeDelta: 0.0121,
+    };
+    if (mapRef.current && !initialMapLoad) {
+      mapRef.current.animateToRegion(newRegion, 1000);
+    } else {
+      setRegion(newRegion);
+    }
+  }, [initialMapLoad]);
+
+  // Extract and set locations based on order type
+  useEffect(() => {
+    if (isTakeaway && orderData?.branch) {
+      // For takeaway: extract branch location
+      const branch = orderData.branch as typeof orderData.branch & { location_coordinates?: string };
+      if (branch.location_coordinates) {
+        try {
+          const coordinatesArray = JSON.parse(branch.location_coordinates);
+          if (Array.isArray(coordinatesArray) && coordinatesArray.length >= 2) {
+            const [latitude, longitude] = coordinatesArray;
+            const location = {
+              latitude: Number(latitude),
+              longitude: Number(longitude),
+            };
+            setBranchLocation(location);
+            updateMapRegion(location);
+          }
+        } catch (error) {
+          console.error('Error parsing branch location:', error);
+        }
+      }
+    } else if (!isTakeaway && addressLatitude != null && addressLongitude != null) {
+      // For delivery: use address coordinates
+      const location = {
+        latitude: Number(addressLatitude),
+        longitude: Number(addressLongitude),
+      };
+      setAddressLocation(location);
+      updateMapRegion(location);
+    }
+  }, [isTakeaway, orderData?.branch, addressLatitude, addressLongitude, updateMapRegion]);
 
   useEffect(() => {
     if (!isTakeaway) {
@@ -358,7 +469,7 @@ const TrackOrderScreen = () => {
       const emitUserJoin = () => {
         const isConnected = socketInstance.isConnected();
         console.log('[Socket Debug] Checking connection before emit. Connected?', isConnected);
-        
+
         if (!isConnected) {
           console.log('[Socket Debug] ⚠️ Socket not connected yet, will retry...');
           return false;
@@ -421,7 +532,7 @@ const TrackOrderScreen = () => {
         console.log('[Socket Debug] Coordinates type:', typeof coordinates);
         console.log('[Socket Debug] Has lat?', !!coordinates?.lat);
         console.log('[Socket Debug] Has long?', !!coordinates?.long);
-        
+
         if (coordinates && coordinates.lat && coordinates.long) {
           console.log('[Socket Debug] ✅ Valid coordinates, calling updateDriverLocation');
           updateDriverLocation(coordinates);
@@ -465,47 +576,35 @@ const TrackOrderScreen = () => {
     }
   }, [orderId, updateDriverLocation, isTakeaway, userState.id, userState.jwt]);
 
-  // zoom out so we can see both the driver and address at the same time
+  // Fit map to show relevant locations
   useEffect(() => {
-    // Only run this when both locations are available and we haven't fitted once yet
-    if (mapRef.current && driverLocation && addressLocation && !hasFittedOnce) {
-      console.log('We are fitting the coordinates for the first time');
+    // Wait for map to be ready
+    if (!mapRef.current || initialMapLoad) return;
 
-      // Set fitting flag to prevent region updates
-      setIsFitting(true);
-      setHasFittedOnce(true);
-
-      setTimeout(() => {
-        mapRef.current?.fitToCoordinates([driverLocation, addressLocation], {
-          edgePadding: { top: 50, right: 50, bottom: 450, left: 50 },
-          animated: true,
-        });
-
-        // After animation completes, reset the flag
-        setTimeout(() => {
-          setIsFitting(false);
-        }, 1000); // Animation usually takes about 500ms, so wait a bit longer
+    if (isTakeaway && branchLocation) {
+      // For takeaway: use animateToRegion with larger delta to zoom out
+      mapRef.current.animateToRegion({
+        ...branchLocation,
+        latitudeDelta: 0.05, // Larger delta = more zoomed out
+        longitudeDelta: 0.05,
       }, 500);
+    } else if (!isTakeaway && addressLocation) {
+      // For delivery: fit to address, add driver if available
+      // Only prevent refitting if we've already fitted with both locations
+      if (hasFittedOnce && driverLocation) return;
+      
+      const locations: LatLng[] = [addressLocation];
+      if (driverLocation) {
+        locations.push(driverLocation);
+        setHasFittedOnce(true);
+      }
+      
+      mapRef.current.fitToCoordinates(locations, {
+        edgePadding: { top: 150, right: 150, bottom: 550, left: 150 },
+        animated: true,
+      });
     }
-  }, [driverLocation, addressLocation, hasFittedOnce]);
-
-  // Memoize driver marker to prevent unnecessary re-renders
-  const driverMarker = useMemo(() => {
-    const coordinate = driverRegionRef.current;
-    if (!coordinate || !driverLocation) return null;
-
-    return (
-      <Marker.Animated
-        coordinate={coordinate}
-        title="Driver Location"
-        tracksViewChanges={false}
-      >
-        <View style={styles.driverMarker}>
-          <Icon_Motorcycle width={20} height={20} />
-        </View>
-      </Marker.Animated>
-    );
-  }, [driverLocation]);
+  }, [driverLocation, addressLocation, branchLocation, initialMapLoad, isTakeaway, hasFittedOnce]);
 
   return (
     <View style={styles.container}>
@@ -517,32 +616,39 @@ const TrackOrderScreen = () => {
           region={region} // Use region instead of initialRegion
           style={[styles.map, isTakeaway && { opacity: 0.9 }]}
           onMapReady={() => setInitialMapLoad(false)}
-          // onRegionChangeComplete={newRegion => {
-          //   // Only update region if not currently fitting coordinates
-          //   if (!isFitting) {
-          //     setRegion(newRegion);
-          //   }
-          // }}
+        // onRegionChangeComplete={newRegion => {
+        //   // Only update region if not currently fitting coordinates
+        //   if (!isFitting) {
+        //     setRegion(newRegion);
+        //   }
+        // }}
         >
-          {/* User Marker */}
-          {addressLocation && (
-            <Marker
-              coordinate={addressLocation}
-              title="Your Location"
-              tracksViewChanges={false}
-              identifier="user-marker"
-            >
-              <View style={styles.userMarker}>
-                <Text style={styles.markerText}>You</Text>
-              </View>
-            </Marker>
+          {/* Markers */}
+          {!isTakeaway && (
+            <>
+              <MapMarker
+                type="user"
+                coordinate={addressLocation}
+                title="Your Location"
+              />
+              <MapMarker
+                type="driver"
+                coordinate={driverLocation}
+                animatedRegion={driverRegionRef.current}
+                title="Driver Location"
+              />
+            </>
           )}
-
-          {/* Driver Marker */}
-          {driverMarker}
+          {isTakeaway && (
+            <MapMarker
+              type="branch"
+              coordinate={branchLocation}
+              title={orderData?.branch?.name || 'Branch Location'}
+            />
+          )}
         </MapView>
 
-        {isTakeaway && (
+        {/* {isTakeaway && (
           <View
             style={{
               position: 'absolute',
@@ -554,7 +660,7 @@ const TrackOrderScreen = () => {
               zIndex: 1,
             }}
           />
-        )}
+        )} */}
       </View>
 
       <View style={styles.orderContainer}>
@@ -661,6 +767,13 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 2,
     borderColor: COLORS.primaryColor,
+  },
+  branchMarker: {
+    backgroundColor: COLORS.primaryColor,
+    padding: 8,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'white',
   },
   markerText: {
     color: '#FFF',

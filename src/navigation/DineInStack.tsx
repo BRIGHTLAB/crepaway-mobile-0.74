@@ -28,7 +28,10 @@ const DineInStack = () => {
   const dispatch = useDispatch();
   // TODO add dine-in stack.
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerShadowVisible: false,
+      }}>
       <Stack.Screen
         name="ScanTable"
         component={ScanTableScreen}

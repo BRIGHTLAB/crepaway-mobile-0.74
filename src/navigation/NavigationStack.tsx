@@ -112,7 +112,10 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
   const renderStack = () => {
     if (!isSplashAnimationFinished) {
       return (
-        <Stack.Navigator>
+        <Stack.Navigator
+          screenOptions={{
+            headerShadowVisible: false,
+          }}>
           <Stack.Screen
             name="Splash"
             options={{
@@ -150,7 +153,10 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
       case 'delivery':
       case 'takeaway':
         return (
-          <Stack.Navigator>
+          <Stack.Navigator
+            screenOptions={{
+              headerShadowVisible: false,
+            }}>
             <Stack.Screen
               name="DeliveryTakeaway"
               component={DeliveryTakeawayStack}
@@ -172,7 +178,10 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
         );
       case 'dine-in':
         return (
-          <Stack.Navigator>
+          <Stack.Navigator
+            screenOptions={{
+              headerShadowVisible: false,
+            }}>
             <Stack.Screen
               name="DineIn"
               component={DineInStack}

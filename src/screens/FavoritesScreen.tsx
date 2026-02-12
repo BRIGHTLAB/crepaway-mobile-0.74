@@ -1,11 +1,13 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
-import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useSelector } from 'react-redux';
+import Icon_Spine from '../../assets/SVG/Icon_Spine';
 import { useGetFavoritesQuery } from '../api/favoriteApi';
 import ItemCard from '../components/Menu/ItemCard';
 import MenuItemSkeleton from '../components/SkeletonLoader/MenuItemSkeleton';
+import Button from '../components/UI/Button';
 import { RootStackParamList } from '../navigation/NavigationStack';
 import { RootState } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
@@ -58,10 +60,38 @@ const FavoritesScreen = () => {
     );
   };
 
+  const emptyFavorites = !favoriteItems || favoriteItems.length === 0;
+
+  const EmptyFavoritesState = () => (
+    <View style={styles.emptyContainer}>
+      <Icon_Spine
+        width={138}
+        height={140}
+        color={COLORS.primaryColor}
+        style={{ marginBottom: 16 }}
+      />
+      <Text style={styles.emptyTitle}>No Favorites Yet</Text>
+      <Text style={styles.emptySubText}>
+        Save items you love — they'll show up here!
+      </Text>
+      <Button
+        style={{ marginTop: 16 }}
+        onPress={() =>
+          navigation.navigate('HomeStack', {
+            screen: 'MenuItems',
+          })
+        }>
+        Browse Menu
+      </Button>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       {isLoading ? (
         <MenuItemSkeleton />
+      ) : emptyFavorites ? (
+        <EmptyFavoritesState />
       ) : (
         <FlatList
           data={favoriteItems}
@@ -105,9 +135,24 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 16,
   },
-
   cardContainer: {
     flex: 1,
     maxWidth: '48%',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyTitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 32,
+    color: COLORS.darkColor,
+  },
+  emptySubText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 16,
+    color: COLORS.foregroundColor,
+    textAlign: 'center',
   },
 });

@@ -30,6 +30,7 @@ const DineInOrderStack = () => {
     <Stack.Navigator
       screenOptions={{
         headerTitle: '',
+        headerShadowVisible: false,
       }}>
       <Stack.Screen
         name="Order"
@@ -98,6 +99,7 @@ const DineInOffersStack = () => {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
+        headerShadowVisible: false,
       }}>
       <Stack.Screen name="Offers" component={DineInOffersScreen} />
       <Stack.Screen name="OfferDetails" component={OfferDetailsScreen} />

@@ -31,7 +31,11 @@ const Stack = createNativeStackNavigator<LoginStackParamList>();
 
 const LoginStack = () => {
   return (
-    <Stack.Navigator initialRouteName="Intro">
+    <Stack.Navigator
+      initialRouteName="Intro"
+      screenOptions={{
+        headerShadowVisible: false,
+      }}>
       <Stack.Screen
         name="Intro"
         component={IntroScreen}

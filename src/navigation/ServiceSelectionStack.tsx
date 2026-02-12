@@ -33,7 +33,10 @@ const Stack = createNativeStackNavigator();
 
 const ServiceSelectionStack = () => {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerShadowVisible: false,
+      }}>
       <Stack.Screen
         name="ServiceSelection"
         component={ServiceSelectionScreen}
