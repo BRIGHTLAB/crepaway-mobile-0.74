@@ -166,11 +166,10 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
               name="MenuItem"
               component={MenuItemScreen}
               options={{
-                headerTitle: '',
+                headerTitle: () => null,
                 headerShown: true,
                 headerBackVisible: false,
                 headerLeft: () => <CustomHeader />,
-                headerTitleAlign: 'center',
               }}
             />
 

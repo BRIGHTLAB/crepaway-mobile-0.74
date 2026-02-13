@@ -80,6 +80,8 @@ const CheckoutScreen = () => {
     promoCode: debouncedPromoCode,
   });
 
+  console.log('getCheckoutError', getCheckoutError);
+
   const { data: paymentMethodsData } = useGetPaymentMethodsQuery();
 
   const [placeOrder, { isLoading: isSubmitLoading, error: placeOrderError }] =
@@ -527,8 +529,8 @@ const CheckoutScreen = () => {
                         initialRegion={{
                           latitude: user.addressLatitude,
                           longitude: user.addressLongitude,
-                          latitudeDelta: 0.001,
-                          longitudeDelta: 0.001,
+                          latitudeDelta: 0.05,
+                          longitudeDelta: 0.05,
                         }}
                       >
                         <Marker
@@ -778,7 +780,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: SCREEN_PADDING.horizontal,
-    paddingTop: 12,
+    // paddingTop: 12,
+    marginTop: SCREEN_PADDING.vertical,
     paddingBottom: 30,
     gap: 16,
   },

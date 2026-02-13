@@ -22,6 +22,7 @@ import { RootStackParamList } from '../navigation/NavigationStack';
 import { RootState } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { normalizeFont } from '../utils/normalizeFonts';
 
 const SearchScreen = () => {
   const [searchValue, setSearchValue] = useState('');
@@ -104,7 +105,7 @@ const SearchScreen = () => {
       {/* <StatusBar barStyle={'dark-content'} /> */}
       <View style={styles.searchContainer}>
         <Input
-          placeholder="Search"
+          placeholder="What are you craving?"
           iconLeft={<Icon_Search />}
           value={searchValue}
           onChangeText={val => handleChangeSearch(val)}
@@ -145,39 +146,62 @@ const SearchScreen = () => {
         isFetching ? (
           <MenuItemSkeleton />
         ) : searchResults?.data && searchResults?.data?.length > 0 ? (
-          <FlatList
-            data={searchResults?.data || []}
-            renderItem={renderItem}
-            keyExtractor={item => item.id?.toString()}
-            numColumns={2}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ gap: 16 }}
-            ListHeaderComponent={() => (
-              <View style={{ height: 16 }} />
-            )}
-            ListFooterComponent={() => (
-              <View style={{ height: SCREEN_PADDING.vertical }} />
-            )}
-            columnWrapperStyle={{
-              gap: 16,
-            }}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                tintColor={COLORS.primaryColor}
-                colors={[COLORS.primaryColor]}
-              />
-            }
-          />
+          <View style={styles.resultsContainer}>
+            <Text style={styles.resultsCount}>
+              {searchResults.data.length} {searchResults.data.length === 1 ? 'result' : 'results'} found
+            </Text>
+            <FlatList
+              data={searchResults?.data || []}
+              renderItem={renderItem}
+              keyExtractor={item => item.id?.toString()}
+              numColumns={2}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ gap: 16 }}
+              // ListHeaderComponent={() => (
+              //   <View style={{ height: 0 }} />
+              // )}
+              ListFooterComponent={() => (
+                <View style={{ height: SCREEN_PADDING.vertical }} />
+              )}
+              columnWrapperStyle={{
+                gap: 16,
+              }}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  tintColor={COLORS.primaryColor}
+                  colors={[COLORS.primaryColor]}
+                />
+              }
+            />
+          </View>
         ) : (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No results found</Text>
+            <Icon_Search
+              width={normalizeFont(100)}
+              height={normalizeFont(100)}
+              color={COLORS.foregroundColor}
+              style={{ marginBottom: 16, opacity: 0.5 }}
+            />
+            <Text style={styles.emptyTitle}>No Results Found</Text>
+            <Text style={styles.emptySubText}>
+              Try searching with different keywords or browse our menu
+            </Text>
           </View>
         )
       ) : (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>Start typing to search for items</Text>
+          <Icon_Search
+            width={normalizeFont(100)}
+            height={normalizeFont(100)}
+            color={COLORS.primaryColor}
+            style={{ marginBottom: 10 }}
+          />
+          <Text style={styles.emptyTitle}>Start Searching</Text>
+          <Text style={styles.emptySubText}>
+            Type in the search bar to find your favorite items
+          </Text>
         </View>
       )}
     </View>
@@ -213,15 +237,30 @@ const styles = StyleSheet.create({
     flex: 1,
     maxWidth: '48%',
   },
+  resultsContainer: {
+    flex: 1,
+    gap: 8,
+  },
+  resultsCount: {
+    fontSize: normalizeFont(14),
+    fontFamily: 'Poppins-Regular',
+    color: COLORS.foregroundColor,
+    marginBottom: 0,
+    marginTop: 16,
+  },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
   },
-  emptyText: {
-    fontSize: 16,
+  emptyTitle: {
     fontFamily: 'Poppins-Medium',
+    fontSize: normalizeFont(22),
+    color: COLORS.darkColor,
+  },
+  emptySubText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: normalizeFont(14),
     color: COLORS.foregroundColor,
     textAlign: 'center',
   }

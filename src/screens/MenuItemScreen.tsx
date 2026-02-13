@@ -41,6 +41,7 @@ import { addItem, updateItem } from '../store/slices/cartSlice';
 import { RootState, useAppDispatch } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { normalizeFont } from '../utils/normalizeFonts';
 
 const SkeletonLoader = () => {
   return (
@@ -362,7 +363,7 @@ const MenuItemScreen = ({ }: IProps) => {
       {isLoading ? (
         <SkeletonLoader />
       ) : (
-        <View style={{ flex: 1, backgroundColor: 'white' }}>
+        <View style={{ flex: 1, backgroundColor: COLORS.backgroundColor}}>
 
           <KeyboardAvoidingView
             style={{
@@ -372,7 +373,7 @@ const MenuItemScreen = ({ }: IProps) => {
             keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight + 10 : 0}
           >
             <ScrollView
-              style={{ backgroundColor: '#fff' }}
+              // style={{ backgroundColor: COLORS.backgroundColor }}
               contentContainerStyle={{ flexGrow: 1 }}
               alwaysBounceVertical={true}
               bounces={true}
@@ -513,7 +514,7 @@ const MenuItemScreen = ({ }: IProps) => {
                         />
                         <View style={{
                           height: 10,
-                          backgroundColor: 'black',
+                          backgroundColor: COLORS.borderColor,
                           opacity: 0.03,
                         }} />
 
@@ -546,7 +547,7 @@ const MenuItemScreen = ({ }: IProps) => {
             style={{
               paddingHorizontal: SCREEN_PADDING.horizontal,
               paddingBottom: 34,
-              backgroundColor: '#fff',
+              backgroundColor: COLORS.backgroundColor,
               shadowColor: '#000',
               shadowOffset: {
                 width: 0,
@@ -653,7 +654,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SCREEN_PADDING.horizontal,
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: '#FFFFFF',
   },
   contentContainer: {
     paddingVertical: 16,
@@ -663,18 +663,21 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Poppins-Medium',
-    fontSize: 24,
+    fontSize: normalizeFont(22),
     color: COLORS.darkColor,
     width: '90%',
+    // backgroundColor: 'red',
+    lineHeight: 40,
+    textTransform: 'capitalize',
   },
   description: {
     fontFamily: 'Poppins-Regular',
-    fontSize: 14,
+    fontSize: normalizeFont(13),
     color: COLORS.foregroundColor,
   },
   price: {
     fontFamily: 'Poppins-Medium',
-    fontSize: 24,
+    fontSize: normalizeFont(22),
     fontWeight: '500',
     color: COLORS.secondaryColor,
     lineHeight: 32,

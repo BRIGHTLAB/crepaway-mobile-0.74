@@ -53,10 +53,7 @@ const FeaturedItemsScreen = () => {
           renderItem={renderItem}
           keyExtractor={item => item.id?.toString()}
           numColumns={2}
-          contentContainerStyle={{ gap: 16 }}
-          columnWrapperStyle={{
-            gap: 16,
-          }}
+          ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={() => (
             <View style={{ height: SCREEN_PADDING.vertical }} />

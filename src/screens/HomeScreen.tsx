@@ -144,8 +144,8 @@ const HomeScreen = () => {
   function updateHeaderColor(color: string) {
     navigation.setOptions({
       headerTintColor: color,
-      headerLeft: () => <CustomHeader color={color} clearOrderType />,
-      headerTitle: () => (<Text style={{backgroundColor: COLORS.primaryColor, borderRadius: 20, paddingVertical: 4 , paddingHorizontal: 8, marginTop:4,  lineHeight: 18, color: COLORS.white, fontSize: 14, fontFamily: 'Poppins-SemiBold', textTransform: 'uppercase', letterSpacing: 1 }}>{state.orderType === 'delivery' ? 'Delivery' : 'Takeaway'}</Text>),
+      headerLeft: () => <CustomHeader color={color} clearOrderType title={state.orderType === 'delivery' ? 'Delivery' : 'Takeaway'} />,
+      // headerTitle: () => (<Text style={{backgroundColor: COLORS.primaryColor, borderRadius: 20, paddingVertical: 4 , paddingHorizontal: 8, marginTop:4,  lineHeight: 18, color: COLORS.white, fontSize: 14, fontFamily: 'Poppins-SemiBold', textTransform: 'uppercase', letterSpacing: 1 }}>{state.orderType === 'delivery' ? 'Delivery' : 'Takeaway'}</Text>),
       headerRight: () => (
         <View
           style={{
@@ -235,7 +235,7 @@ const HomeScreen = () => {
 
           <ItemsList
             isLoading={isLoading}
-            title="Fav Items"
+            title="Favorite Items"
             data={favoriteItems ?? []}
             onPress={() => navigation.navigate('HomeStack', { screen: 'FavoriteItems' })}
             onItemPress={id =>

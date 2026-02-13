@@ -65,7 +65,7 @@ const OffersScreen = () => {
           renderItem={renderItem}
           keyExtractor={item => item.id?.toString()}
           numColumns={1}
-          contentContainerStyle={{ gap: 2 }}
+          ItemSeparatorComponent={() => <View style={{ height: 4 }} />}
         // columnWrapperStyle={{
         //   gap: 16,
         // }}

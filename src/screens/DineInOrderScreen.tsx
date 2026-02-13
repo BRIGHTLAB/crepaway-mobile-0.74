@@ -107,7 +107,7 @@ const DineInOrderScreen = () => {
             {
               <ItemsList
                 isLoading={isLoading}
-                title="Fav Items"
+                title="Favorite Items"
                 data={favoriteItems ?? []}
                 onPress={() => navigation.navigate('Favorites')}
                 onItemPress={id => {

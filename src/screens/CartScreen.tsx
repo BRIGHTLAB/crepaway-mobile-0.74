@@ -8,29 +8,30 @@ import {
   GestureResponderEvent,
 } from 'react-native';
 import React from 'react';
-import {useSelector} from 'react-redux';
-import {RootState, useAppDispatch} from '../store/store';
+import { useSelector } from 'react-redux';
+import { RootState, useAppDispatch } from '../store/store';
 import FastImage from 'react-native-fast-image';
 import Icon_Decrease_Quantity from '../../assets/SVG/Icon_Decrease_Quantity';
 import Icon_Increase_Quantity from '../../assets/SVG/Icon_Increase_Quantity';
 import Button from '../components/UI/Button';
 import Icon_Checkout from '../../assets/SVG/Icon_Checkout';
+import Icon_Cart from '../../assets/SVG/Icon_Cart';
 import {
   clearCart,
   increaseQuantity,
   decreaseQuantity,
   CartItem,
 } from '../store/slices/cartSlice';
-import {useNavigation} from '@react-navigation/native';
-import {COLORS, SCREEN_PADDING} from '../theme';
+import { useNavigation } from '@react-navigation/native';
+import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
 import CartItemComponent from '../components/Cart/CartItemComponent';
-import {RootStackParamList} from '../navigation/NavigationStack';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {DeliveryTakeawayStackParamList} from '../navigation/DeliveryTakeawayStack';
+import { RootStackParamList } from '../navigation/NavigationStack';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import ReactNativeHapticFeedback from "react-native-haptic-feedback";
+import { normalizeFont } from '../utils/normalizeFonts';
 
 
-interface IProps {}
+interface IProps { }
 
 interface CartData {
   branch: string;
@@ -41,11 +42,11 @@ interface CartData {
   order_type: string;
 }
 
-const CartScreen = ({}: IProps) => {
+const CartScreen = ({ }: IProps) => {
   const cartData = useSelector((state: RootState) => state.cart);
   const dispatch = useAppDispatch();
   const navigation =
-    useNavigation<NativeStackNavigationProp<DeliveryTakeawayStackParamList>>();
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const handleClearCart = () => {
     dispatch(clearCart());
@@ -89,37 +90,62 @@ const CartScreen = ({}: IProps) => {
   //   );
   // }
 
+  const EmptyCartState = () => (
+    <View style={styles.emptyContainer}>
+      <Icon_Cart
+        width={normalizeFont(100)}
+        height={normalizeFont(100)}
+        color={COLORS.primaryColor}
+        style={{ marginBottom: 16 }}
+      />
+      <Text style={styles.emptyTitle}>Your Cart is Empty</Text>
+      <Text style={styles.emptySubText}>
+        Add delicious items to your cart to get started!
+      </Text>
+      <Button
+        style={{ marginTop: 16 }}
+        onPress={() =>
+          navigation.navigate('HomeStack', {
+            screen: 'Home',
+          })
+        }>
+        Browse Menu
+      </Button>
+    </View>
+  );
+
   if (!cartData || Object.keys(cartData.items).length === 0) {
     return (
       <View style={styles.container}>
-        <View style={styles.boxContainer}>
-          <Text style={styles.emptyCartText}>Your cart is empty</Text>
-        </View>
+        <EmptyCartState />
       </View>
     );
   }
 
   return (
-    <ScrollView style={{flex: 1, backgroundColor: COLORS.backgroundColor}}>
+    <ScrollView style={{ flex: 1, backgroundColor: COLORS.backgroundColor }}>
       <View style={styles.container}>
         {/* Items  */}
         <View style={styles.boxContainer}>
-          <Pressable style={{alignSelf: 'flex-end'}} onPress={handleClearCart}>
-            <Text
-              style={{
-                color: COLORS.primaryColor,
-                fontFamily: 'Poppins-Medium',
-                fontSize: 14,
-                marginBottom: 6,
-              }}>
-              Clear Cart
-            </Text>
-          </Pressable>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6}}>
+            <Text style={{...TYPOGRAPHY.SUB_HEADLINE, paddingBottom: 6, color: COLORS.darkColor }}>All Items</Text>
+            <Pressable onPress={handleClearCart}>
+              <Text
+                style={{
+                  color: COLORS.primaryColor,
+                  ...TYPOGRAPHY.CTA,
+                  marginBottom: 6,
+                  textDecorationLine: 'underline',
+                }}>
+                Clear Cart
+              </Text>
+            </Pressable>
+          </View>
           {cartData &&
             Object.entries(cartData.items).map(([uuid, item], idx) => {
               const handleIncreaseQuantity = () => {
                 dispatch(increaseQuantity(uuid));
-                
+
                 // Trigger haptic feedback
                 ReactNativeHapticFeedback.trigger("impactLight", {
                   enableVibrateFallback: true,
@@ -136,7 +162,7 @@ const CartScreen = ({}: IProps) => {
                   enableVibrateFallback: true,
                   ignoreAndroidSystemSettings: false,
                 });
-                
+
               };
 
               const handleNavigateToMenuItem = () => {
@@ -156,10 +182,6 @@ const CartScreen = ({}: IProps) => {
                 />
               );
             })}
-
-          {(!cartData || Object.keys(cartData.items).length === 0) && (
-            <Text style={styles.emptyCartText}>Your cart is empty</Text>
-          )}
         </View>
 
         {cartData && Object.keys(cartData.items).length > 0 && (
@@ -168,7 +190,7 @@ const CartScreen = ({}: IProps) => {
               icon={<Icon_Checkout />}
               iconPosition="left"
               disabled={cartData.isSyncing}
-              onPress={() => navigation.navigate('Checkout')}>
+              onPress={() => navigation.navigate('HomeStack', { screen: 'Checkout' })}>
               {`Checkout ${getCurrencySymbol()}${calculateCartTotal().toFixed(2)}`}
             </Button>
           </>
@@ -183,12 +205,11 @@ export default CartScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 12,
     paddingHorizontal: SCREEN_PADDING.horizontal,
     flexDirection: 'column',
     gap: 12,
     paddingBottom: 28,
-    // backgroundColor: 'red',
+    backgroundColor: COLORS.backgroundColor,
   },
   loadingContainer: {
     justifyContent: 'center',
@@ -219,5 +240,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.foregroundColor,
     padding: 20,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: SCREEN_PADDING.horizontal,
+  },
+  emptyTitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: normalizeFont(22),
+    color: COLORS.darkColor,
+  },
+  emptySubText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: normalizeFont(14),
+    color: COLORS.foregroundColor,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
 });

@@ -24,6 +24,7 @@ import Button from '../components/UI/Button';
 import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
 import { COLORS, SCREEN_PADDING } from '../theme';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { normalizeFont } from '../utils/normalizeFonts';
 
 const OrderComponent = React.memo(
   ({
@@ -140,7 +141,7 @@ const SectionTitle = React.memo(({ title }: { title: string }) => (
       fontSize: 20,
       color: COLORS.darkColor,
       marginBottom: 10,
-      marginTop: 10,
+      // marginTop: 10,
     }}>
     {title}
   </Text>
@@ -213,8 +214,8 @@ const OrdersScreen = () => {
     () => (
       <View style={styles.noOrdersContainer}>
         <Icon_Spine
-          width={138}
-          height={140}
+          width={normalizeFont(100)}
+          height={normalizeFont(100)}
           color={COLORS.primaryColor}
           style={{ marginBottom: 16 }}
         />
@@ -354,7 +355,12 @@ const OrdersScreen = () => {
         maxToRenderPerBatch={5}
         windowSize={5}
         initialNumToRender={5}
-        ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+        renderSectionFooter={({ section }) =>
+          section.title === 'Ongoing Orders' ? (
+            <View style={{ height: 24 }} />
+          ) : null
+        }
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -387,7 +393,7 @@ const OrdersScreen = () => {
     <View style={styles.container}>
 
       {/* custom header inside the page */}
-      <HeaderShadow />
+      {/* <HeaderShadow /> */}
 
       <View style={{ paddingHorizontal: SCREEN_PADDING.horizontal, flex: 1 }}>
         {renderContent()}
@@ -426,12 +432,12 @@ const styles = StyleSheet.create({
   },
   noOrdersText: {
     fontFamily: 'Poppins-Medium',
-    fontSize: 32,
+    fontSize: normalizeFont(22),
     color: COLORS.darkColor,
   },
   noOrdersSubText: {
     fontFamily: 'Poppins-Regular',
-    fontSize: 16,
+    fontSize: normalizeFont(14),
     color: COLORS.foregroundColor,
     textAlign: 'center',
   },
@@ -453,7 +459,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderWidth: 1,
     borderColor: COLORS.borderColor,
-
     shadowColor: COLORS.shadowColor,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,

@@ -8,7 +8,7 @@ const MenuItemSkeleton = () => {
       <SkeletonPlaceholder.Item
         flexDirection="row"
         flexWrap="wrap"
-        marginTop={32}
+        marginTop={16}
         gap={16}>
         {[...Array(4)].map((_, index) => (
           <SkeletonPlaceholder.Item

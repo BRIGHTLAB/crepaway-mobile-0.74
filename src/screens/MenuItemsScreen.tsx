@@ -22,6 +22,7 @@ import {
 import { RootState } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { normalizeFont } from '../utils/normalizeFonts';
 
 // Fixed heights for more accurate calculations
 const ITEM_HEIGHT = 120; // Height of each menu item
@@ -678,7 +679,7 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     marginTop: 6,
-    fontSize: 22,
+    fontSize: normalizeFont(20),
     fontFamily: 'Poppins-SemiBold',
     fontWeight: '600',
     color: COLORS.darkColor,
@@ -694,23 +695,27 @@ const styles = StyleSheet.create({
   },
   menuItem: {
     flex: 1,
-    gap: 3,
     paddingTop: 0,
+    gap: 1,
   },
   itemName: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontFamily: 'Poppins-Medium',
     fontWeight: '500',
     color: COLORS.darkColor,
+    lineHeight: 18,
+    textTransform: 'capitalize',
   },
   itemPrice: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontFamily: 'Poppins-Medium',
     fontWeight: '500',
     color: COLORS.secondaryColor,
+    lineHeight: 20,
+    marginTop: 6,
   },
   itemDescription: {
-    fontSize: 12,
+    fontSize: normalizeFont(12),
     color: COLORS.foregroundColor,
   },
 });

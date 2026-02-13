@@ -46,6 +46,7 @@ import store from '../store/store';
 import { COLORS, DRIVER_SOCKET_URL, SCREEN_PADDING } from '../theme';
 import { formatNumberWithCommas } from '../utils/formatNumberWithCommas';
 import SocketService from '../utils/SocketService';
+import CustomHeader from '../components/Header';
 
 type OrderScreenRouteProps = RouteProp<OrdersStackParamList, 'TrackOrder'>;
 
@@ -318,7 +319,7 @@ const TrackOrderScreen = () => {
     if (!orderId) return;
 
     navigation.setOptions({
-      headerTitle: `Order #${orderId}`,
+      headerLeft: () => <CustomHeader title={`Order #${orderId}`} />,
     });
 
   }, [orderId]);
@@ -721,6 +722,7 @@ const styles = StyleSheet.create({
     margin: 0,
     padding: 0,
   backgroundColor: COLORS.backgroundColor      
+    // backgroundColor: 'red',
   },
   mapContainer: {
     top: -10,

@@ -5,7 +5,7 @@ import {
   createNativeStackNavigator,
   NativeStackNavigationProp,
 } from '@react-navigation/native-stack';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Icon_Nav_Fav from '../../assets/SVG/Icon_Nav_Fav';
 import Icon_Nav_Home from '../../assets/SVG/Icon_Nav_Home';
@@ -113,7 +113,6 @@ const HomeStack = () => {
           title: "",
           headerLeft: () => <CustomHeader color={'white'} clearOrderType />,
           headerTitleAlign: 'center',
-          headerTitle: "hii",
           headerRight: () => (
             <View
               style={{
@@ -142,10 +141,9 @@ const HomeStack = () => {
         name="Offers"
         component={OffersScreen}
         options={{
-          headerTitle: 'Exclusive Offers',
+          headerTitle: () => null,
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
+          headerLeft: () => <CustomHeader title='Exclusive Offers' />,
           headerRight: () => (
             <View
               style={{
@@ -174,19 +172,17 @@ const HomeStack = () => {
         name="OfferDetails"
         component={OfferDetailsScreen}
         options={{
-          headerTitle: 'Exclusive Offer',
+          headerTitle: () => null,
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
+          headerLeft: () => <CustomHeader title='Exclusive Offer' />,
         }}
       />
       <Stack.Screen
         name="FavoriteItems"
         component={FavoritesScreen}
         options={{
-          headerTitle: 'Favorite Items',
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
+          headerTitle: () => null,
+          headerLeft: () => <CustomHeader title='My Favorite Items' />,
           headerRight: () => (
             <View
               style={{
@@ -215,10 +211,9 @@ const HomeStack = () => {
         name="NewItems"
         component={NewItemsScreen}
         options={{
-          headerTitle: 'New Items',
+          headerTitle: () => null,
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
+          headerLeft: () => <CustomHeader title='New Items' />,
           headerRight: () => (
             <View
               style={{
@@ -247,9 +242,9 @@ const HomeStack = () => {
         name="featuredItems"
         component={FeaturedItemsScreen}
         options={{
-          headerTitle: 'Featured Items',
+          headerTitle: () => null,
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
+          headerLeft: () => <CustomHeader title='Featured Items' />,
           headerTitleAlign: 'center',
           headerRight: () => (
             <View
@@ -279,14 +274,9 @@ const HomeStack = () => {
         name="MenuItems"
         component={MenuItemsScreen}
         options={{
-          headerTitle: 'Menu',
+          headerTitle: () => null,
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
-          // contentStyle: {
-          //   pointerEvents: 'none',
-          // },
-          headerShadowVisible: false,
+          headerLeft: () => <CustomHeader title='Our Loved Menu' />,
           headerRight: () => (
             <View
               style={{
@@ -308,10 +298,10 @@ const HomeStack = () => {
         name="Cart"
         component={CartScreen}
         options={{
-          headerTitle: 'Cart',
+          headerTitle: () => null,
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
+          headerLeft: () => <CustomHeader title='My Cart' />,
+          // headerTitleAlign: 'center',
         }}
       />
       <Stack.Screen
@@ -325,30 +315,27 @@ const HomeStack = () => {
         name="Checkout"
         component={CheckoutScreen}
         options={{
-          headerTitle: 'Checkout',
+          headerTitle: () => null,
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
+          headerLeft: () => <CustomHeader title='Checkout' />,
         }}
       />
       <Stack.Screen
         name="AddressMap"
         component={AddressMapScreen}
         options={{
-          headerTitle: 'Checkout',
+          headerTitle: () => null,
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
+          headerLeft: () => <CustomHeader title='Checkout' />,
         }}
       />
       <Stack.Screen
         name="TrackOrder"
         component={TrackOrderScreen}
         options={{
-          headerTitle: 'Track Order',
+          headerTitle: () => null,
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
+          headerLeft: () => <CustomHeader title='Track Order' />,
         }}
       />
     </Stack.Navigator>
@@ -373,9 +360,8 @@ const SearchStack = () => {
         name="Search"
         component={SearchScreen}
         options={{
-          headerTitle: 'Search',
+          headerTitle: 'Search Menu',
           headerBackVisible: false,
-          headerTitleAlign: 'center',
         }}
       />
     </Stack.Navigator>
@@ -402,9 +388,8 @@ const FavoritesStack = () => {
         name="Favorites"
         component={FavoritesScreen}
         options={{
-          headerTitle: 'Favorites',
+          headerTitle: 'My Favorite Items',
           headerBackVisible: false,
-          headerTitleAlign: 'center',
         }}
       />
 
@@ -437,11 +422,10 @@ const ProfileStack = () => {
       }}
     >
       <Stack.Screen
-        name="Profile"
+        name="My Profile"
         component={ProfileScreen}
         options={{
           headerBackVisible: false,
-          headerTitleAlign: 'center'
         }}
       />
       <Stack.Screen
@@ -449,9 +433,8 @@ const ProfileStack = () => {
         component={ProfileSettingsScreen}
         options={{
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
-          headerTitle: 'Profile Settings',
+          headerLeft: () => <CustomHeader title='Profile Settings' />,
+          headerTitle: () => null,
         }}
       />
       <Stack.Screen
@@ -459,9 +442,8 @@ const ProfileStack = () => {
         component={DeleteAccountOTPScreen}
         options={{
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
-          headerTitle: 'Confirm Deletion',
+          headerLeft: () => <CustomHeader title='Confirm Deletion' />,
+          headerTitle: () => null,
         }}
       />
       <Stack.Screen
@@ -469,18 +451,17 @@ const ProfileStack = () => {
         component={ProfileAddressesScreen}
         options={{
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
+          headerLeft: () => <CustomHeader title='My Addresses'   />,
+          headerTitle: () => null,
         }}
       />
       <Stack.Screen
         name="AddressMap"
         component={AddressMapScreen}
         options={{
-          headerTitle: 'Map',
+          headerTitle: () => null,
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
+          headerLeft: () => <CustomHeader title='Map' />,
         }}
       />
       <Stack.Screen
@@ -488,8 +469,8 @@ const ProfileStack = () => {
         component={LegalScreen}
         options={{
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
+          headerLeft: () => <CustomHeader title='Legal' />,
+          headerTitle: () => null,
         }}
       />
       <Stack.Screen
@@ -497,8 +478,8 @@ const ProfileStack = () => {
         component={FAQScreen}
         options={{
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
+          headerLeft: () => <CustomHeader title='FAQ' />,
+          headerTitle: () => null,
         }}
       />
       <Stack.Screen
@@ -506,9 +487,8 @@ const ProfileStack = () => {
         component={PaymentMethodsScreen}
         options={{
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
-          headerTitle: 'Payment Methods',
+          headerLeft: () => <CustomHeader title='Payment Methods' />,
+          headerTitle: () => null,
         }}
       />
       <Stack.Screen
@@ -516,9 +496,8 @@ const ProfileStack = () => {
         component={AllergiesScreen}
         options={{
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
-          headerTitle: 'Allergies',
+          headerLeft: () => <CustomHeader title='My Allergies' />,
+          headerTitle: () => null,
         }}
       />
       <Stack.Screen
@@ -526,19 +505,17 @@ const ProfileStack = () => {
         component={WalletScreen}
         options={{
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
-          headerTitle: 'Wallet',
+          headerLeft: () => <CustomHeader title='My Wallet' />,
+          headerTitle: () => null,
         }}
       />
       <Stack.Screen
         name="FavoriteItems"
         component={FavoritesScreen}
         options={{
-          headerTitle: 'Favorite Items',
+          headerTitle: () => null,
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
+          headerLeft: () => <CustomHeader title='My Favorite Items' />,
         }}
       />
     </Stack.Navigator>
@@ -571,7 +548,6 @@ const OrderStack = () => {
         options={{
           headerTitle: 'Orders',
           headerBackVisible: false,
-          headerTitleAlign: 'center',
           headerShadowVisible: false,
         }}
       />
@@ -579,10 +555,9 @@ const OrderStack = () => {
         name="OrderDetails"
         component={OrderDetailsScreen}
         options={{
-          headerTitle: 'Orders',
+          headerTitle: () => null,
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
+          headerLeft: () => <CustomHeader title='Order Details' />,
           headerShadowVisible: false,
         }}
       />
@@ -590,10 +565,10 @@ const OrderStack = () => {
         name="TrackOrder"
         component={TrackOrderScreen}
         options={{
-          headerTitle: 'Track Order',
+          headerTitle: () => null,
           headerBackVisible: false,
           headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
+          // headerTitleAlign: 'center',
         }}
       />
     </Stack.Navigator>
@@ -645,11 +620,17 @@ export const navigationData = [
 
 
 const DeliveryTakeawayStack = () => {
+  const [ordersBadgeCount, setOrdersBadgeCount] = useState<number>(0);
+
+  useEffect(() => {
+    setOrdersBadgeCount(1);
+  }, []);
+
   return (
     <Tab.Navigator
       initialRouteName="HomeStack"
 
-      tabBar={props => <CustomBottomTab {...(props as any)} navigationData={navigationData} />}
+      tabBar={props => <CustomBottomTab {...(props as any)} navigationData={navigationData} ordersBadgeCount={ordersBadgeCount} />}
     >
       {navigationData?.map((el, idx) => (
         <Tab.Screen

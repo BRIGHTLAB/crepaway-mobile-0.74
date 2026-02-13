@@ -7,16 +7,18 @@ import {
 import { COLORS } from "../theme";
 import { SvgProps } from "react-native-svg";
 import RightCurvedBar from "./Curve";
+import { normalizeFont } from "../utils/normalizeFonts";
 
 export interface INavigationItem {
-    Icon?: React.ComponentType<{ color: string }>;
+    Icon?: React.ComponentType<SvgProps>;
     title: string | null;
     focused: boolean;
     name?: string;
     headerShown?: boolean;
+    badgeCount?: number;
 }
 
-export const NavigationItem = ({ Icon, title, focused, name }: INavigationItem) => {
+export const NavigationItem = ({ Icon, title, focused, name, badgeCount }: INavigationItem) => {
     return (
         <View
             style={{
@@ -30,11 +32,18 @@ export const NavigationItem = ({ Icon, title, focused, name }: INavigationItem) 
                 paddingTop: 10,
                 ...(name === 'HomeStack' ? { top: -15 } : {}),
             }}>
-            {Icon && <Icon
-                color={focused ? '#DB0032' : '#F7F7F7F7'}
-                width={name === 'HomeStack' ? 74 : 27}
-                height={name === 'HomeStack' ? 74 : 27}
-            />}
+            <View style={{ position: 'relative' }}>
+                {Icon && <Icon
+                    color={focused ? '#DB0032' : '#F7F7F7F7'}
+                    width={name === 'HomeStack' ? 74 : 27}
+                    height={name === 'HomeStack' ? 74 : 27}
+                />}
+                {badgeCount !== undefined && badgeCount > 0 && (
+                    <View style={styles.badge}>
+                        <Text style={styles.badgeText}>{badgeCount}</Text>
+                    </View>
+                )}
+            </View>
             <Text
                 style={{
                     color: focused ? COLORS.primaryColor : COLORS.lightColor,
@@ -80,7 +89,8 @@ export interface CustomBottomTabProps {
         Icon: (props: SvgProps) => React.JSX.Element;
         headerShown: boolean;
         initialScreen: string;
-    }[]
+    }[];
+    ordersBadgeCount?: number;
 
 }
 
@@ -88,7 +98,8 @@ export const CustomBottomTab = ({
     state,
     descriptors,
     navigation,
-    navigationData
+    navigationData,
+    ordersBadgeCount
 }: CustomBottomTabProps) => {
     return (
         <View style={styles.mainContainer}>
@@ -149,6 +160,7 @@ export const CustomBottomTab = ({
                                 name={navItem?.name}
                                 focused={isFocused}
                                 headerShown={navItem?.headerShown}
+                                badgeCount={navItem?.name === 'OrderStack' ? ordersBadgeCount : undefined}
                             />
                         </TouchableOpacity>
                     );
@@ -193,7 +205,24 @@ const styles = StyleSheet.create({
     },
     rightDivider: {
 
-    }
+    },
+    badge: {
+        position: 'absolute',
+        top: -5,
+        right: -8,
+        backgroundColor: COLORS.primaryColor,
+        minWidth: 18,
+        height: 18,
+        borderRadius: 9,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 4,
+    },
+    badgeText: {
+        fontFamily: 'Poppins-Medium',
+        fontSize: normalizeFont(10),
+        color: 'white',
+    },
 });
 
 

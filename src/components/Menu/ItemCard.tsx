@@ -17,6 +17,7 @@ import { RootStackParamList } from '../../navigation/NavigationStack';
 import { RootState } from '../../store/store';
 import { COLORS } from '../../theme';
 import { FadeInFastImage } from '../FadeInFastImage';
+import { normalizeFont } from '../../utils/normalizeFonts';
 
 interface IProps {
   id: number;
@@ -109,7 +110,7 @@ const ItemCard = ({
         />
         <View style={styles.content}>
           <View style={styles.leftContent}>
-            <Text style={styles.name} numberOfLines={1}>
+            <Text style={styles.name} numberOfLines={2}>
               {capitalizeFirstLetter(name)}
             </Text>
             {/* wishlist icon  */}
@@ -200,17 +201,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   name: {
-    marginTop: 8,
-    fontSize: 16,
+    marginTop: 10,
+    fontSize: normalizeFont(15),
     fontFamily: 'Poppins-Medium',
     color: COLORS.darkColor,
+    lineHeight: 20,
   },
   description: {
     fontFamily: 'Poppins-Normal',
-    fontSize: 12,
+    fontSize: normalizeFont(12),
   },
   price: {
-    fontSize: 16,
+    fontSize: normalizeFont(14),
     fontFamily: 'Poppins-Medium',
     color: COLORS.secondaryColor,
     marginTop: 4,

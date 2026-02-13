@@ -7,6 +7,7 @@ import {RootStackParamList} from '../navigation/NavigationStack';
 import {COLORS} from '../theme';
 import {useAppDispatch} from '../store/store';
 import {setOrderType} from '../store/slices/userSlice';
+import { normalizeFont } from '../utils/normalizeFonts';
 
 interface IProps {
   title?: string;
@@ -17,7 +18,7 @@ interface IProps {
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const CustomHeader: React.FC<IProps> = ({
-  title = 'Back',
+  title = '',
   color = COLORS.darkColor,
   clearOrderType = false,
 }) => {
@@ -42,7 +43,6 @@ const CustomHeader: React.FC<IProps> = ({
   return (
     <View
       style={{
-        width: 70,
         height: 30,
         paddingTop: 4,
         flexDirection: 'row',
@@ -50,7 +50,7 @@ const CustomHeader: React.FC<IProps> = ({
       }}>
       <TouchableOpacity
         onPress={handleBackPress}
-        style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+        style={{flexDirection: 'row', alignItems: 'center', gap: 16,}}>
         <Icon_BackArrow color={color} />
         <Text style={[styles.headerTitle, {color: color}]}>{title}</Text>
       </TouchableOpacity>
@@ -63,7 +63,7 @@ export default CustomHeader;
 const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: 'Poppins-Medium',
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     color: COLORS.darkColor,
   },
 });

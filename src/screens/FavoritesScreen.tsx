@@ -12,6 +12,7 @@ import { RootStackParamList } from '../navigation/NavigationStack';
 import { RootState } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { normalizeFont } from '../utils/normalizeFonts';
 
 const FavoritesScreen = () => {
 
@@ -65,8 +66,8 @@ const FavoritesScreen = () => {
   const EmptyFavoritesState = () => (
     <View style={styles.emptyContainer}>
       <Icon_Spine
-        width={138}
-        height={140}
+        width={normalizeFont(100)}
+        height={normalizeFont(100)}
         color={COLORS.primaryColor}
         style={{ marginBottom: 16 }}
       />
@@ -107,7 +108,7 @@ const FavoritesScreen = () => {
               colors={[COLORS.primaryColor]}
             />
           }
-          contentContainerStyle={{ gap: 16 }}
+          ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
           ListHeaderComponent={() => (
             <View style={{ height: SCREEN_PADDING.vertical }} />
           )}
@@ -147,12 +148,12 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontFamily: 'Poppins-Medium',
-    fontSize: 32,
+    fontSize: normalizeFont(22),
     color: COLORS.darkColor,
   },
   emptySubText: {
     fontFamily: 'Poppins-Regular',
-    fontSize: 16,
+    fontSize: normalizeFont(14),
     color: COLORS.foregroundColor,
     textAlign: 'center',
   },

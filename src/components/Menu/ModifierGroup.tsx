@@ -286,7 +286,7 @@ if (!group.enabled) return null;
 
       {expanded && (
         <View style={{ gap: 8 }}>
-                {group.min_quantity === 0 && (
+                {group.min_quantity >0 && (
         <Text style={{ fontSize: 12, fontWeight: '500', paddingHorizontal: 16, marginBottom: 4,  }}>
       At least {group?.min_quantity} quantity are required to be added.
         </Text>

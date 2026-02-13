@@ -5,6 +5,7 @@ import Icon_Increase_Quantity from '../../../assets/SVG/Icon_Increase_Quantity';
 import { OrderItem } from '../../api/ordersApi';
 import { CartItem } from '../../store/slices/cartSlice';
 import { COLORS } from '../../theme';
+import { normalizeFont } from '../../utils/normalizeFonts';
 
 // Cart Item
 const CartItemComponent = ({
@@ -61,7 +62,7 @@ const CartItemComponent = ({
             uri: item?.image_url || 'https://placehold.co/600x400/png',
             priority: FastImage.priority.normal,
           }}
-          style={{ width: 80, height: 88, borderRadius: 8 }}
+          style={{ width: 70, height: 70, borderRadius: 8 }}
           resizeMode={FastImage.resizeMode.cover}
         />
 
@@ -70,15 +71,16 @@ const CartItemComponent = ({
             numberOfLines={2}
             style={{
               fontFamily: 'Poppins-Medium',
-              fontSize: 16,
+              fontSize: normalizeFont(14),
               color: COLORS.darkColor,
+              textTransform: 'capitalize',
             }}>
             {item.name}
           </Text>
           <Text
             style={{
               fontFamily: 'Poppins-Medium',
-              fontSize: 16,
+              fontSize: normalizeFont(14),
               color: COLORS.secondaryColor,
             }}>
             {item.symbol} {calculateItemTotal().toFixed(2)}
