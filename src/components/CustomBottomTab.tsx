@@ -39,8 +39,8 @@ export const NavigationItem = ({ Icon, title, focused, name, badgeCount }: INavi
                     height={name === 'HomeStack' ? 74 : 27}
                 />}
                 {badgeCount !== undefined && badgeCount > 0 && (
-                    <View style={styles.badge}>
-                        <Text style={styles.badgeText}>{badgeCount}</Text>
+                    <View style={[styles.badge, focused && styles.badgeActive]}>
+                        <Text style={[styles.badgeText, focused && styles.badgeTextActive]}>{badgeCount}</Text>
                     </View>
                 )}
             </View>
@@ -220,8 +220,14 @@ const styles = StyleSheet.create({
     },
     badgeText: {
         fontFamily: 'Poppins-Medium',
-        fontSize: normalizeFont(10),
+        fontSize: normalizeFont(11),
         color: 'white',
+    },
+    badgeActive: {
+        backgroundColor: COLORS.white,
+    },
+    badgeTextActive: {
+        color: COLORS.primaryColor,
     },
 });
 

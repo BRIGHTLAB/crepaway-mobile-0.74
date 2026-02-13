@@ -130,6 +130,9 @@ const OrderRatingSheet = forwardRef<OrderRatingSheetRef, Props>(
             >
                 <View style={styles.headerContainer}>
                     <Text style={styles.headerText}>{title}</Text>
+                    {orderId > 0 && (
+                        <Text style={styles.orderIdText}>Order #{orderId}</Text>
+                    )}
                 </View>
                 <BottomSheetScrollView
                     contentContainerStyle={styles.formContainer}
@@ -189,13 +192,21 @@ export default OrderRatingSheet;
 
 const styles = StyleSheet.create({
     headerContainer: {
-        gap: 8,
-        paddingBottom: 15,
+        marginBottom: 4,
+        alignItems: 'center',
     },
     headerText: {
         ...TYPOGRAPHY.TITLE,
         color: COLORS.black,
         fontFamily: 'Poppins-SemiBold',
+        textAlign: 'center',
+        textTransform: 'capitalize',
+
+    },
+    orderIdText: {
+        fontSize: 14,
+        color: COLORS.foregroundColor,
+        fontFamily: 'Poppins-Regular',
         textAlign: 'center',
     },
     formContainer: {

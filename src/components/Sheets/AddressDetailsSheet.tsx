@@ -160,6 +160,8 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
         } else {
           const response = await addAddresses({ addresses: [data] }).unwrap();
 
+          console.log('response address', response);
+
 
           const newAddress = response.user_address?.[0];
 
@@ -181,9 +183,10 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
                 orderTypeAlias: 'delivery',
               })
             );
-          } else {
-            navigation.goBack();
-          }
+          } 
+          navigation.goBack();
+
+          
         }
       } catch (error: any) {
         console.error('ERROR', error);

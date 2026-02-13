@@ -18,6 +18,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import Toast from 'react-native-toast-message';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import Icon_Branch from '../../assets/SVG/Icon_Branch';
 import Icon_Checkout from '../../assets/SVG/Icon_Checkout';
 import Icon_Location from '../../assets/SVG/Icon_Location';
@@ -82,7 +83,7 @@ const CheckoutScreen = () => {
 
   console.log('getCheckoutError', getCheckoutError);
 
-  const { data: paymentMethodsData } = useGetPaymentMethodsQuery();
+  const { data: paymentMethodsData, isLoading: isPaymentMethodsLoading } = useGetPaymentMethodsQuery();
 
   const [placeOrder, { isLoading: isSubmitLoading, error: placeOrderError }] =
     usePlaceOrderMutation();
@@ -558,30 +559,52 @@ const CheckoutScreen = () => {
               ></View>
 
               <View style={styles.paymentMethodContainer}>
-                {paymentMethodsData?.data?.map((method) => (
-                  <View key={method.id} style={styles.paymentMethodItem}>
-                    <RadioButton
-                      onPress={() => setSelectedPaymentMethodId(method.id)}
-                      checked={selectedPaymentMethodId === method.id}
-                      title={method.title}
-                    />
-                    {method.image_url ? (
-                      <FastImage
-                        source={{ uri: method.image_url }}
-                        style={{ width: 48, height: 28 }}
-                        resizeMode={FastImage.resizeMode.contain}
+                {isPaymentMethodsLoading ? (
+                  <SkeletonPlaceholder>
+                    <SkeletonPlaceholder.Item gap={16}>
+                      {[1, 2, 3].map((i) => (
+                        <SkeletonPlaceholder.Item
+                          key={i}
+                          flexDirection="row"
+                          alignItems="center"
+                          justifyContent="space-between"
+                          paddingVertical={6}
+                        >
+                          <SkeletonPlaceholder.Item flexDirection="row" alignItems="center" gap={12}>
+                            <SkeletonPlaceholder.Item width={24} height={24} borderRadius={12} />
+                            <SkeletonPlaceholder.Item width={120} height={16} borderRadius={4} />
+                          </SkeletonPlaceholder.Item>
+                          <SkeletonPlaceholder.Item width={48} height={28} borderRadius={4} />
+                        </SkeletonPlaceholder.Item>
+                      ))}
+                    </SkeletonPlaceholder.Item>
+                  </SkeletonPlaceholder>
+                ) : (
+                  paymentMethodsData?.data?.map((method) => (
+                    <View key={method.id} style={styles.paymentMethodItem}>
+                      <RadioButton
+                        onPress={() => setSelectedPaymentMethodId(method.id)}
+                        checked={selectedPaymentMethodId === method.id}
+                        title={method.title}
                       />
-                    ) : (
-                      // Fallback to local image if no image_url
-                      method.type === 'cash' && (
+                      {method.image_url ? (
                         <FastImage
-                          source={require('../../assets/images/payment/cash.png')}
+                          source={{ uri: method.image_url }}
                           style={{ width: 48, height: 28 }}
+                          resizeMode={FastImage.resizeMode.contain}
                         />
-                      )
-                    )}
-                  </View>
-                ))}
+                      ) : (
+                        // Fallback to local image if no image_url
+                        method.type === 'cash' && (
+                          <FastImage
+                            source={require('../../assets/images/payment/cash.png')}
+                            style={{ width: 48, height: 28 }}
+                          />
+                        )
+                      )}
+                    </View>
+                  ))
+                )}
               </View>
             </View>
 

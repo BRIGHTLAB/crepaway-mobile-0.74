@@ -396,7 +396,7 @@ const TrackOrderScreen = () => {
 
           });
         }
-      }, 5000);
+      }, 1000);
 
       return () => {
         clearTimeout(navigationTimeout);

@@ -69,24 +69,26 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
   const notificationInstance = NotificationService.getInstance();
   const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
   const ratingSheetRef = useRef<OrderRatingSheetRef>(null);
-  const [hasShownRating, setHasShownRating] = useState(false);
+  const [lastShownOrderId, setLastShownOrderId] = useState<number | null>(null);
   const [pendingOrderId, setPendingOrderId] = useState<number | null>(null);
 
   const { data: pendingOrderToRate } = useGetPendingRatingQuery(undefined, {
-    skip: hasShownRating || !isSplashAnimationFinished || !isLoggedIn,
+    skip: !isSplashAnimationFinished || !isLoggedIn,
   });
 
   useEffect(() => {
-    if (pendingOrderToRate?.id && isSplashAnimationFinished && !hasShownRating) {
+    if (
+      pendingOrderToRate?.id &&
+      isSplashAnimationFinished &&
+      pendingOrderToRate.id !== lastShownOrderId
+    ) {
       setPendingOrderId(pendingOrderToRate.id);
-      // Small delay to ensure the sheet ref is ready
       setTimeout(() => {
         ratingSheetRef.current?.expand();
       }, 100);
-      setHasShownRating(true);
+      setLastShownOrderId(pendingOrderToRate.id);
     }
-    console.log('wehavePendingOrdertoRate', pendingOrderToRate)
-  }, [pendingOrderToRate, isSplashAnimationFinished, hasShownRating]);
+  }, [pendingOrderToRate, isSplashAnimationFinished, lastShownOrderId]);
 
   // Initialize notification service when user logs in
   useEffect(() => {
