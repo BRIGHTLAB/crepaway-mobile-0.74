@@ -158,6 +158,13 @@ export const ordersApi = baseApi.injectEndpoints({
       providesTags: (_result, _error, id) => (id ? [{ type: 'Order', id }] : []), // Return an empty array if id is null or undefined
       keepUnusedDataFor: 0, // Force refetch every time screen opens
     }),
+    getOrdersBadgeCount: builder.query<{ count: number }, void>({
+      query: () => ({
+        url: '/orders/pending-count',
+        method: 'GET',
+      }),
+      providesTags: ['Order'],
+    }),
     getOrderStatus: builder.query<OrderStatusResponse, number>({
       query: id => `/orders/${id}/status`,
       providesTags: (_result, _error, id) =>
@@ -188,6 +195,7 @@ export const {
   useGetOrdersQuery,
   useGetOrderTypesQuery,
   useGetOrderQuery,
+  useGetOrdersBadgeCountQuery,
   useGetOrderStatusQuery,
   useRateOrderMutation,
   useGetPendingRatingQuery,

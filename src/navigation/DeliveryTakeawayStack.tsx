@@ -43,6 +43,7 @@ import WalletScreen from '../screens/WalletScreen';
 import { setCartFromFetch } from '../store/slices/cartSlice';
 import { useAppDispatch } from '../store/store';
 import { RootStackParamList } from './NavigationStack';
+import { useGetOrdersBadgeCountQuery } from '../api/ordersApi';
 
 export type DeliveryTakeawayStackParamList = {
   HomeStack: any;
@@ -621,15 +622,28 @@ export const navigationData = [
 
 const DeliveryTakeawayStack = () => {
   const [ordersBadgeCount, setOrdersBadgeCount] = useState<number>(0);
+  const [currentRoute, setCurrentRoute] = useState<string>('HomeStack');
+
+  const { data: badgeCount, refetch: refetchBadgeCount } = useGetOrdersBadgeCountQuery();
 
   useEffect(() => {
-    setOrdersBadgeCount(1);
-  }, []);
+    if (currentRoute === 'HomeStack' || currentRoute === 'OrderStack') {
+      refetchBadgeCount();
+    }
+  }, [currentRoute]);
+
+  useEffect(() => {
+    if (currentRoute !== 'HomeStack' && currentRoute !== 'OrderStack') return;
+    if (!badgeCount) return;
+    setOrdersBadgeCount(badgeCount?.count || 0);
+  }, [badgeCount, currentRoute]);
 
   return (
     <Tab.Navigator
       initialRouteName="HomeStack"
-
+      screenListeners={({ route }) => ({
+        focus: () => setCurrentRoute(route.name),
+      })}
       tabBar={props => <CustomBottomTab {...(props as any)} navigationData={navigationData} ordersBadgeCount={ordersBadgeCount} />}
     >
       {navigationData?.map((el, idx) => (
