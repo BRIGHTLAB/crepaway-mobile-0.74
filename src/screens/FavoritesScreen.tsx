@@ -129,6 +129,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: SCREEN_PADDING.horizontal,
+    backgroundColor: COLORS.backgroundColor,
   },
   title: {
     fontSize: 24,

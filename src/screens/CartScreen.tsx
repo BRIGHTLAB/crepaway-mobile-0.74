@@ -100,7 +100,7 @@ const CartScreen = ({}: IProps) => {
   }
 
   return (
-    <ScrollView>
+    <ScrollView style={{flex: 1, backgroundColor: COLORS.backgroundColor}}>
       <View style={styles.container}>
         {/* Items  */}
         <View style={styles.boxContainer}>
@@ -188,6 +188,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     gap: 12,
     paddingBottom: 28,
+    // backgroundColor: 'red',
   },
   loadingContainer: {
     justifyContent: 'center',
@@ -195,7 +196,7 @@ const styles = StyleSheet.create({
     height: 300,
   },
   boxContainer: {
-    backgroundColor: '#FFF',
+    // backgroundColor: '#FFF',
     paddingHorizontal: 12,
     paddingVertical: 16,
     borderRadius: 8,

@@ -7,7 +7,8 @@ export const COLORS = {
   darkColor: '#191919',
   lightColor: '#F7F7F7',
   foregroundColor: '#8391A1',
-  borderColor: '#D9D9D9',
+  backgroundColor: '#FFF',
+  borderColor: '#F0F0F0',
   card: '#FFFFFF',
   yellow: '#F9CA03',
   yellowLight: '#F9CA0356',
@@ -18,6 +19,7 @@ export const COLORS = {
   white: '#ffffff',
   placeholderColor: '#8391A1',
   primaryGradient: ['#DB0032', '#B6022B'],
+  shadowColor: '#000',
 };
 
 export const SCREEN_PADDING = {
@@ -29,7 +31,8 @@ export const INPUT_HEIGHT = 53;
 
 // export const BASE_URL = 'http://192.168.10.151:8080/api/app';
 // export const BASE_URL = 'https://cc9099b8927d.ngrok-free.app/api/app';
-export const BASE_URL = 'https://crepaway.staging-api.thenewexperience.app/api/app';
+export const BASE_URL = 'https://dev.staging-api.thenewexperience.app/api/app';
+// export const BASE_URL = 'http://dev.chris.pc:8080/api/app';
 
 export const API_MAP_KEY = 'AIzaSyA0IxviANpXAl-sTNcYjH1zU5cjgXimKuk';
 export const DRIVER_SOCKET_URL = 'wss://crepaway.realtime.driver-tracking.com';

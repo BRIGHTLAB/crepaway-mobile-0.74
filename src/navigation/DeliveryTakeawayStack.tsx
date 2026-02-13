@@ -101,7 +101,7 @@ const HomeStack = () => {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerShadowVisible: false
+        headerShadowVisible: false,
       }}
     >
       <Stack.Screen

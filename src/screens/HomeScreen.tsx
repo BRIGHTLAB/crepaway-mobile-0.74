@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     position: 'relative',
-    backgroundColor: 'white'
+    backgroundColor: COLORS.backgroundColor,
   },
   headerContainer: {
     position: 'absolute',
@@ -338,14 +338,14 @@ const styles = StyleSheet.create({
     paddingTop: 15,
     borderTopRightRadius: 10,
     borderTopLeftRadius: 10,
-    backgroundColor: COLORS.white
+    backgroundColor: COLORS.backgroundColor
   },
   swiperContainer: {
     // marginTop: 60,
     // paddingHorizontal: 10,
     marginBottom: 10,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
-    overflow: 'hidden',
+    // borderBottomLeftRadius: 8,
+    // borderBottomRightRadius: 8,
+    // overflow: 'hidden',
   }
 });

@@ -117,7 +117,7 @@ const AllergiesScreen = () => {
         style={{
           gap: 16,
           backgroundColor: COLORS.white,
-          paddingVertical: 32,
+          // paddingVertical: 32,
           paddingHorizontal: SCREEN_PADDING.horizontal,
         }}>
         <Text
@@ -159,7 +159,8 @@ export default AllergiesScreen;
 
 const styles = StyleSheet.create({
   container: {
-    gap: 24,
+    gap: 12,
     flex: 1,
+    backgroundColor: COLORS.backgroundColor,
   },
 });

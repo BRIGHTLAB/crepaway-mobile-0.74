@@ -22,11 +22,11 @@ const styles = StyleSheet.create({
         overflow: 'visible',
 
         /* shadow */
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-        elevation: 5,
+        // shadowColor: '#000',
+        // shadowOffset: { width: 0, height: 2 },
+        // shadowOpacity: 0.04,
+        // shadowRadius: 8,
+        // elevation: 5,
 
         zIndex: 1
 

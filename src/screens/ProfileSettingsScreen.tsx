@@ -338,6 +338,7 @@ const styles = StyleSheet.create({
   scrollView: {
     paddingVertical: SCREEN_PADDING.vertical,
     paddingHorizontal: SCREEN_PADDING.horizontal,
+    backgroundColor: COLORS.backgroundColor,
   },
   container: {
     gap: 24,
@@ -345,13 +346,22 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: COLORS.card,
-    borderRadius: 8,
+    borderRadius: 16,
     padding: 16,
+    borderWidth: 1,
+    borderColor: COLORS.borderColor,
   },
   list: {
     backgroundColor: COLORS.card,
     width: '100%',
-    borderRadius: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.borderColor,
+    // shadowColor: COLORS.shadowColor,
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.06,
+    // shadowRadius: 8,
+    // elevation: 2,
   },
   seperator: {
     width: '100%',

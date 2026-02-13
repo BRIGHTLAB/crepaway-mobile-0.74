@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   FlatList,
   Pressable,
   RefreshControl,
@@ -145,6 +146,54 @@ const CategorySection = React.memo(
     );
   },
 );
+const CategoryTab = React.memo(
+  ({
+    item,
+    isSelected,
+    onPress,
+  }: {
+    item: Category;
+    isSelected: boolean;
+    onPress: () => void;
+  }) => {
+    const indicatorAnim = useRef(new Animated.Value(isSelected ? 1 : 0)).current;
+
+    useEffect(() => {
+      Animated.spring(indicatorAnim, {
+        toValue: isSelected ? 1 : 0,
+        damping: 20,
+        stiffness: 200,
+        mass: 0.8,
+        useNativeDriver: true,
+      }).start();
+    }, [isSelected]);
+
+    return (
+      <TouchableOpacity
+        hitSlop={20}
+        style={styles.categoryTab}
+        onPress={onPress}>
+        <Text
+          style={[
+            styles.categoryTitle,
+            isSelected && styles.activeCategoryTitle,
+          ]}>
+          {item.name}
+        </Text>
+        <Animated.View
+          style={[
+            styles.categoryIndicator,
+            {
+              transform: [{ scaleX: indicatorAnim }],
+              opacity: indicatorAnim,
+            },
+          ]}
+        />
+      </TouchableOpacity>
+    );
+  },
+);
+
 interface IProps {
   route?: {
     params: {
@@ -412,36 +461,11 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
   const renderCategoryItem = useCallback(
     ({ item, index }: { item: Category; index: number }) => {
       return (
-        <TouchableOpacity
-          hitSlop={20}
-          style={[
-            {
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-            },
-            selectedCategoryIndex === index ? styles.activeCategory : null,
-          ]}
-          onPress={() => {
-            scrollToCategory(index, item.id);
-          }}>
-          {/* <FastImage
-            source={{
-              uri: item?.image_url,
-              priority: FastImage.priority.normal,
-            }}
-            resizeMode={FastImage.resizeMode.cover}
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-            }}
-          /> */}
-          <Text style={[
-            { ...styles.categoryTitle },
-            selectedCategoryIndex === index ? styles.activeCategoryTitle : null,
-          ]}>{item.name}</Text>
-        </TouchableOpacity>
+        <CategoryTab
+          item={item}
+          isSelected={selectedCategoryIndex === index}
+          onPress={() => scrollToCategory(index, item.id)}
+        />
       );
     },
     [selectedCategoryIndex, scrollToCategory],
@@ -611,13 +635,11 @@ export default MenuItemsScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.backgroundColor,
   },
   categoryList: {
-    paddingTop: 4,
-    // marginTop: SCREEN_PADDING.vertical,
-    maxHeight: 50,
-    backgroundColor: 'white',
+    maxHeight: 56,
+    backgroundColor: COLORS.backgroundColor,
 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -628,29 +650,31 @@ const styles = StyleSheet.create({
     zIndex: 5,
     overflow: 'visible'
   },
+  categoryTab: {
+    alignItems: 'center',
+    paddingTop: 12,
+    paddingBottom: 3,
+    paddingHorizontal: 4,
+  },
   categoryTitle: {
     fontSize: 14,
     fontFamily: 'Poppins-Regular',
     fontWeight: '400',
     color: COLORS.darkColor,
-    opacity: 0.9,
-    // color: COLORS.tertiaryColor,
 
-    borderBottomColor: 'transparent',
-    borderBottomWidth: 2
-  },
-  activeCategory: {
-    // backgroundColor: '#e4e4e4ff',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    borderBottomColor: 'red',
-    borderBottomWidth: 2
-
+    opacity: 0.45,
   },
   activeCategoryTitle: {
+    fontFamily: 'Poppins-SemiBold',
     fontWeight: '600',
     color: COLORS.darkColor,
+    opacity: 1,
+  },
+  categoryIndicator: {
+    height: 2.5,
+    width: '100%',
+    backgroundColor: COLORS.primaryColor,
+    marginTop: 4,
   },
   sectionHeader: {
     marginTop: 6,

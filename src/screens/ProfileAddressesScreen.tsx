@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     gap: 10,
     justifyContent: 'space-between',
     flex: 1,
-    backgroundColor: COLORS.lightColor,
+    backgroundColor: COLORS.backgroundColor,
   },
   listContainer: {
     gap: 12,

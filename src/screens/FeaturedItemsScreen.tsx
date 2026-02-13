@@ -8,7 +8,7 @@ import ItemCard from '../components/Menu/ItemCard';
 import MenuItemSkeleton from '../components/SkeletonLoader/MenuItemSkeleton';
 import { RootStackParamList } from '../navigation/NavigationStack';
 import { RootState } from '../store/store';
-import { SCREEN_PADDING } from '../theme';
+import { COLORS, SCREEN_PADDING } from '../theme';
 
 const FeaturedItemsScreen = () => {
 
@@ -76,6 +76,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: SCREEN_PADDING.horizontal,
+    backgroundColor: COLORS.backgroundColor,
   },
   title: {
     fontSize: 24,

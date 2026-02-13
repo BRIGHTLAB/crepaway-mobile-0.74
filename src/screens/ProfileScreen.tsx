@@ -248,7 +248,8 @@ const styles = StyleSheet.create({
     paddingVertical: SCREEN_PADDING.vertical,
     paddingHorizontal: SCREEN_PADDING.horizontal,
     gap: 24,
-    marginBottom: 46,
+    backgroundColor: COLORS.backgroundColor,
+    flex: 1,
   },
   infoContainer: {
     flexDirection: 'row',
@@ -281,14 +282,18 @@ const styles = StyleSheet.create({
   },
 
   list: {
-    backgroundColor: COLORS.card,
+    // backgroundColor: COLORS.card,
     width: '100%',
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.borderColor,
+    marginBottom: 76
+    
   },
   seperator: {
     width: '100%',
     height: 2,
-    backgroundColor: '#8391A1',
+    backgroundColor: COLORS.foregroundColor,
     opacity: 0.1,
   },
 });

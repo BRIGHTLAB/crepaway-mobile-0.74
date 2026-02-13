@@ -414,7 +414,7 @@ export default OrdersScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.backgroundColor,
   },
   loadingContainer: {
     flex: 1,
@@ -446,18 +446,19 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   orderContainer: {
-    backgroundColor: COLORS.lightColor,
+    backgroundColor: COLORS.card,
     gap: 10,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: COLORS.borderColor,
 
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 5,
-
+    shadowColor: COLORS.shadowColor,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   orderHeader: {
     flexDirection: 'row',

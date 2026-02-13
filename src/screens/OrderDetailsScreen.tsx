@@ -539,6 +539,7 @@ const styles = StyleSheet.create({
     gap: 16,
     paddingVertical: SCREEN_PADDING.vertical,
     paddingHorizontal: SCREEN_PADDING.horizontal,
+    backgroundColor: COLORS.backgroundColor,
   },
   card: {
     backgroundColor: COLORS.white,

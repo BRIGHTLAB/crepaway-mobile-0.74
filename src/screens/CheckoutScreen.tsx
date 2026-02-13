@@ -474,7 +474,7 @@ const CheckoutScreen = () => {
         behavior={'padding'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight + 10 : 0}
       >
-        <ScrollView>
+        <ScrollView style={{backgroundColor: COLORS.backgroundColor}}>
           <View style={styles.container}>
 
 
@@ -783,10 +783,13 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   paymentContainer: {
-    backgroundColor: '#FFF',
+    backgroundColor: COLORS.card,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.borderColor,
+
   },
   paymentTitle: {
     fontFamily: 'Poppins-Medium',
@@ -803,10 +806,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   boxContainer: {
-    backgroundColor: '#FFF',
+    backgroundColor: COLORS.card,
     paddingHorizontal: 12,
     paddingVertical: 16,
-    borderRadius: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.borderColor,
   },
   boxContainerTitle: {
     fontFamily: 'Poppins-Medium',
