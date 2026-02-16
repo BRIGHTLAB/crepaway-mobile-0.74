@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ScrollView,
@@ -20,20 +20,7 @@ import OffersList from '../components/Menu/OffersList';
 import { DineInOrderStackParamList } from '../navigation/DineInOrderStack';
 import { RootState } from '../store/store';
 
-const bannerData = [
-  {
-    image: 'https://placehold.co/600x400/png',
-    title: 'Slide 1',
-  },
-  {
-    image: 'https://placehold.co/600x400/png',
-    title: 'Slide 2',
-  },
-  {
-    image: 'https://placehold.co/600x400/png',
-    title: 'Slide 3',
-  },
-];
+
 
 type DineInOrderScreenNavigationProp =
   NativeStackNavigationProp<DineInOrderStackParamList>;
@@ -60,11 +47,27 @@ const DineInOrderScreen = () => {
 
   console.log('data', data?.new_items);
 
+
+  const bannerData = useMemo(() => {
+    return [
+      {
+        image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800',
+        title: 'Delicious Food',
+      },
+      {
+        image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800',
+        title: 'Fresh Ingredients',
+      },
+    ];
+  }, []);
+
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View>
-          <Banner data={bannerData} />
+          <View style={styles.swiperContainer}>
+            <Banner data={bannerData} />
+          </View>
           <View style={[styles.headerContainer, {
             top
           }]}>
@@ -198,4 +201,7 @@ const styles = StyleSheet.create({
     gap: 20,
     marginTop: 10,
   },
+  swiperContainer: {
+    marginBottom: 10,
+  }
 });
