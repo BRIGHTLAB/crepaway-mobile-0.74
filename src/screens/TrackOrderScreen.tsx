@@ -406,17 +406,20 @@ const TrackOrderScreen = () => {
 
   // Helper function to update map region
   const updateMapRegion = useCallback((location: LatLng) => {
+    const latitudeDelta = isTakeaway ? 0.015 : 0.03;
+    const longitudeDelta = isTakeaway ? 0.0121 : 0.01;
+    
     const newRegion = {
       ...location,
-      latitudeDelta: 0.015,
-      longitudeDelta: 0.0121,
+      latitudeDelta,
+      longitudeDelta,
     };
     if (mapRef.current && !initialMapLoad) {
       mapRef.current.animateToRegion(newRegion, 1000);
     } else {
       setRegion(newRegion);
     }
-  }, [initialMapLoad]);
+  }, [initialMapLoad, isTakeaway]);
 
   // Extract and set locations based on order type
   useEffect(() => {
@@ -601,7 +604,7 @@ const TrackOrderScreen = () => {
       }
       
       mapRef.current.fitToCoordinates(locations, {
-        edgePadding: { top: 150, right: 150, bottom: 550, left: 150 },
+        edgePadding: { top: 400, right: 400, bottom: 800, left: 400 },
         animated: true,
       });
     }
