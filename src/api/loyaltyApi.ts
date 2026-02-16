@@ -37,10 +37,9 @@ export const loyaltyApi = loyaltyBaseApi.injectEndpoints({
             providesTags: ['tiers'],
         }),
         getTierProgress: builder.query<TierProgress, GetTierProgressParams>({
-            query: ({ unitKey }) => ({
+            query: () => ({
                 url: `/me/tier-progress`,
                 method: 'GET',
-                params: unitKey ? { unit_key: unitKey } : undefined,
             }),
             providesTags: ['loyalty'],
         }),

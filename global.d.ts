@@ -276,7 +276,7 @@ interface TierProgress {
   current_balance: number;
   current_tier: TierProgressTier | null;
   next_tier: TierProgressTier | null;
-  remaining_to_next_tier: number;
+  remaining_to_next_tier: number | null;
   is_max_tier: boolean;
 }
 

@@ -60,8 +60,7 @@ const HomeScreen = () => {
   const [showErrorPopup, setShowErrorPopup] = useState(false);
 
   // Fetch tier progress data
-  const { data: tierProgress, isLoading: isTierProgressLoading } = useGetTierProgressQuery(
-    { unitKey: 'orders' },
+  const { data: tierProgress, isLoading: isTierProgressLoading } = useGetTierProgressQuery({},
     { skip: !state.id || !state.isLoggedIn }
   );
 
@@ -281,21 +280,21 @@ const HomeScreen = () => {
                 tierName={tierProgress.current_tier.name}
                 totalDashes={
                   tierProgress.is_max_tier
-                    ? 10
+                    ? Math.round(tierProgress.current_tier.threshold)
                     : tierProgress.next_tier
                       ? Math.round(tierProgress.next_tier.threshold - tierProgress.current_tier.threshold)
                       : 10
                 }
                 filledDashes={
                   tierProgress.is_max_tier
-                    ? 10
+                    ? Math.round(tierProgress.current_balance)
                     : Math.round(tierProgress.current_balance - tierProgress.current_tier.threshold)
                 }
                 progressColor={tierProgress.current_tier.extras?.color || COLORS.primaryColor}
                 description={
                   tierProgress.is_max_tier
                     ? `You've reached the highest tier!`
-                    : `Complete ${tierProgress.remaining_to_next_tier.toFixed(0)} more ${tierProgress.unit?.key || 'orders'} to reach ${tierProgress.next_tier?.name}`
+                    : `Complete ${tierProgress.remaining_to_next_tier?.toFixed(0)} more ${tierProgress.unit?.key || 'orders'} to reach ${tierProgress.next_tier?.name}`
                 }
                 pointsCount={tierProgress.current_balance >= 1000 ? `${(tierProgress.current_balance / 1000).toFixed(1)}K` : tierProgress.current_balance.toFixed(0)}
                 pointsUnit={tierProgress.unit?.name || 'Pts'}

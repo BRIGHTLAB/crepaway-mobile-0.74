@@ -82,6 +82,7 @@ export const loyaltyBaseApi = createApi({
     const result = await loyaltyBaseQueryWithAuth(args, api, extraOptions);
 
     console.log('Loyalty API Response:', result);
+    console.log('Loyalty API Headers Sent:', Object.fromEntries(result.meta?.request?.headers?.entries() ?? []));
     if (result.error?.status === 401) {
       api.dispatch(logoutUser());
     }

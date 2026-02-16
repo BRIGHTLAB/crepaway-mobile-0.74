@@ -16,13 +16,13 @@ import {
 import FastImage from 'react-native-fast-image';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useSelector } from 'react-redux';
 import Toast from 'react-native-toast-message';
+import { useSelector } from 'react-redux';
 import Icon_Branch from '../../assets/SVG/Icon_Branch';
 import Icon_Checkout from '../../assets/SVG/Icon_Checkout';
 import Icon_Location from '../../assets/SVG/Icon_Location';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
-import Icon_Paper_Edit from '../../assets/SVG/Icon_Paper_Edit';
+import { loyaltyBaseApi } from '../api/baseApi';
 import { useGetCheckoutQuery, usePlaceOrderMutation } from '../api/checkoutApi';
 import DeliveryInstructionsSheet from '../components/Checkout/DeliveryInstructionsSheet';
 import TotalSection from '../components/Menu/TotalSection';
@@ -33,8 +33,8 @@ import RadioButton from '../components/UI/RadioButton';
 import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
 import {
   clearCart,
+  DeliveryInstruction,
 } from '../store/slices/cartSlice';
-import { DeliveryInstruction } from '../store/slices/cartSlice';
 import { RootState, useAppDispatch } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
 
@@ -193,26 +193,26 @@ const CheckoutScreen = () => {
       is_scheduled: scheduleOrder === 'yes' ? 1 : 0,
       scheduled_date: scheduledDateTime
         ? scheduledDateTime
-            .toLocaleDateString('en-US', {
-              month: '2-digit',
-              day: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-              hour12: false,
-            })
-            .replace(',', '')
+          .toLocaleDateString('en-US', {
+            month: '2-digit',
+            day: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+          })
+          .replace(',', '')
         : null,
       order_type: user?.orderType,
       ...(user.orderType === 'delivery'
         ? {
-            delivery_instructions: deliveryInstructions?.map((el) => {
-              return {
-                id: el.id,
-              };
-            }),
-          }
+          delivery_instructions: deliveryInstructions?.map((el) => {
+            return {
+              id: el.id,
+            };
+          }),
+        }
         : {}),
       cutleries: sendCutlery === 'yes' ? 1 : 0,
     };
@@ -220,6 +220,7 @@ const CheckoutScreen = () => {
     try {
       const resp = await placeOrder(formData).unwrap();
       dispatch(clearCart()); // This will also clear promoCode
+      dispatch(loyaltyBaseApi.util.invalidateTags(['loyalty']));
       refetch();
 
       navigation.reset({
@@ -342,7 +343,7 @@ const CheckoutScreen = () => {
 
             {/* Delivery Address or Takeaway Branch */}
             {(user.orderType === 'delivery' && user.addressTitle) ||
-            (user.orderType === 'takeaway' && cart.branchName) ? (
+              (user.orderType === 'takeaway' && cart.branchName) ? (
               <View style={styles.boxContainer}>
                 <Text style={styles.boxContainerTitle}>
                   {user.orderType === 'delivery' ? 'Delivery Address' : 'Pickup Branch'}
@@ -419,7 +420,7 @@ const CheckoutScreen = () => {
 
               <View style={styles.paymentMethodContainer}>
                 <View style={styles.paymentMethodItem}>
-                  <RadioButton onPress={() => {}} checked={true} title="Cash on delivery" />
+                  <RadioButton onPress={() => { }} checked={true} title="Cash on delivery" />
                   <FastImage
                     source={require('../../assets/images/payment/cash.png')}
                     style={{ width: 48, height: 28 }}
@@ -440,9 +441,8 @@ const CheckoutScreen = () => {
                   checked={scheduleOrder === 'no'}
                   onPress={() => setScheduleOrder('no')}
                   title="No"
-                  description={`Estimated ${
-                    user?.orderType === 'delivery' ? 'delivery' : 'pickup'
-                  } time 30 minutes`}
+                  description={`Estimated ${user?.orderType === 'delivery' ? 'delivery' : 'pickup'
+                    } time 30 minutes`}
                 />
                 <View
                   style={{
@@ -467,12 +467,12 @@ const CheckoutScreen = () => {
                     description={
                       scheduledDateTime
                         ? scheduledDateTime.toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
                         : 'Select Date and Time'
                     }
                   />
@@ -501,24 +501,20 @@ const CheckoutScreen = () => {
 
             <TotalSection
               orderType={user?.orderType ?? 'delivery'}
-              subtotal={`${data?.currency?.symbol ?? ''} ${
-                data?.summary?.original_sub_total ?? ''
-              }`}
-              deliveryCharge={`${data?.currency?.symbol ?? ''} ${
-                data?.delivery_charge ?? ''
-              }`}
+              subtotal={`${data?.currency?.symbol ?? ''} ${data?.summary?.original_sub_total ?? ''
+                }`}
+              deliveryCharge={`${data?.currency?.symbol ?? ''} ${data?.delivery_charge ?? ''
+                }`}
               pointsRewarded={`+ ${data?.points_rewarded ?? ''} pts`}
               promoCode={promoCode}
               promoCodeError={promoError}
               onPromoCodeChange={handlePromoCodeChange}
-              total={`${data?.currency?.symbol ?? ''} ${
-                data?.summary?.final_total ?? ''
-              }`}
+              total={`${data?.currency?.symbol ?? ''} ${data?.summary?.final_total ?? ''
+                }`}
               discount={
                 data?.summary?.total_discount
-                  ? `${data?.currency?.symbol ?? ''} ${
-                      data?.summary?.total_discount
-                    }`
+                  ? `${data?.currency?.symbol ?? ''} ${data?.summary?.total_discount
+                  }`
                   : ''
               }
               isLoading={isLoading}
@@ -528,30 +524,30 @@ const CheckoutScreen = () => {
             {/* Delivery instructions  */}
             {(deliveryInstructions?.length > 0 ||
               specialDeliveryInstructions) && (
-              <View style={styles.boxContainer}>
-                <Text style={styles.boxContainerTitle}>
-                  Delivery Instructions
-                </Text>
+                <View style={styles.boxContainer}>
+                  <Text style={styles.boxContainerTitle}>
+                    Delivery Instructions
+                  </Text>
 
-                <View style={{ gap: 8 }}>
-                  {deliveryInstructions?.map((el) => {
-                    return (
-                      <Text key={el.id} style={{}}>
-                        {el.title}
+                  <View style={{ gap: 8 }}>
+                    {deliveryInstructions?.map((el) => {
+                      return (
+                        <Text key={el.id} style={{}}>
+                          {el.title}
+                        </Text>
+                      );
+                    })}
+                    {specialDeliveryInstructions && (
+                      <Text style={{}}>
+                        <Text style={{ fontWeight: 700 }}>
+                          Special Instructions:
+                        </Text>{' '}
+                        {specialDeliveryInstructions}
                       </Text>
-                    );
-                  })}
-                  {specialDeliveryInstructions && (
-                    <Text style={{}}>
-                      <Text style={{ fontWeight: 700 }}>
-                        Special Instructions:
-                      </Text>{' '}
-                      {specialDeliveryInstructions}
-                    </Text>
-                  )}
+                    )}
+                  </View>
                 </View>
-              </View>
-            )}
+              )}
 
             <View style={{ gap: 12 }}>
               {user.orderType === 'delivery' && (

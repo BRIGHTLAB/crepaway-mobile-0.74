@@ -138,10 +138,7 @@ const LoyaltyScreen = () => {
   const state = useSelector((state: RootState) => state.user);
 
   // Fetch tier progress data for orders
-  const { data: tierProgress, isLoading: isTierProgressLoading } = useGetTierProgressQuery(
-    { unitKey: 'orders' },
-    { skip: !state.id || !state.isLoggedIn }
-  );
+  const { data: tierProgress, isLoading: isTierProgressLoading } = useGetTierProgressQuery({}, { skip: !state.id || !state.isLoggedIn });
 
   // Fetch points history for track your points section
   const { data: pointsHistory, isLoading: isPointsHistoryLoading } = useGetPointsHistoryQuery(
@@ -205,14 +202,14 @@ const LoyaltyScreen = () => {
                 tierName={tierProgress.current_tier.name}
                 totalDashes={
                   tierProgress.is_max_tier
-                    ? 10
+                    ? Math.round(tierProgress.current_tier.threshold)
                     : tierProgress.next_tier
                       ? Math.round(tierProgress.next_tier.threshold - tierProgress.current_tier.threshold)
                       : 10
                 }
                 filledDashes={
                   tierProgress.is_max_tier
-                    ? 10
+                    ? Math.round(tierProgress.current_balance)
                     : Math.round(tierProgress.current_balance - tierProgress.current_tier.threshold)
                 }
                 progressColor={tierProgress.current_tier.extras?.color || '#FFD700'}
