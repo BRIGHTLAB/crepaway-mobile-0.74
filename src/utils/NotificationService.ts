@@ -175,9 +175,15 @@ class NotificationService {
             }
           }
 
+          // Clear badge when user taps or swipes notification
+          if (notification.userInteraction) {
+            this.log('User interacted with notification - clearing badge');
+            this.setBadgeCount(0);
+          }
+
           // Handle navigation
-          // Only navigate when user taps the notification (userInteraction === true)
-          // When notification is just received in foreground (userInteraction === false), don't navigate
+          // Only navigate when user taps the notification (userInteraction is true)
+          // When notification is just received in foreground (userInteraction is false), don't navigate
           if (notificationData.screen) {
             const params: NavParams = {
               screen: notificationData.screen,
@@ -187,10 +193,7 @@ class NotificationService {
               ...notificationData.params,
             };
             
-            // Check if user tapped the notification
-            const userTapped = notification.userInteraction === true;
-            
-            if (userTapped) {
+            if (notification.userInteraction) {
               // User tapped the notification - navigate immediately
               this.log('User tapped notification - navigating to:', params.screen);
               if (appState === 'active' && this.navigationRef?.isReady()) {
@@ -455,6 +458,9 @@ class NotificationService {
   setBadgeCount = (count: number): void => {
     if (Platform.OS === 'ios') {
       PushNotificationIOS.setApplicationIconBadgeNumber(count);
+    } else {
+      // Android badge support via react-native-push-notification
+      PushNotification.setApplicationIconBadgeNumber(count);
     }
   };
 }

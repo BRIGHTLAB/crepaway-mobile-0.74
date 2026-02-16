@@ -156,7 +156,9 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
             },
           }).unwrap();
           sheetRef.current?.close();
-          navigation.goBack();
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          }
         } else {
           const response = await addAddresses({ addresses: [data] }).unwrap();
 
@@ -183,10 +185,11 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
                 orderTypeAlias: 'delivery',
               })
             );
-          } 
-          navigation.goBack();
-
-          
+          }
+          sheetRef.current?.close();
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          }
         }
       } catch (error: any) {
         console.error('ERROR', error);
@@ -228,6 +231,16 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
       additional_info: React.useRef<any>(null),
     };
 
+    const inputContainerRefs = {
+      title: React.useRef<View>(null),
+      street_address: React.useRef<View>(null),
+      building: React.useRef<View>(null),
+      floor: React.useRef<View>(null),
+      additional_info: React.useRef<View>(null),
+    };
+
+    const scrollViewRef = useRef<any>(null);
+
     const handleInputSubmit = (currentInput: string) => {
       const names = Object.keys(inputRefs);
       const idx = names.indexOf(currentInput);
@@ -240,13 +253,60 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
       }
     };
 
+    const scrollToFirstError = () => {
+      const inputNames = ['title', 'street_address', 'building', 'floor', 'additional_info'];
+      
+      for (const inputName of inputNames) {
+        if (errors[inputName as keyof typeof errors]?.message) {
+          const inputRef = inputRefs[inputName as keyof typeof inputRefs];
+          const containerRef = inputContainerRefs[inputName as keyof typeof inputContainerRefs];
+          
+          if (inputRef?.current) {
+            inputRef.current.focus();
+          }
+          
+          setTimeout(() => {
+            if (containerRef?.current && scrollViewRef.current) {
+              containerRef.current.measureLayout(
+                scrollViewRef.current,
+                (x, y) => {
+                  scrollViewRef.current?.scrollTo({
+                    y: Math.max(0, y - 50), 
+                    animated: true,
+                  });
+                },
+                () => {
+                  const inputIndex = inputNames.indexOf(inputName);
+                  const estimatedY = inputIndex * 80; 
+                  scrollViewRef.current?.scrollTo({
+                    y: Math.max(0, estimatedY - 50),
+                    animated: true,
+                  });
+                }
+              );
+            }
+          }, 150);
+          break;
+        }
+      }
+    };
+
+    const handleSubmitWithErrorCheck = () => {
+      handleSubmit(
+        onSubmit,
+        () => {
+          scrollToFirstError();
+        }
+      )();
+    };
+
     const Footer = ({ animatedFooterPosition }: BottomSheetFooterProps) => (
       <BottomSheetFooter
         animatedFooterPosition={animatedFooterPosition}
         style={{ paddingVertical: SCREEN_PADDING.vertical + 9 }}
       >
         <Button
-          onPress={handleSubmit(onSubmit)}
+          onPress={handleSubmitWithErrorCheck}
           isLoading={isLoading}
           icon={
             isEditMode ? (
@@ -278,28 +338,33 @@ const AddressDetailsSheet = forwardRef<BottomSheet, Props>(
           paddingBottom: 150,
         }}>
           <BottomSheetScrollView
+            ref={scrollViewRef}
             contentContainerStyle={styles.formContainer}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {inputs.map(inp => (
-              <Controller
+            {inputs.map((inp) => (
+              <View
                 key={inp.name}
-                control={control}
-                name={inp.name as keyof AddressForm}
-                render={({ field: { onBlur, onChange, value } }) => (
-                  <BottomSheetInput
-                    ref={inputRefs[inp.name as keyof typeof inputRefs]}
-                    placeholder={inp.placeholder}
-                    value={value?.toString()}
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    error={errors[inp.name as keyof AddressForm]?.message}
-                    returnKeyType={inp.name === 'additional_info' ? 'done' : 'next'}
-                    onSubmitEditing={() => handleInputSubmit(inp.name)}
-                  />
-                )}
-              />
+                ref={inputContainerRefs[inp.name as keyof typeof inputContainerRefs]}
+              >
+                <Controller
+                  control={control}
+                  name={inp.name as keyof AddressForm}
+                  render={({ field: { onBlur, onChange, value } }) => (
+                    <BottomSheetInput
+                      ref={inputRefs[inp.name as keyof typeof inputRefs]}
+                      placeholder={inp.placeholder}
+                      value={value?.toString()}
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      error={errors[inp.name as keyof AddressForm]?.message}
+                      returnKeyType={inp.name === 'additional_info' ? 'done' : 'next'}
+                      onSubmitEditing={() => handleInputSubmit(inp.name)}
+                    />
+                  )}
+                />
+              </View>
             ))}
 
           </BottomSheetScrollView>
