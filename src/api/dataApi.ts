@@ -41,10 +41,13 @@ export const dataApi = baseApi.injectEndpoints({
         staleTime: Infinity, // Data never becomes stale
       }
     }),
+    getLoyaltyTierThreshold: builder.query<{ loyalty_tier_threshold: string }, void>({
+      query: () => `/loyalty_tier_threshold`,
+    }),
   }),
 
   overrideExisting: true,
 });
 
-export const { useGetAllergensQuery, useGetContentQuery, useGetZonesQuery, useGetWaiterInstructionsQuery } =
+export const { useGetAllergensQuery, useGetContentQuery, useGetZonesQuery, useGetWaiterInstructionsQuery, useGetLoyaltyTierThresholdQuery } =
   dataApi;
