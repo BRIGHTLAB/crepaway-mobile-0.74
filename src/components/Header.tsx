@@ -1,12 +1,12 @@
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
-import {TouchableOpacity, Text, View, StyleSheet} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Icon_BackArrow from '../../assets/SVG/Icon_BackArrow';
-import {useNavigation} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {RootStackParamList} from '../navigation/NavigationStack';
-import {COLORS} from '../theme';
-import {useAppDispatch} from '../store/store';
-import {setOrderType} from '../store/slices/userSlice';
+import { RootStackParamList } from '../navigation/NavigationStack';
+import { setOrderType } from '../store/slices/userSlice';
+import { useAppDispatch } from '../store/store';
+import { COLORS } from '../theme';
 import { normalizeFont } from '../utils/normalizeFonts';
 
 interface IProps {
@@ -24,7 +24,7 @@ const CustomHeader: React.FC<IProps> = ({
 }) => {
   const navigation = useNavigation<NavigationProp>();
   const dispatch = useAppDispatch();
-  
+
   const handleBackPress = () => {
     if (clearOrderType) {
       console.log('clear order type');
@@ -50,9 +50,9 @@ const CustomHeader: React.FC<IProps> = ({
       }}>
       <TouchableOpacity
         onPress={handleBackPress}
-        style={{flexDirection: 'row', alignItems: 'center', gap: 16,}}>
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 16, }}>
         <Icon_BackArrow color={color} />
-        <Text style={[styles.headerTitle, {color: color}]}>{title}</Text>
+        <Text style={[styles.headerTitle, { color: color }]}>{title}</Text>
       </TouchableOpacity>
     </View>
   );
