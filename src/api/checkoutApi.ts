@@ -23,12 +23,14 @@ export interface OrderFormData {
   order_type: string | null;
   cutleries?: number;
   promo_code?: string;
+  save_card?: boolean;
 }
 
 export interface PaymentMethod {
   id: number;
   type: string;
   title: string;
+  alias?: string;
   pos_payment_type_id: number;
   removed: number;
   created_at: string | null;

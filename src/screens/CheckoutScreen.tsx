@@ -32,6 +32,7 @@ import DynamicSheet from '../components/Sheets/DynamicSheet';
 import Button from '../components/UI/Button';
 import DateInput from '../components/UI/DateInput';
 import RadioButton from '../components/UI/RadioButton';
+import Checkbox from '../components/UI/Checkbox';
 import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
 import {
   clearCart,
@@ -56,6 +57,7 @@ const CheckoutScreen = () => {
   const [deliveryInstructions, setDeliveryInstructions] = useState<DeliveryInstruction[]>([]);
   const [specialDeliveryInstructions, setSpecialDeliveryInstructions] = useState<string>('');
   const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<number | null>(null);
+  const [saveCard, setSaveCard] = useState<boolean>(false);
 
   // Promo code state (local state, resets on mount)
   const [promoCode, setPromoCode] = useState<string>('');
@@ -315,6 +317,7 @@ const CheckoutScreen = () => {
         }
         : {}),
       cutleries: sendCutlery === 'yes' ? 1 : 0,
+      ...(saveCard && paymentMethodsData?.data?.find(m => m.id === selectedPaymentMethodId)?.alias === 'areeba' ? { save_card: true } : {}),
     };
 
     try {
@@ -477,7 +480,7 @@ const CheckoutScreen = () => {
         behavior={'padding'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight + 10 : 0}
       >
-        <ScrollView style={{backgroundColor: COLORS.backgroundColor}}>
+        <ScrollView style={{ backgroundColor: COLORS.backgroundColor }}>
           <View style={styles.container}>
 
 
@@ -606,6 +609,23 @@ const CheckoutScreen = () => {
                   ))
                 )}
               </View>
+
+              {/* Save Card Checkbox (only for Areeba) */}
+              {(() => {
+                const selectedMethod = paymentMethodsData?.data?.find(m => m.id === selectedPaymentMethodId);
+                if (selectedMethod?.alias === 'areeba') {
+                  return (
+                    <View style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Checkbox
+                        checked={saveCard}
+                        onCheck={(checked) => setSaveCard(checked)}
+                        title="Save card for future use"
+                      />
+                    </View>
+                  );
+                }
+                return null;
+              })()}
             </View>
 
 
