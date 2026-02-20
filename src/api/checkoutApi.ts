@@ -24,6 +24,7 @@ export interface OrderFormData {
   cutleries?: number;
   promo_code?: string;
   save_card?: boolean;
+  users_payment_methods_id?: number | null;
 }
 
 export interface PaymentMethod {
@@ -57,6 +58,21 @@ export interface PaymentMethodsResponse {
   prev_page_url: string | null;
   to: number;
   total: number;
+}
+
+export interface SavedCard {
+  id: number;
+  users_id: number;
+  payment_methods_id: number;
+  card_digits: string | null;
+  card_holder_name: string | null;
+  card_expiry: string | null;
+  areeba_token: string | null;
+  is_default: number;
+  type: string | null;
+  title: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 // Response from GET /payments/{id} for polling
@@ -128,6 +144,20 @@ export const checkoutApi = baseApi.injectEndpoints({
       query: (paymentId) => `/payments/${paymentId}`,
       keepUnusedDataFor: 0, // Don't cache - always fetch fresh
     }),
+
+    getSavedCards: builder.query<SavedCard[], void>({
+      query: () => `/user_payment_methods`,
+      keepUnusedDataFor: 30,
+      providesTags: ['SavedCards'],
+    }),
+
+    deleteSavedCard: builder.mutation<{ message: string }, number>({
+      query: (id) => ({
+        url: `/user_payment_methods/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['SavedCards'],
+    }),
   }),
 
   overrideExisting: true,
@@ -138,4 +168,6 @@ export const {
   usePlaceOrderMutation,
   useGetPaymentMethodsQuery,
   useLazyGetPaymentStatusQuery,
+  useGetSavedCardsQuery,
+  useDeleteSavedCardMutation,
 } = checkoutApi;

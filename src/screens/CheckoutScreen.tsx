@@ -6,11 +6,13 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
@@ -24,7 +26,8 @@ import Icon_Checkout from '../../assets/SVG/Icon_Checkout';
 import Icon_Location from '../../assets/SVG/Icon_Location';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
 import Icon_Paper_Edit from '../../assets/SVG/Icon_Paper_Edit';
-import { useGetCheckoutQuery, usePlaceOrderMutation, useGetPaymentMethodsQuery, useLazyGetPaymentStatusQuery } from '../api/checkoutApi';
+import { useGetCheckoutQuery, usePlaceOrderMutation, useGetPaymentMethodsQuery, useLazyGetPaymentStatusQuery, useGetSavedCardsQuery, useDeleteSavedCardMutation } from '../api/checkoutApi';
+import Icon_Delete from '../../assets/SVG/Icon_Delete';
 import DeliveryInstructionsSheet from '../components/Checkout/DeliveryInstructionsSheet';
 import PaymentWebViewModal from '../components/Checkout/PaymentWebViewModal';
 import TotalSection from '../components/Menu/TotalSection';
@@ -57,6 +60,7 @@ const CheckoutScreen = () => {
   const [deliveryInstructions, setDeliveryInstructions] = useState<DeliveryInstruction[]>([]);
   const [specialDeliveryInstructions, setSpecialDeliveryInstructions] = useState<string>('');
   const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<number | null>(null);
+  const [selectedSavedCardId, setSelectedSavedCardId] = useState<number | null>(null);
   const [saveCard, setSaveCard] = useState<boolean>(false);
 
   // Promo code state (local state, resets on mount)
@@ -92,6 +96,10 @@ const CheckoutScreen = () => {
 
   // Lazy query for polling payment status
   const [getPaymentStatus] = useLazyGetPaymentStatusQuery();
+
+  // Fetch saved cards for the user
+  const { data: savedCardsData } = useGetSavedCardsQuery(undefined, { refetchOnMountOrArgChange: true });
+  const [deleteSavedCard] = useDeleteSavedCardMutation();
 
   // Set default payment method when payment methods are loaded
   useEffect(() => {
@@ -317,7 +325,10 @@ const CheckoutScreen = () => {
         }
         : {}),
       cutleries: sendCutlery === 'yes' ? 1 : 0,
-      ...(saveCard && paymentMethodsData?.data?.find(m => m.id === selectedPaymentMethodId)?.alias === 'areeba' ? { save_card: true } : {}),
+      ...(selectedSavedCardId
+        ? { users_payment_methods_id: selectedSavedCardId }
+        : (saveCard && paymentMethodsData?.data?.find(m => m.id === selectedPaymentMethodId)?.alias === 'areeba' ? { save_card: true } : {})
+      ),
     };
 
     try {
@@ -610,18 +621,90 @@ const CheckoutScreen = () => {
                 )}
               </View>
 
-              {/* Save Card Checkbox (only for Areeba) */}
+              {/* Save Card Checkbox (only for Areeba and when no saved card is selected) */}
               {(() => {
                 const selectedMethod = paymentMethodsData?.data?.find(m => m.id === selectedPaymentMethodId);
                 if (selectedMethod?.alias === 'areeba') {
+                  // Show saved cards if available
+                  const savedCards = savedCardsData?.filter(c => c.areeba_token) || [];
+
                   return (
-                    <View style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <Checkbox
-                        checked={saveCard}
-                        onCheck={(checked) => setSaveCard(checked)}
-                        title="Save card for future use"
-                      />
-                    </View>
+                    <>
+                      {savedCards.length > 0 && (
+                        <View style={{ marginTop: 12, gap: 10 }}>
+                          <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.foregroundColor, opacity: 0.7 }}>Saved Cards</Text>
+                          {savedCards.map((card) => (
+                            <View key={card.id} style={styles.paymentMethodItem}>
+                              <RadioButton
+                                onPress={() => {
+                                  setSelectedSavedCardId(card.id);
+                                  setSaveCard(false);
+                                }}
+                                checked={selectedSavedCardId === card.id}
+                                title={`•••• ${card.card_digits?.slice(-4) || '****'}${card.card_expiry ? `  (${card.card_expiry})` : ''}`}
+                              />
+                              <TouchableOpacity
+                                onPress={() => {
+                                  Alert.alert(
+                                    'Remove Card',
+                                    'Are you sure you want to remove this saved card?',
+                                    [
+                                      { text: 'Cancel', style: 'cancel' },
+                                      {
+                                        text: 'Remove',
+                                        style: 'destructive',
+                                        onPress: async () => {
+                                          try {
+                                            await deleteSavedCard(card.id).unwrap();
+                                            if (selectedSavedCardId === card.id) {
+                                              setSelectedSavedCardId(null);
+                                            }
+                                            Toast.show({
+                                              type: 'success',
+                                              text1: 'Card removed successfully',
+                                              visibilityTime: 2000,
+                                              position: 'bottom',
+                                            });
+                                          } catch (err) {
+                                            Toast.show({
+                                              type: 'error',
+                                              text1: 'Failed to remove card',
+                                              visibilityTime: 3000,
+                                              position: 'bottom',
+                                            });
+                                          }
+                                        },
+                                      },
+                                    ],
+                                  );
+                                }}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                              >
+                                <Icon_Delete color={COLORS.foregroundColor} />
+                              </TouchableOpacity>
+                            </View>
+                          ))}
+                          {/* Option to use a new card instead */}
+                          <View style={styles.paymentMethodItem}>
+                            <RadioButton
+                              onPress={() => setSelectedSavedCardId(null)}
+                              checked={selectedSavedCardId === null}
+                              title="Use a new card"
+                            />
+                          </View>
+                        </View>
+                      )}
+                      {/* Only show save card checkbox when using a new card */}
+                      {!selectedSavedCardId && (
+                        <View style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <Checkbox
+                            checked={saveCard}
+                            onCheck={(checked) => setSaveCard(checked)}
+                            title="Save card for future use"
+                          />
+                        </View>
+                      )}
+                    </>
                   );
                 }
                 return null;
