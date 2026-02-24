@@ -67,17 +67,15 @@ const HomeScreen = () => {
 
   // Get banner data based on order type
   const bannerData = useMemo(() => {
-    return [
-      {
-        image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800',
-        title: 'Delicious Food',
-      },
-      {
-        image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800',
-        title: 'Fresh Ingredients',
-      },
-    ];
-  }, []);
+    if (!content?.length) return [];
+    const bannerKey = state.orderType === 'delivery' ? 'home-delivery-swiper' : 'home-takeaway-swiper';
+    return content
+      .filter((item) => item.key === bannerKey && item.image_url)
+      .map((item) => ({
+        image: item.image_url ?? '',
+        title: item.title ?? '',
+      }));
+  }, [content, state.orderType]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -103,12 +101,6 @@ const HomeScreen = () => {
     branch: state.branchAlias,
     addressId: state.addressId,
   });
-
-  // const { data: banners, isLoading: isBannersLoading, error: bannersError } = useGetBannersQuery({
-  //   branch: state.branchName ?? '',
-  // });
-
-  // console.log('banners', banners);
 
   // Handle error from useGetHomepageQuery
   React.useEffect(() => {
