@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi';
+import { baseApi, loyaltyBaseApi } from './baseApi';
 
 export interface Checkout {
   summary: {
@@ -137,6 +137,10 @@ export const checkoutApi = baseApi.injectEndpoints({
         };
       },
       invalidatesTags: ['Order', 'checkout'],
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        await queryFulfilled;
+        dispatch(loyaltyBaseApi.util.invalidateTags(['loyalty']));
+      },
     }),
 
     // Get payment status (for polling after card payment success)

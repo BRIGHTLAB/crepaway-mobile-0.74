@@ -42,6 +42,7 @@ import TrackOrderScreen from '../screens/TrackOrderScreen';
 import WalletScreen from '../screens/WalletScreen';
 import { setCartFromFetch } from '../store/slices/cartSlice';
 import { useAppDispatch } from '../store/store';
+import LoyaltyStack from './LoyaltyStack';
 import { RootStackParamList } from './NavigationStack';
 import { useGetOrdersBadgeCountQuery } from '../api/ordersApi';
 
@@ -136,6 +137,7 @@ const HomeStack = () => {
               </TouchableOpacity> */}
             </View>
           ),
+
         }}
       />
       <Stack.Screen
@@ -294,7 +296,13 @@ const HomeStack = () => {
           ),
         }}
       />
-
+      <Stack.Screen
+        name="Loyalty"
+        component={LoyaltyStack}
+        options={{
+          headerShown: false,
+        }}
+      />
       <Stack.Screen
         name="Cart"
         component={CartScreen}

@@ -22,6 +22,7 @@ import DeliveryTakeawayStack, {
 import DineInStack from './DineInStack';
 import linking, { processPendingDeepLink } from './linking';
 import LoginStack, { LoginStackParamList } from './LoginStack';
+import LoyaltyStack from './LoyaltyStack';
 import ServiceSelectionStack, {
   ServiceSelectionStackParamList,
 } from './ServiceSelectionStack';
@@ -37,6 +38,7 @@ export type RootStackParamList = {
   } | undefined;
   DineIn: undefined;
   MenuItem: { itemId: number; itemUuid?: string };
+  Loyalty: undefined;
   HomeStack: {
     screen: keyof DeliveryTakeawayStackParamList;
     params?: DeliveryTakeawayStackParamList[keyof DeliveryTakeawayStackParamList];
@@ -197,6 +199,13 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
                 headerBackVisible: false,
                 headerLeft: () => <CustomHeader />,
                 headerTitleAlign: 'center',
+              }}
+            />
+            <Stack.Screen
+              name="Loyalty"
+              component={LoyaltyStack}
+              options={{
+                headerShown: false,
               }}
             />
 

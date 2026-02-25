@@ -1,33 +1,32 @@
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React from 'react';
 import {
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
-  Pressable,
-  GestureResponderEvent,
+  View
 } from 'react-native';
-import React from 'react';
-import { useSelector } from 'react-redux';
-import { RootState, useAppDispatch } from '../store/store';
-import FastImage from 'react-native-fast-image';
-import Icon_Decrease_Quantity from '../../assets/SVG/Icon_Decrease_Quantity';
-import Icon_Increase_Quantity from '../../assets/SVG/Icon_Increase_Quantity';
-import Button from '../components/UI/Button';
-import Icon_Checkout from '../../assets/SVG/Icon_Checkout';
-import Icon_Cart from '../../assets/SVG/Icon_Cart';
-import {
-  clearCart,
-  increaseQuantity,
-  decreaseQuantity,
-  CartItem,
-} from '../store/slices/cartSlice';
-import { useNavigation } from '@react-navigation/native';
-import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
-import CartItemComponent from '../components/Cart/CartItemComponent';
-import { RootStackParamList } from '../navigation/NavigationStack';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import ReactNativeHapticFeedback from "react-native-haptic-feedback";
+import { useSelector } from 'react-redux';
+import Icon_Cart from '../../assets/SVG/Icon_Cart';
+import Icon_Checkout from '../../assets/SVG/Icon_Checkout';
+import Icon_Spine from '../../assets/SVG/Icon_Spine';
+import { useGetLoyaltyTierThresholdQuery } from '../api/dataApi';
+import CartItemComponent from '../components/Cart/CartItemComponent';
+import Button from '../components/UI/Button';
+import DashedProgressBar from '../components/UI/DashedProgressBar';
+import { RootStackParamList } from '../navigation/NavigationStack';
+import {
+  CartItem,
+  clearCart,
+  decreaseQuantity,
+  increaseQuantity,
+} from '../store/slices/cartSlice';
+import { RootState, useAppDispatch } from '../store/store';
+import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
 import { normalizeFont } from '../utils/normalizeFonts';
 
 
@@ -47,6 +46,8 @@ const CartScreen = ({ }: IProps) => {
   const dispatch = useAppDispatch();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  const { data: thresholdData } = useGetLoyaltyTierThresholdQuery();
 
   const handleClearCart = () => {
     dispatch(clearCart());
@@ -82,14 +83,6 @@ const CartScreen = ({ }: IProps) => {
     return firstItem?.symbol || '$';
   };
 
-  // if (isLocalLoading) {
-  //   return (
-  //     <View style={[styles.container, styles.loadingContainer]}>
-  //       <ActivityIndicator size="large" color={COLORS.primaryColor} />
-  //     </View>
-  //   );
-  // }
-
   const EmptyCartState = () => (
     <View style={styles.emptyContainer}>
       <Icon_Cart
@@ -122,13 +115,25 @@ const CartScreen = ({ }: IProps) => {
     );
   }
 
+  const cartTotal = calculateCartTotal();
+  const threshold = thresholdData?.loyalty_tier_threshold
+    ? parseFloat(thresholdData.loyalty_tier_threshold)
+    : 0;
+  const showLoyalty = threshold > 0;
+  const progress = threshold > 0 ? Math.min(cartTotal / threshold, 1) : 0;
+  const isComplete = progress >= 1;
+  const totalDashes = 10;
+  const filledDashes = Math.round(progress * totalDashes);
+  const currencySymbol = getCurrencySymbol();
+  const remaining = threshold - cartTotal;
+
   return (
     <ScrollView style={{ flex: 1, backgroundColor: COLORS.backgroundColor }}>
       <View style={styles.container}>
         {/* Items  */}
         <View style={styles.boxContainer}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6}}>
-            <Text style={{...TYPOGRAPHY.SUB_HEADLINE, paddingBottom: 6, color: COLORS.darkColor }}>All Items</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <Text style={{ ...TYPOGRAPHY.SUB_HEADLINE, paddingBottom: 6, color: COLORS.darkColor }}>All Items</Text>
             <Pressable onPress={handleClearCart}>
               <Text
                 style={{
@@ -145,24 +150,18 @@ const CartScreen = ({ }: IProps) => {
             Object.entries(cartData.items).map(([uuid, item], idx) => {
               const handleIncreaseQuantity = () => {
                 dispatch(increaseQuantity(uuid));
-
-                // Trigger haptic feedback
                 ReactNativeHapticFeedback.trigger("impactLight", {
                   enableVibrateFallback: true,
                   ignoreAndroidSystemSettings: false,
                 });
-
               };
 
               const handleDecreaseQuantity = () => {
                 dispatch(decreaseQuantity(uuid));
-
-                // Trigger haptic feedback
                 ReactNativeHapticFeedback.trigger("impactLight", {
                   enableVibrateFallback: true,
                   ignoreAndroidSystemSettings: false,
                 });
-
               };
 
               const handleNavigateToMenuItem = () => {
@@ -186,6 +185,56 @@ const CartScreen = ({ }: IProps) => {
 
         {cartData && Object.keys(cartData.items).length > 0 && (
           <>
+            {/* Loyalty Progress Card */}
+            {showLoyalty && (
+              <View style={styles.loyaltyCard}>
+                <View style={styles.loyaltyCardContent}>
+                  <View style={{ flex: 1, gap: 5 }}>
+                    <Text style={[styles.loyaltyTierName, { color: isComplete ? '#34C759' : COLORS.primaryColor }]}>
+                      {isComplete ? '🎉 Reward Earned!' : 'Loyalty Progress'}
+                    </Text>
+                    <DashedProgressBar
+                      totalDashes={totalDashes}
+                      filledDashes={filledDashes}
+                      color={isComplete ? '#34C759' : COLORS.primaryColor}
+                    />
+                    <Text style={styles.loyaltyDescription}>
+                      {isComplete
+                        ? `You've earned a loyalty reward!`
+                        : `Spend ${currencySymbol}${remaining.toFixed(2)} more to earn a reward`}
+                    </Text>
+                  </View>
+                  <View style={styles.loyaltyPointsContainer}>
+                    <Text style={styles.loyaltyPointsCount}>
+                      {cartTotal >= 1000 ? `${(cartTotal / 1000).toFixed(1)}K` : cartTotal.toFixed(0)}
+                    </Text>
+                    <Text style={styles.loyaltyPointsUnit}>
+                      {currencySymbol}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Add More Items button - only when reward not reached */}
+                {!isComplete && (
+                  <TouchableOpacity
+                    style={styles.addMoreButton}
+                    onPress={() => navigation.goBack()}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.addMoreButtonText}>Add More Items</Text>
+                  </TouchableOpacity>
+                )}
+
+                {/* Decorative spines */}
+                <View style={styles.spineLeft}>
+                  <Icon_Spine width={400} height={400} opacity={0.1} />
+                </View>
+                <View style={styles.spineRight}>
+                  <Icon_Spine width={400} height={400} opacity={0.1} />
+                </View>
+              </View>
+            )}
+
             <Button
               icon={<Icon_Checkout />}
               iconPosition="left"
@@ -217,7 +266,6 @@ const styles = StyleSheet.create({
     height: 300,
   },
   boxContainer: {
-    // backgroundColor: '#FFF',
     paddingHorizontal: 12,
     paddingVertical: 16,
     borderRadius: 8,
@@ -258,5 +306,63 @@ const styles = StyleSheet.create({
     color: COLORS.foregroundColor,
     textAlign: 'center',
     paddingHorizontal: 20,
+  },
+  // Loyalty progress card
+  loyaltyCard: {
+    backgroundColor: COLORS.secondaryColor,
+    borderRadius: 8,
+    padding: 16,
+    overflow: 'hidden',
+    gap: 12,
+  },
+  loyaltyCardContent: {
+    flexDirection: 'row',
+    gap: 15,
+  },
+  loyaltyTierName: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: normalizeFont(14),
+  },
+  loyaltyDescription: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: normalizeFont(10),
+    color: '#bdbdbd',
+  },
+  loyaltyPointsContainer: {
+    flexDirection: 'row',
+    gap: 4,
+    alignItems: 'center',
+  },
+  loyaltyPointsCount: {
+    ...TYPOGRAPHY.HEADLINE,
+    fontFamily: 'Poppins-Regular',
+    fontWeight: 'bold',
+    color: COLORS.white,
+  },
+  loyaltyPointsUnit: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: COLORS.white,
+  },
+  addMoreButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 6,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  addMoreButtonText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: normalizeFont(12),
+    color: COLORS.white,
+  },
+  spineLeft: {
+    position: 'absolute',
+    left: -150,
+    bottom: -325,
+  },
+  spineRight: {
+    position: 'absolute',
+    right: -180,
+    top: -325,
   },
 });

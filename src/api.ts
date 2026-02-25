@@ -1,6 +1,6 @@
-import axios, {isAxiosError} from 'axios';
+import axios, { AxiosInstance, isAxiosError } from 'axios';
 import store from './store/store';
-import {BASE_URL} from './theme';
+import { BASE_URL } from './theme';
 
 type APIResponse<T> = {
   data: T | null;
@@ -8,62 +8,76 @@ type APIResponse<T> = {
   status: number;
 };
 
-// const apiFetch = axios.create({
-//   baseURL: 'http://localhost:8080/api/app',
-// });
+// Cache for axios instances to avoid recreating them
+const axiosInstances = new Map<string, AxiosInstance>();
+const authAxiosInstances = new Map<string, AxiosInstance>();
 
-// const authFetch = axios.create({
-//   baseURL: 'http://localhost:8080/api/app',
-// });
-const apiFetch = axios.create({
-  baseURL: BASE_URL,
-});
+// Helper function to get or create an axios instance
+const getAxiosInstance = (baseUrl: string): AxiosInstance => {
+  if (!axiosInstances.has(baseUrl)) {
+    const instance = axios.create({
+      baseURL: baseUrl,
+    });
+    axiosInstances.set(baseUrl, instance);
+  }
+  return axiosInstances.get(baseUrl)!;
+};
 
-const authFetch = axios.create({
-  baseURL: BASE_URL,
-});
+// Helper function to get or create an authenticated axios instance
+const getAuthAxiosInstance = (baseUrl: string): AxiosInstance => {
+  if (!authAxiosInstances.has(baseUrl)) {
+    const instance = axios.create({
+      baseURL: baseUrl,
+    });
 
-// Request Interceptors
-authFetch.interceptors.request.use(
-  config => {
-    const state = store.getState();
-    const token = state.user.token;
+    // Request Interceptor
+    instance.interceptors.request.use(
+      config => {
+        const state = store.getState();
+        const token = state.user.token;
 
-    if (token) {
-      config.headers = config.headers || {};
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+        if (token) {
+          config.headers = config.headers || {};
+          config.headers.Authorization = `Bearer ${token}`;
+        }
 
-    return config;
-  },
-  error => {
-    return Promise.reject(error);
-  },
-);
+        return config;
+      },
+      error => {
+        return Promise.reject(error);
+      },
+    );
 
-// Response Interceptors
-authFetch.interceptors.response.use(
-  response => {
-    return response;
-  },
-  error => {
-    if (isAxiosError(error) && error.status === 401) {
-      // logout
-    }
-    return Promise.reject(error);
-  },
-);
+    // Response Interceptor
+    instance.interceptors.response.use(
+      response => {
+        return response;
+      },
+      error => {
+        if (isAxiosError(error) && error.status === 401) {
+          // logout
+        }
+        return Promise.reject(error);
+      },
+    );
+
+    authAxiosInstances.set(baseUrl, instance);
+  }
+  return authAxiosInstances.get(baseUrl)!;
+};
 
 type GET = {
   endpoint: string;
-  params?: {[key: string]: string | number | Array<number>};
+  params?: { [key: string]: string | number | Array<number> };
   requiresAuth?: boolean;
+  baseUrl?: string;
 };
 
 export const GET = async <T>({
   endpoint,
   params,
   requiresAuth = true,
+  baseUrl = BASE_URL,
 }: GET): Promise<APIResponse<T>> => {
   const config = {
     params,
@@ -72,7 +86,11 @@ export const GET = async <T>({
   console.log('endpoint', endpoint);
 
   try {
-    const response = await (requiresAuth ? authFetch : apiFetch).get(endpoint, {
+    const axiosInstance = requiresAuth
+      ? getAuthAxiosInstance(baseUrl)
+      : getAxiosInstance(baseUrl);
+
+    const response = await axiosInstance.get(endpoint, {
       headers: {
         'Accept-Language': 'en',
       },
@@ -98,22 +116,25 @@ export const GET = async <T>({
 
 type POST = {
   endpoint: string;
-  formData?: {[key: string]: any} | FormData;
+  formData?: { [key: string]: any } | FormData;
   requiresAuth?: boolean;
+  baseUrl?: string;
 };
 
 export const POST = async <T>({
   endpoint,
   formData,
   requiresAuth = true,
+  baseUrl = BASE_URL,
 }: POST): Promise<APIResponse<T>> => {
   console.log('endpoint', endpoint);
 
   try {
-    const response = await (requiresAuth ? authFetch : apiFetch).post(
-      endpoint,
-      formData,
-    );
+    const axiosInstance = requiresAuth
+      ? getAuthAxiosInstance(baseUrl)
+      : getAxiosInstance(baseUrl);
+
+    const response = await axiosInstance.post(endpoint, formData);
 
     return {
       data: response?.data,

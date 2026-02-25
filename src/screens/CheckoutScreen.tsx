@@ -18,14 +18,13 @@ import {
 import FastImage from 'react-native-fast-image';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useSelector } from 'react-redux';
-import Toast from 'react-native-toast-message';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import Toast from 'react-native-toast-message';
+import { useSelector } from 'react-redux';
 import Icon_Branch from '../../assets/SVG/Icon_Branch';
 import Icon_Checkout from '../../assets/SVG/Icon_Checkout';
 import Icon_Location from '../../assets/SVG/Icon_Location';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
-import Icon_Paper_Edit from '../../assets/SVG/Icon_Paper_Edit';
 import { useGetCheckoutQuery, usePlaceOrderMutation, useGetPaymentMethodsQuery, useLazyGetPaymentStatusQuery, useGetSavedCardsQuery, useDeleteSavedCardMutation } from '../api/checkoutApi';
 import Icon_Delete from '../../assets/SVG/Icon_Delete';
 import DeliveryInstructionsSheet from '../components/Checkout/DeliveryInstructionsSheet';
@@ -39,8 +38,8 @@ import Checkbox from '../components/UI/Checkbox';
 import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
 import {
   clearCart,
+  DeliveryInstruction,
 } from '../store/slices/cartSlice';
-import { DeliveryInstruction } from '../store/slices/cartSlice';
 import { RootState, useAppDispatch } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
 

@@ -2,7 +2,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { logoutUser } from '../store/slices/userSlice';
 import { RootState } from '../store/store';
-import { BASE_URL } from '../theme';
+import { BASE_URL, LOYALTY_BASE_URL } from '../theme';
 
 const baseQueryWithAuth = fetchBaseQuery({
   baseUrl: BASE_URL,
@@ -59,5 +59,37 @@ export const baseApi = createApi({
     'legals',
     'SavedCards',
   ],
+  endpoints: () => ({}),
+});
+
+// Loyalty Program Base API
+const loyaltyBaseQueryWithAuth = fetchBaseQuery({
+  baseUrl: LOYALTY_BASE_URL,
+  prepareHeaders: (headers, { getState }) => {
+    headers.set('Content-Type', 'application/json');
+    headers.set('Accept-Language', 'en');
+    const state = getState() as RootState;
+    const token = state.user.jwt;
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+    return headers;
+  },
+});
+
+export const loyaltyBaseApi = createApi({
+  reducerPath: 'loyaltyApi',
+  baseQuery: async (args, api, extraOptions) => {
+    const result = await loyaltyBaseQueryWithAuth(args, api, extraOptions);
+
+    console.log('Loyalty API Response:', result);
+    console.log('Loyalty API Headers Sent:', Object.fromEntries(result.meta?.request?.headers?.entries() ?? []));
+    if (result.error?.status === 401) {
+      api.dispatch(logoutUser());
+    }
+
+    return result;
+  },
+  tagTypes: ['loyalty', 'tiers', 'points', 'rewards'],
   endpoints: () => ({}),
 });

@@ -7,14 +7,13 @@ import {
   Dimensions,
   RefreshControl,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import { useGetContentQuery } from '../api/dataApi';
-import { useGetBannersQuery, useGetHomepageQuery } from '../api/homeApi';
+import { useGetHomepageQuery } from '../api/homeApi';
 import Banner from '../components/Banner';
 import FadeOverlay from '../components/FadeOverlay';
 import CartCounter from '../components/Menu/CartCounter';
@@ -35,9 +34,18 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue
 } from "react-native-reanimated";
+import { useGetTierProgressQuery } from '../api/loyaltyApi';
 import CustomHeader from '../components/Header';
-import { COLORS } from '../theme';
+import LoyaltyProgressCard from '../components/Loyalty/LoyaltyProgressCard';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { COLORS, SCREEN_PADDING } from '../theme';
+
+const { width } = Dimensions.get("window");
+const BANNER_HEIGHT = 350;
+
+const IMAGES = {
+  bannerBg: require('../../assets/images/banner.png')
+}
 
 // Define the navigation prop type
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -52,18 +60,22 @@ const HomeScreen = () => {
   const { data: content } = useGetContentQuery();
   const [showErrorPopup, setShowErrorPopup] = useState(false);
 
+  // Fetch tier progress data
+  const { data: tierProgress, isLoading: isTierProgressLoading } = useGetTierProgressQuery({},
+    { skip: !state.id || !state.isLoggedIn }
+  );
+
+  // Get banner data based on order type
   const bannerData = useMemo(() => {
-    return [
-      {
-        image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800',
-        title: 'Delicious Food',
-      },
-      {
-        image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800',
-        title: 'Fresh Ingredients',
-      },
-    ];
-  }, []);
+    if (!content?.length) return [];
+    const bannerKey = state.orderType === 'delivery' ? 'home-delivery-swiper' : 'home-takeaway-swiper';
+    return content
+      .filter((item) => item.key === bannerKey && item.image_url)
+      .map((item) => ({
+        image: item.image_url ?? '',
+        title: item.title ?? '',
+      }));
+  }, [content, state.orderType]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -89,12 +101,6 @@ const HomeScreen = () => {
     branch: state.branchAlias,
     addressId: state.addressId,
   });
-
-  // const { data: banners, isLoading: isBannersLoading, error: bannersError } = useGetBannersQuery({
-  //   branch: state.branchName ?? '',
-  // });
-
-  // console.log('banners', banners);
 
   // Handle error from useGetHomepageQuery
   React.useEffect(() => {
@@ -220,6 +226,44 @@ const HomeScreen = () => {
             }}
           />
 
+          {/* Loyalty Tier Progress */}
+          {state.isLoggedIn && tierProgress?.current_tier && (
+            <View style={{
+              paddingHorizontal: SCREEN_PADDING.horizontal,
+            }}>
+              <LoyaltyProgressCard
+                tierName={tierProgress.current_tier.name}
+                totalDashes={
+                  tierProgress.is_max_tier
+                    ? Math.round(tierProgress.current_tier.threshold)
+                    : tierProgress.next_tier
+                      ? Math.round(tierProgress.next_tier.threshold - tierProgress.current_tier.threshold)
+                      : 10
+                }
+                filledDashes={
+                  tierProgress.is_max_tier
+                    ? Math.round(tierProgress.current_balance)
+                    : Math.round(tierProgress.current_balance - tierProgress.current_tier.threshold)
+                }
+                progressColor={tierProgress.current_tier.extras?.color || COLORS.primaryColor}
+                description={
+                  tierProgress.is_max_tier
+                    ? `You've reached the highest tier!`
+                    : `Complete ${tierProgress.remaining_to_next_tier?.toFixed(0)} more ${tierProgress.unit?.key || 'orders'} to reach ${tierProgress.next_tier?.name}`
+                }
+                pointsCount={tierProgress.current_balance >= 1000 ? `${(tierProgress.current_balance / 1000).toFixed(1)}K` : tierProgress.current_balance.toFixed(0)}
+                pointsUnit={tierProgress.unit?.name || 'Pts'}
+                scrollY={scrollY}
+                onPress={() => {
+                  navigation.navigate('Loyalty');
+                }}
+              />
+            </View>
+          )}
+
+
+
+          {/* Featured Items */}
           <ItemsList
             isLoading={isLoading}
             title="Featured Items"

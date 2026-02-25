@@ -1,5 +1,5 @@
 import React from 'react';
-import { KeyboardAvoidingView, Modal, Platform, StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, StyleProp, StyleSheet, TouchableWithoutFeedback, View, ViewStyle } from 'react-native';
 
 interface Props {
   visible: boolean;
@@ -7,9 +7,10 @@ interface Props {
   children: React.ReactNode;
   wide?: boolean;
   closeOnBackdropPress?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
-const DynamicPopup: React.FC<Props> = ({ visible, onClose, children, wide = false, closeOnBackdropPress = false }) => {
+const DynamicPopup: React.FC<Props> = ({ visible, onClose, children, wide = false, closeOnBackdropPress = false, style }) => {
   const handleBackdropPress = () => {
     if (closeOnBackdropPress) {
       onClose();
@@ -30,7 +31,7 @@ const DynamicPopup: React.FC<Props> = ({ visible, onClose, children, wide = fals
           <TouchableWithoutFeedback onPress={handleBackdropPress}>
             <View style={styles.modalBackground}>
               <TouchableWithoutFeedback onPress={() => { }}>
-                <View style={[styles.modalContainer, wide && { width: '90%' }]}>
+                <View style={[styles.modalContainer, wide && { width: '90%' }, style]}>
                   {children}
                 </View>
               </TouchableWithoutFeedback>
