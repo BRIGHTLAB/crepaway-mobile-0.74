@@ -21,6 +21,7 @@ import CategoryList from '../components/Menu/CategoryList';
 import ItemsList from '../components/Menu/ItemsList';
 import OffersList from '../components/Menu/OffersList';
 import InfoPopup from '../components/Popups/InfoPopup';
+import PromoCarousel from '../components/PromoCarousel';
 import { RootStackParamList } from '../navigation/NavigationStack';
 import { setOrderType } from '../store/slices/userSlice';
 import { RootState, useAppDispatch } from '../store/store';
@@ -261,7 +262,14 @@ const HomeScreen = () => {
             </View>
           )}
 
-
+          {/* Promo Codes Carousel */}
+          {state.isLoggedIn && (
+            <PromoCarousel
+              promos={data?.user_promos ?? []}
+              currency={data?.currency ?? null}
+              scrollY={scrollY}
+            />
+          )}
 
           {/* Featured Items */}
           <ItemsList

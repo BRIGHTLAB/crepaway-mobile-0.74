@@ -1,5 +1,15 @@
 import { baseApi } from './baseApi';
 
+export interface UserPromo {
+    id: number;
+    name: string;
+    code: string;
+    discount_type: 'percentage' | 'fixed-value';
+    amount: number;
+    max_amount: number | null;
+    end_date: string | null;
+}
+
 export interface HomepageResponse {
     categories: Category[];
     featured_items: Item[];
@@ -7,6 +17,13 @@ export interface HomepageResponse {
     exclusive_offers: Offer[];
     favorite_items: Item[];
     best_sellers: Item[];
+    user_promos: UserPromo[];
+    currency: {
+        id: number;
+        symbol: string;
+        name: string;
+        exchange: number;
+    } | null;
 }
 
 type HomeArgs = {
