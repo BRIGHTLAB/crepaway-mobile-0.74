@@ -1,7 +1,6 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Input from '../UI/Input';
 import { COLORS } from '../../theme';
-import Icon_Promo from '../../../assets/SVG/Icon_Promo';
+import Icon_Add from '../../../assets/SVG/Icon_Add';
 import React from 'react';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 
@@ -9,9 +8,9 @@ interface IProps {
   subtotal: string;
   deliveryCharge?: string | null;
   pointsRewarded: string;
+  promoApplied?: boolean;
   promoCode?: string;
-  promoCodeError?: string | null;
-  onPromoCodeChange?: (code: string) => void;
+  onAddPromoCode?: () => void;
   total: string;
   totalUSD?: string;
   discount?: string;
@@ -29,15 +28,14 @@ const TotalSection = ({
   subtotal,
   deliveryCharge,
   pointsRewarded,
+  promoApplied,
   promoCode,
-  promoCodeError,
-  onPromoCodeChange,
+  onAddPromoCode,
   total,
   totalUSD,
   discount,
   tips,
   isLoading = false,
-  disabled = false,
   orderType,
   canEdit = false,
 }: IProps) => {
@@ -103,25 +101,6 @@ const TotalSection = ({
         </View>
       )}
 
-      {/* Promo Code  */}
-      {(canEdit || (promoCode && disabled)) && (
-        <View style={styles.subTotalContainer}>
-          <Text style={styles.subTotalTitle}>Promo Code</Text>
-          <View style={{ width: 150 }}>
-            <Input
-              iconLeft={<Icon_Promo />}
-              placeholder="Enter code"
-              value={promoCode}
-              onChangeText={onPromoCodeChange}
-              disabled={disabled}
-            />
-            {promoCodeError && (
-              <Text style={styles.errorText}>{promoCodeError}</Text>
-            )}
-          </View>
-        </View>
-      )}
-
       {/* Total  */}
       <View style={[styles.totalContainer]}>
         <Text style={styles.totalTitle}>Total</Text>
@@ -179,19 +158,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    // borderBottomWidth: 2,
-    // borderBottomColor: `${COLORS.foregroundColor}10`,
   },
   totalTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 16,
     color: COLORS.darkColor,
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 10,
-    marginTop: 2,
-    textAlign: 'right',
   },
   tipsButton: {
     borderWidth: 1,

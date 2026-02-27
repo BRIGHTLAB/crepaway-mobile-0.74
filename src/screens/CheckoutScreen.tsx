@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -23,22 +24,22 @@ import Toast from 'react-native-toast-message';
 import { useSelector } from 'react-redux';
 import Icon_Branch from '../../assets/SVG/Icon_Branch';
 import Icon_Checkout from '../../assets/SVG/Icon_Checkout';
+import Icon_Credit_Card from '../../assets/SVG/Icon_Credit_Card';
 import Icon_Location from '../../assets/SVG/Icon_Location';
+import Icon_Delete from '../../assets/SVG/Icon_Delete';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
 import { useGetCheckoutQuery, usePlaceOrderMutation, useGetPaymentMethodsQuery, useLazyGetPaymentStatusQuery, useGetSavedCardsQuery, useDeleteSavedCardMutation } from '../api/checkoutApi';
-import Icon_Delete from '../../assets/SVG/Icon_Delete';
-import DeliveryInstructionsSheet from '../components/Checkout/DeliveryInstructionsSheet';
 import PaymentWebViewModal from '../components/Checkout/PaymentWebViewModal';
 import TotalSection from '../components/Menu/TotalSection';
 import DynamicSheet from '../components/Sheets/DynamicSheet';
 import Button from '../components/UI/Button';
 import DateInput from '../components/UI/DateInput';
+import Input from '../components/UI/Input';
 import RadioButton from '../components/UI/RadioButton';
-import Checkbox from '../components/UI/Checkbox';
+import BottomSheetInput from '../components/UI/BottomSheetInput';
 import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
 import {
   clearCart,
-  DeliveryInstruction,
 } from '../store/slices/cartSlice';
 import { RootState, useAppDispatch } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
@@ -47,8 +48,9 @@ const CheckoutScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<DeliveryTakeawayStackParamList>>();
 
-  const deliveryInstructionRef = useRef<BottomSheetMethods | null>(null);
   const scheduleOrderRef = useRef<BottomSheetMethods | null>(null);
+  const promoCodeSheetRef = useRef<BottomSheetMethods | null>(null);
+  const paymentMethodSheetRef = useRef<BottomSheetMethods | null>(null);
   const dispatch = useAppDispatch();
   const user = useSelector((state: RootState) => state.user);
   const cart = useSelector((state: RootState) => state.cart);
@@ -56,16 +58,16 @@ const CheckoutScreen = () => {
   const [scheduleOrder, setScheduleOrder] = useState<string>('no');
   const [scheduledDateTime, setScheduledDateTime] = useState<Date | undefined>(undefined);
   const [sendCutlery, setSendCutlery] = useState<string>('no');
-  const [deliveryInstructions, setDeliveryInstructions] = useState<DeliveryInstruction[]>([]);
   const [specialDeliveryInstructions, setSpecialDeliveryInstructions] = useState<string>('');
   const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<number | null>(null);
   const [selectedSavedCardId, setSelectedSavedCardId] = useState<number | null>(null);
   const [saveCard, setSaveCard] = useState<boolean>(false);
 
-  // Promo code state (local state, resets on mount)
+  // Promo code state
   const [promoCode, setPromoCode] = useState<string>('');
   const [promoError, setPromoError] = useState<string | null>(null);
   const [debouncedPromoCode, setDebouncedPromoCode] = useState<string>('');
+  const [sheetPromoCode, setSheetPromoCode] = useState<string>('');
 
   // Payment WebView state (for card payments)
   const [paymentWebViewUrl, setPaymentWebViewUrl] = useState<string | null>(null);
@@ -74,6 +76,9 @@ const CheckoutScreen = () => {
   // Payment polling state (waiting for order_id after successful card payment)
   const [isWaitingForOrder, setIsWaitingForOrder] = useState(false);
   const [pendingPaymentId, setPendingPaymentId] = useState<number | null>(null);
+
+  // Save card dialog state
+  const [showSaveCardDialog, setShowSaveCardDialog] = useState(false);
 
   const { bottom } = useSafeAreaInsets();
 
@@ -255,45 +260,8 @@ const CheckoutScreen = () => {
     []
   );
 
-  const handlerOrder = async () => {
-    // Front-end validation: if scheduleOrder is "yes" but no date selected, switch to "no"
-    if (scheduleOrder === 'yes' && !scheduledDateTime) {
-      setScheduleOrder('no');
-      Toast.show({
-        type: 'error',
-        text1: 'Please select a date and time to schedule your order',
-        visibilityTime: 3000,
-        position: 'bottom',
-      });
-      return;
-    }
-
-    // Front-end validation: if date is selected but not in the future, show error
-    if (scheduledDateTime) {
-      const now = new Date();
-      const minDate = getMinimumDate();
-      if (scheduledDateTime <= now || scheduledDateTime < minDate) {
-        Toast.show({
-          type: 'error',
-          text1: 'Please select a future date and time',
-          visibilityTime: 3000,
-          position: 'bottom',
-        });
-        return;
-      }
-    }
-
-    // Validate payment method is selected
-    if (!selectedPaymentMethodId) {
-      Toast.show({
-        type: 'error',
-        text1: 'Please select a payment method',
-        visibilityTime: 3000,
-        position: 'bottom',
-      });
-      return;
-    }
-
+  // Called when user submits the order (or after save card dialog)
+  const executeOrder = async (shouldSaveCard: boolean) => {
     const formData = {
       special_delivery_instructions: specialDeliveryInstructions,
       payment_methods_id: selectedPaymentMethodId,
@@ -314,19 +282,10 @@ const CheckoutScreen = () => {
           .replace(',', '')
         : null,
       order_type: user?.orderType,
-      ...(user.orderType === 'delivery'
-        ? {
-          delivery_instructions: deliveryInstructions?.map((el) => {
-            return {
-              id: el.id,
-            };
-          }),
-        }
-        : {}),
       cutleries: sendCutlery === 'yes' ? 1 : 0,
       ...(selectedSavedCardId
         ? { users_payment_methods_id: selectedSavedCardId }
-        : (saveCard && paymentMethodsData?.data?.find(m => m.id === selectedPaymentMethodId)?.alias === 'areeba' ? { save_card: true } : {})
+        : (shouldSaveCard ? { save_card: true } : {})
       ),
     };
 
@@ -390,6 +349,57 @@ const CheckoutScreen = () => {
     }
   };
 
+  const handlerOrder = async () => {
+    // Front-end validation: if scheduleOrder is "yes" but no date selected, switch to "no"
+    if (scheduleOrder === 'yes' && !scheduledDateTime) {
+      setScheduleOrder('no');
+      Toast.show({
+        type: 'error',
+        text1: 'Please select a date and time to schedule your order',
+        visibilityTime: 3000,
+        position: 'bottom',
+      });
+      return;
+    }
+
+    // Front-end validation: if date is selected but not in the future, show error
+    if (scheduledDateTime) {
+      const now = new Date();
+      const minDate = getMinimumDate();
+      if (scheduledDateTime <= now || scheduledDateTime < minDate) {
+        Toast.show({
+          type: 'error',
+          text1: 'Please select a future date and time',
+          visibilityTime: 3000,
+          position: 'bottom',
+        });
+        return;
+      }
+    }
+
+    // Validate payment method is selected
+    if (!selectedPaymentMethodId) {
+      Toast.show({
+        type: 'error',
+        text1: 'Please select a payment method',
+        visibilityTime: 3000,
+        position: 'bottom',
+      });
+      return;
+    }
+
+    // Check if Areeba (new card) is selected and no saved card is used
+    const selectedMethod = paymentMethodsData?.data?.find(m => m.id === selectedPaymentMethodId);
+    if (selectedMethod?.alias === 'areeba' && !selectedSavedCardId) {
+      // Show save card dialog
+      setShowSaveCardDialog(true);
+      return;
+    }
+
+    // Proceed directly for non-Areeba or saved card selection
+    await executeOrder(false);
+  };
+
   useEffect(() => {
     if (data) {
       if (data?.summary?.promo_code_applied) {
@@ -401,23 +411,24 @@ const CheckoutScreen = () => {
     }
   }, [data, promoCode]);
 
-  const handleAddDeliveryInstructions = (
-    instructions: { id: number; title: string }[],
-    specialNotes: string
-  ) => {
-    setDeliveryInstructions(instructions);
-    setSpecialDeliveryInstructions(specialNotes);
-  };
-
-  const handlePromoCodeChange = (code: string) => {
-    setPromoCode(code);
-
-    if (!code.trim() && promoError) {
-      setPromoError(null);
+  const handleApplyPromoCode = () => {
+    const trimmedCode = sheetPromoCode.trim();
+    if (!trimmedCode) {
+      setPromoError('Please enter a promo code');
+      return;
     }
-
-    debouncedApplyPromo(code);
+    setPromoCode(trimmedCode);
+    setDebouncedPromoCode(trimmedCode);
+    setPromoError(null);
+    // We'll close the sheet after the query resolves if valid
   };
+
+  // Close promo sheet when promo is successfully applied
+  useEffect(() => {
+    if (data?.summary?.promo_code_applied && debouncedPromoCode) {
+      promoCodeSheetRef.current?.close();
+    }
+  }, [data?.summary?.promo_code_applied, debouncedPromoCode]);
 
 
   console.log('total123', data?.summary?.final_total);
@@ -479,7 +490,44 @@ const CheckoutScreen = () => {
     });
   };
 
+  // Get the currently selected payment method object
+  const selectedPaymentMethod = paymentMethodsData?.data?.find(m => m.id === selectedPaymentMethodId);
 
+  // Get saved cards for Areeba
+  const savedCards = savedCardsData?.filter(c => c.areeba_token) || [];
+
+  // Get display info for selected payment
+  const getSelectedPaymentDisplay = () => {
+    if (selectedSavedCardId) {
+      const card = savedCardsData?.find(c => c.id === selectedSavedCardId);
+      if (card) {
+        return {
+          name: `Card ending with ${card.card_digits?.slice(-4) || '****'}`,
+          icon: <Icon_Credit_Card color={COLORS.foregroundColor} />,
+        };
+      }
+    }
+    if (selectedPaymentMethod) {
+      return {
+        name: selectedPaymentMethod.title,
+        icon: selectedPaymentMethod.image_url
+          ? <FastImage
+            source={{ uri: selectedPaymentMethod.image_url }}
+            style={{ width: 32, height: 20 }}
+            resizeMode={FastImage.resizeMode.contain}
+          />
+          : selectedPaymentMethod.type === 'cash'
+            ? <FastImage
+              source={require('../../assets/images/payment/cash.png')}
+              style={{ width: 32, height: 20 }}
+            />
+            : <Icon_Credit_Card color={COLORS.foregroundColor} />,
+      };
+    }
+    return { name: 'Select', icon: null };
+  };
+
+  const paymentDisplay = getSelectedPaymentDisplay();
 
   return (
     <>
@@ -490,7 +538,7 @@ const CheckoutScreen = () => {
         behavior={'padding'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight + 10 : 0}
       >
-        <ScrollView style={{ backgroundColor: COLORS.backgroundColor }}>
+        <ScrollView style={{ backgroundColor: COLORS.lightColor }}>
           <View style={styles.container}>
 
 
@@ -498,7 +546,7 @@ const CheckoutScreen = () => {
             {(user.orderType === 'delivery' && user.addressTitle) ||
               (user.orderType === 'takeaway' && cart.branchName) ? (
               <View style={styles.boxContainer}>
-                <Text style={styles.boxContainerTitle}>
+                <Text style={[styles.boxContainerTitle, { marginBottom: 6 }]}>
                   {user.orderType === 'delivery' ? 'Delivery Address' : 'Pickup Branch'}
                 </Text>
                 <View
@@ -557,163 +605,25 @@ const CheckoutScreen = () => {
                       </MapView>
                     </View>
                   )}
+                {/* Delivery Instructions Input - directly under the map */}
+                {user.orderType === 'delivery' && (
+                  <View style={{ marginTop: 12 }}>
+                    <Input
+                      iconLeft={<Icon_Motorcycle color={COLORS.foregroundColor} />}
+                      placeholder="Any delivery instructions?"
+                      value={specialDeliveryInstructions}
+                      onChangeText={setSpecialDeliveryInstructions}
+                      multiline
+                      lines={2}
+                    />
+                  </View>
+                )}
               </View>
             ) : null}
 
-            <View style={styles.paymentContainer}>
-              <Text style={styles.paymentTitle}>Payment Method</Text>
-
-              <View
-                style={{
-                  height: 2,
-                  backgroundColor: `${COLORS.foregroundColor}10`,
-                  marginTop: 6,
-                }}
-              ></View>
-
-              <View style={styles.paymentMethodContainer}>
-                {isPaymentMethodsLoading ? (
-                  <SkeletonPlaceholder>
-                    <SkeletonPlaceholder.Item gap={16}>
-                      {[1, 2, 3].map((i) => (
-                        <SkeletonPlaceholder.Item
-                          key={i}
-                          flexDirection="row"
-                          alignItems="center"
-                          justifyContent="space-between"
-                          paddingVertical={6}
-                        >
-                          <SkeletonPlaceholder.Item flexDirection="row" alignItems="center" gap={12}>
-                            <SkeletonPlaceholder.Item width={24} height={24} borderRadius={12} />
-                            <SkeletonPlaceholder.Item width={120} height={16} borderRadius={4} />
-                          </SkeletonPlaceholder.Item>
-                          <SkeletonPlaceholder.Item width={48} height={28} borderRadius={4} />
-                        </SkeletonPlaceholder.Item>
-                      ))}
-                    </SkeletonPlaceholder.Item>
-                  </SkeletonPlaceholder>
-                ) : (
-                  paymentMethodsData?.data?.map((method) => (
-                    <View key={method.id} style={styles.paymentMethodItem}>
-                      <RadioButton
-                        onPress={() => setSelectedPaymentMethodId(method.id)}
-                        checked={selectedPaymentMethodId === method.id}
-                        title={method.title}
-                      />
-                      {method.image_url ? (
-                        <FastImage
-                          source={{ uri: method.image_url }}
-                          style={{ width: 48, height: 28 }}
-                          resizeMode={FastImage.resizeMode.contain}
-                        />
-                      ) : (
-                        // Fallback to local image if no image_url
-                        method.type === 'cash' && (
-                          <FastImage
-                            source={require('../../assets/images/payment/cash.png')}
-                            style={{ width: 48, height: 28 }}
-                          />
-                        )
-                      )}
-                    </View>
-                  ))
-                )}
-              </View>
-
-              {/* Save Card Checkbox (only for Areeba and when no saved card is selected) */}
-              {(() => {
-                const selectedMethod = paymentMethodsData?.data?.find(m => m.id === selectedPaymentMethodId);
-                if (selectedMethod?.alias === 'areeba') {
-                  // Show saved cards if available
-                  const savedCards = savedCardsData?.filter(c => c.areeba_token) || [];
-
-                  return (
-                    <>
-                      {savedCards.length > 0 && (
-                        <View style={{ marginTop: 12, gap: 10 }}>
-                          <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.foregroundColor, opacity: 0.7 }}>Saved Cards</Text>
-                          {savedCards.map((card) => (
-                            <View key={card.id} style={styles.paymentMethodItem}>
-                              <RadioButton
-                                onPress={() => {
-                                  setSelectedSavedCardId(card.id);
-                                  setSaveCard(false);
-                                }}
-                                checked={selectedSavedCardId === card.id}
-                                title={`•••• ${card.card_digits?.slice(-4) || '****'}${card.card_expiry ? `  (${card.card_expiry})` : ''}`}
-                              />
-                              <TouchableOpacity
-                                onPress={() => {
-                                  Alert.alert(
-                                    'Remove Card',
-                                    'Are you sure you want to remove this saved card?',
-                                    [
-                                      { text: 'Cancel', style: 'cancel' },
-                                      {
-                                        text: 'Remove',
-                                        style: 'destructive',
-                                        onPress: async () => {
-                                          try {
-                                            await deleteSavedCard(card.id).unwrap();
-                                            if (selectedSavedCardId === card.id) {
-                                              setSelectedSavedCardId(null);
-                                            }
-                                            Toast.show({
-                                              type: 'success',
-                                              text1: 'Card removed successfully',
-                                              visibilityTime: 2000,
-                                              position: 'bottom',
-                                            });
-                                          } catch (err) {
-                                            Toast.show({
-                                              type: 'error',
-                                              text1: 'Failed to remove card',
-                                              visibilityTime: 3000,
-                                              position: 'bottom',
-                                            });
-                                          }
-                                        },
-                                      },
-                                    ],
-                                  );
-                                }}
-                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                              >
-                                <Icon_Delete color={COLORS.foregroundColor} />
-                              </TouchableOpacity>
-                            </View>
-                          ))}
-                          {/* Option to use a new card instead */}
-                          <View style={styles.paymentMethodItem}>
-                            <RadioButton
-                              onPress={() => setSelectedSavedCardId(null)}
-                              checked={selectedSavedCardId === null}
-                              title="Use a new card"
-                            />
-                          </View>
-                        </View>
-                      )}
-                      {/* Only show save card checkbox when using a new card */}
-                      {!selectedSavedCardId && (
-                        <View style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                          <Checkbox
-                            checked={saveCard}
-                            onCheck={(checked) => setSaveCard(checked)}
-                            title="Save card for future use"
-                          />
-                        </View>
-                      )}
-                    </>
-                  );
-                }
-                return null;
-              })()}
-            </View>
-
-
-            {/* Delivery or pickup  */}
+            {/* Schedule your order */}
             <View style={styles.boxContainer}>
-              <Text style={styles.boxContainerTitle}>
+              <Text style={[styles.boxContainerTitle, { marginBottom: 6 }]}>
                 Schedule your order?
               </Text>
 
@@ -757,14 +667,13 @@ const CheckoutScreen = () => {
                         : 'Select Date and Time'
                     }
                   />
-                  {/* <Icon_Paper_Edit onPress={handleScheduleEdit} color={COLORS.secondaryColor} /> */}
                 </View>
               </View>
             </View>
 
-            {/* send cutlery */}
+            {/* Send cutlery */}
             <View style={styles.boxContainer}>
-              <Text style={styles.boxContainerTitle}>Send Cutlery?</Text>
+              <Text style={[styles.boxContainerTitle, { marginBottom: 6 }]}>Send Cutlery?</Text>
 
               <View style={{ gap: 16 }}>
                 <RadioButton
@@ -780,6 +689,74 @@ const CheckoutScreen = () => {
               </View>
             </View>
 
+            {/* Payment Method - Compact Display */}
+            <View style={styles.boxContainer}>
+              <View style={styles.paymentHeaderRow}>
+                <Text style={styles.boxContainerTitle}>Payment Method</Text>
+                <TouchableOpacity
+                  style={styles.changeButton}
+                  onPress={() => paymentMethodSheetRef.current?.expand()}
+                >
+                  <Text style={styles.changeButtonText}>Change</Text>
+                </TouchableOpacity>
+              </View>
+
+              {isPaymentMethodsLoading ? (
+                <SkeletonPlaceholder>
+                  <SkeletonPlaceholder.Item flexDirection="row" alignItems="center" gap={12} marginTop={8}>
+                    <SkeletonPlaceholder.Item width={32} height={20} borderRadius={4} />
+                    <SkeletonPlaceholder.Item width={100} height={16} borderRadius={4} />
+                  </SkeletonPlaceholder.Item>
+                </SkeletonPlaceholder>
+              ) : (
+                <View style={styles.selectedPaymentRow}>
+                  {paymentDisplay.icon}
+                  <Text style={styles.selectedPaymentText}>{paymentDisplay.name}</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Promo Code - Compact Display */}
+            <View style={styles.boxContainer}>
+              <View style={styles.paymentHeaderRow}>
+                <Text style={styles.boxContainerTitle}>Promo code</Text>
+                {data?.summary?.promo_code_applied && promoCode ? (
+                  <TouchableOpacity
+                    style={styles.changeButton}
+                    onPress={() => {
+                      setPromoCode('');
+                      setDebouncedPromoCode('');
+                      setSheetPromoCode('');
+                      setPromoError(null);
+                    }}
+                  >
+                    <Text style={[styles.changeButtonText, { color: COLORS.primaryColor }]}>Remove</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.addButton}
+                    onPress={() => {
+                      setSheetPromoCode(promoCode);
+                      setPromoError(null);
+                      promoCodeSheetRef.current?.expand();
+                    }}
+                  >
+                    <Text style={styles.addButtonText}>+ Add</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              {data?.summary?.promo_code_applied && promoCode ? (
+                <Text style={{
+                  fontFamily: 'Poppins-Regular',
+                  fontSize: 14,
+                  color: COLORS.secondaryColor,
+                  marginTop: 4,
+                }}>
+                  {promoCode} applied
+                </Text>
+              ) : null}
+            </View>
+
             <TotalSection
               orderType={user?.orderType ?? 'delivery'}
               subtotal={`${data?.currency?.symbol ?? ''} ${data?.summary?.original_sub_total ?? ''
@@ -787,9 +764,6 @@ const CheckoutScreen = () => {
               deliveryCharge={`${data?.currency?.symbol ?? ''} ${data?.delivery_charge ?? ''
                 }`}
               pointsRewarded={`+ ${data?.points_rewarded ?? ''} pts`}
-              promoCode={promoCode}
-              promoCodeError={promoError}
-              onPromoCodeChange={handlePromoCodeChange}
               total={`${data?.currency?.symbol ?? ''} ${data?.summary?.final_total ?? ''
                 }`}
               discount={
@@ -802,50 +776,7 @@ const CheckoutScreen = () => {
               canEdit={true}
             />
 
-            {/* Delivery instructions  */}
-            {(deliveryInstructions?.length > 0 ||
-              specialDeliveryInstructions) && (
-                <View style={styles.boxContainer}>
-                  <Text style={styles.boxContainerTitle}>
-                    Delivery Instructions
-                  </Text>
-
-                  <View style={{ gap: 8 }}>
-                    {deliveryInstructions?.map((el) => {
-                      return (
-                        <Text key={el.id} style={{}}>
-                          {el.title}
-                        </Text>
-                      );
-                    })}
-                    {specialDeliveryInstructions && (
-                      <Text style={{}}>
-                        <Text style={{ fontWeight: 700 }}>
-                          Special Instructions:
-                        </Text>{' '}
-                        {specialDeliveryInstructions}
-                      </Text>
-                    )}
-                  </View>
-                </View>
-              )}
-
             <View style={{ gap: 12 }}>
-              {user.orderType === 'delivery' && (
-                <Button
-                  icon={<Icon_Motorcycle />}
-                  variant="outline"
-                  onPress={() => {
-                    console.log(
-                      'instructionsSheet',
-                      deliveryInstructionRef?.current
-                    );
-                    deliveryInstructionRef?.current?.expand();
-                  }}
-                >
-                  Add Delivery Instructions
-                </Button>
-              )}
               <Button
                 isLoading={isSubmitLoading || isWaitingForOrder}
                 icon={<Icon_Checkout />}
@@ -858,11 +789,7 @@ const CheckoutScreen = () => {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <DeliveryInstructionsSheet
-        deliveryInstructionRef={deliveryInstructionRef}
-        onAddInstructions={handleAddDeliveryInstructions}
-      />
-
+      {/* Schedule Order Bottom Sheet */}
       <DynamicSheet ref={scheduleOrderRef} onClose={handleScheduleSheetClose}>
         <BottomSheetView
           style={[
@@ -888,6 +815,238 @@ const CheckoutScreen = () => {
         </BottomSheetView>
       </DynamicSheet>
 
+      {/* Promo Code Bottom Sheet */}
+      <DynamicSheet ref={promoCodeSheetRef}>
+        <BottomSheetView
+          style={{
+            gap: 16,
+            paddingBottom: bottom + 20,
+            paddingTop: 8,
+          }}
+        >
+          <Text style={styles.sheetTitle}>Promo Code</Text>
+          <BottomSheetInput
+            placeholder="Enter promo code"
+            value={sheetPromoCode}
+            onChangeText={(text: string) => {
+              setSheetPromoCode(text);
+              if (promoError) setPromoError(null);
+            }}
+            autoCapitalize="characters"
+          />
+          {promoError && (
+            <Text style={styles.promoErrorText}>{promoError}</Text>
+          )}
+          <Button onPress={handleApplyPromoCode} isLoading={isLoading}>
+            Apply
+          </Button>
+        </BottomSheetView>
+      </DynamicSheet>
+
+      {/* Payment Method Bottom Sheet */}
+      <DynamicSheet ref={paymentMethodSheetRef}>
+        <BottomSheetView
+          style={{
+            gap: 12,
+            paddingBottom: bottom + 20,
+            paddingTop: 8,
+          }}
+        >
+          <Text style={styles.sheetTitle}>Payment Method</Text>
+          <Text style={styles.sheetSubtitle}>
+            Please select one of the below payment method
+          </Text>
+
+          {/* Payment methods list */}
+          {paymentMethodsData?.data?.map((method) => (
+            <TouchableOpacity
+              key={method.id}
+              style={styles.paymentSheetRow}
+              onPress={() => {
+                setSelectedPaymentMethodId(method.id);
+                // If not areeba, clear saved card selection
+                if (method.alias !== 'areeba') {
+                  setSelectedSavedCardId(null);
+                }
+                paymentMethodSheetRef.current?.close();
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.paymentSheetRowLeft}>
+                {method.image_url ? (
+                  <FastImage
+                    source={{ uri: method.image_url }}
+                    style={{ width: 40, height: 28 }}
+                    resizeMode={FastImage.resizeMode.contain}
+                  />
+                ) : method.type === 'cash' ? (
+                  <FastImage
+                    source={require('../../assets/images/payment/cash.png')}
+                    style={{ width: 40, height: 28 }}
+                  />
+                ) : (
+                  <Icon_Credit_Card color={COLORS.foregroundColor} />
+                )}
+                <View>
+                  <Text style={styles.paymentSheetRowTitle}>{method.title}</Text>
+                  {method.alias === 'areeba' && (
+                    <Text style={styles.paymentSheetRowSubtitle}>
+                      Can be saved on checkout for later use
+                    </Text>
+                  )}
+                </View>
+              </View>
+              <RadioButton
+                checked={selectedPaymentMethodId === method.id && !selectedSavedCardId}
+                onPress={() => {
+                  setSelectedPaymentMethodId(method.id);
+                  if (method.alias !== 'areeba') {
+                    setSelectedSavedCardId(null);
+                  }
+                  paymentMethodSheetRef.current?.close();
+                }}
+              />
+            </TouchableOpacity>
+          ))}
+
+          {/* Saved cards section */}
+          {savedCards.length > 0 && (
+            <>
+              {savedCards.map((card) => {
+                // Find the areeba payment method to set the correct ID
+                const areebaMethod = paymentMethodsData?.data?.find(m => m.alias === 'areeba');
+
+                return (
+                  <TouchableOpacity
+                    key={card.id}
+                    style={styles.paymentSheetRow}
+                    onPress={() => {
+                      if (areebaMethod) {
+                        setSelectedPaymentMethodId(areebaMethod.id);
+                      }
+                      setSelectedSavedCardId(card.id);
+                      paymentMethodSheetRef.current?.close();
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.paymentSheetRowLeft}>
+                      <View style={styles.cardBrandIcon}>
+                        {card.type?.toLowerCase() === 'visa' ? (
+                          <Text style={styles.cardBrandText}>VISA</Text>
+                        ) : card.type?.toLowerCase() === 'mastercard' || card.type?.toLowerCase() === 'master' ? (
+                          <Text style={[styles.cardBrandText, { color: '#EB001B' }]}>MC</Text>
+                        ) : (
+                          <Icon_Credit_Card color={COLORS.foregroundColor} />
+                        )}
+                      </View>
+                      <Text style={styles.paymentSheetRowTitle}>
+                        Card ending with {card.card_digits?.slice(-4) || '****'}
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          Alert.alert(
+                            'Remove Card',
+                            'Are you sure you want to remove this saved card?',
+                            [
+                              { text: 'Cancel', style: 'cancel' },
+                              {
+                                text: 'Remove',
+                                style: 'destructive',
+                                onPress: async () => {
+                                  try {
+                                    await deleteSavedCard(card.id).unwrap();
+                                    if (selectedSavedCardId === card.id) {
+                                      setSelectedSavedCardId(null);
+                                    }
+                                    Toast.show({
+                                      type: 'success',
+                                      text1: 'Card removed successfully',
+                                      visibilityTime: 2000,
+                                      position: 'bottom',
+                                    });
+                                  } catch (err) {
+                                    Toast.show({
+                                      type: 'error',
+                                      text1: 'Failed to remove card',
+                                      visibilityTime: 3000,
+                                      position: 'bottom',
+                                    });
+                                  }
+                                },
+                              },
+                            ],
+                          );
+                        }}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Icon_Delete color={COLORS.foregroundColor} />
+                      </TouchableOpacity>
+                      <RadioButton
+                        checked={selectedSavedCardId === card.id}
+                        onPress={() => {
+                          if (areebaMethod) {
+                            setSelectedPaymentMethodId(areebaMethod.id);
+                          }
+                          setSelectedSavedCardId(card.id);
+                          paymentMethodSheetRef.current?.close();
+                        }}
+                      />
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </>
+          )}
+        </BottomSheetView>
+      </DynamicSheet>
+
+      {/* Save Card Confirmation Dialog */}
+      <Modal
+        visible={showSaveCardDialog}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setShowSaveCardDialog(false);
+          executeOrder(false);
+        }}
+      >
+        <View style={styles.dialogOverlay}>
+          <View style={styles.dialogContainer}>
+            <View style={styles.dialogIconContainer}>
+              <Icon_Credit_Card color={COLORS.primaryColor} width={64} height={64} />
+            </View>
+            <Text style={styles.dialogSubtitle}>
+              Redirecting you to enter card details.
+            </Text>
+            <Text style={styles.dialogTitle}>
+              Would you like to save this card for future orders?
+            </Text>
+            <View style={styles.dialogButtonRow}>
+              <TouchableOpacity
+                style={styles.dialogButtonOutline}
+                onPress={() => {
+                  setShowSaveCardDialog(false);
+                  executeOrder(false);
+                }}
+              >
+                <Text style={styles.dialogButtonOutlineText}>No, thanks</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.dialogButtonFilled}
+                onPress={() => {
+                  setShowSaveCardDialog(false);
+                  executeOrder(true);
+                }}
+              >
+                <Text style={styles.dialogButtonFilledText}>Yes, save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Payment WebView Modal for card payments */}
       <PaymentWebViewModal
         visible={!!paymentWebViewUrl}
@@ -905,33 +1064,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: SCREEN_PADDING.horizontal,
-    // paddingTop: 12,
     marginTop: SCREEN_PADDING.vertical,
     paddingBottom: 30,
     gap: 16,
-  },
-  paymentContainer: {
-    backgroundColor: COLORS.card,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: COLORS.borderColor,
-
-  },
-  paymentTitle: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 16,
-    color: COLORS.darkColor,
-  },
-  paymentMethodContainer: {
-    marginTop: 10,
-  },
-  paymentMethodItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
   },
   boxContainer: {
     backgroundColor: COLORS.card,
@@ -945,7 +1080,47 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Medium',
     fontSize: 16,
     color: COLORS.darkColor,
-    marginBottom: 6,
+  },
+  paymentHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  changeButton: {
+    backgroundColor: COLORS.lightColor,
+    borderRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  changeButtonText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13,
+    color: COLORS.foregroundColor,
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: COLORS.lightColor,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  addButtonText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13,
+    color: COLORS.foregroundColor,
+  },
+  selectedPaymentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 8,
+  },
+  selectedPaymentText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: COLORS.darkColor,
   },
   scheduleSheetContainer: {
     paddingTop: 16,
@@ -971,5 +1146,125 @@ const styles = StyleSheet.create({
   minimap: {
     width: '100%',
     height: '100%',
+  },
+  // Promo sheet
+  sheetTitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 20,
+    color: COLORS.darkColor,
+    textAlign: 'center',
+  },
+  sheetSubtitle: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: COLORS.secondaryColor,
+    textAlign: 'center',
+    marginTop: -4,
+  },
+  promoErrorText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: COLORS.primaryColor,
+    marginTop: -8,
+  },
+  // Payment method sheet
+  paymentSheetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: `${COLORS.foregroundColor}10`,
+  },
+  paymentSheetRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    flex: 1,
+  },
+  paymentSheetRowTitle: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: COLORS.darkColor,
+  },
+  paymentSheetRowSubtitle: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 11,
+    color: COLORS.foregroundColor,
+  },
+  cardBrandIcon: {
+    width: 40,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: `${COLORS.foregroundColor}10`,
+    borderRadius: 4,
+  },
+  cardBrandText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 10,
+    color: '#1A1F71',
+  },
+  // Save card dialog
+  dialogOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  dialogContainer: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    alignItems: 'center',
+    gap: 12,
+  },
+  dialogIconContainer: {
+    marginBottom: 4,
+  },
+  dialogSubtitle: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: COLORS.primaryColor,
+    textAlign: 'center',
+  },
+  dialogTitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 16,
+    color: COLORS.darkColor,
+    textAlign: 'center',
+  },
+  dialogButtonRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+    width: '100%',
+  },
+  dialogButtonOutline: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderColor: COLORS.primaryColor,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  dialogButtonOutlineText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: COLORS.primaryColor,
+  },
+  dialogButtonFilled: {
+    flex: 1,
+    backgroundColor: COLORS.primaryColor,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  dialogButtonFilledText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: COLORS.white,
   },
 });
