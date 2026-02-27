@@ -63,7 +63,7 @@ const TrackYourPoints: React.FC<TrackYourPointsProps> = ({
           <View style={styles.listContent}>
             {pointsData.map((item) => (
               <Text key={item.id} style={styles.listItemText}>
-                {item.points}
+                {parseFloat(String(item.points))}
               </Text>
             ))}
           </View>
