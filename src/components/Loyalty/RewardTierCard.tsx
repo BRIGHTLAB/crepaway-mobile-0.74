@@ -1,5 +1,5 @@
 import React from 'react'
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import Animated, { interpolate, SharedValue, useAnimatedStyle } from 'react-native-reanimated'
 import Icon_Arrow_Right from '../../../assets/SVG/Icon_Arrow_Right'
 import Icon_Handbag from '../../../assets/SVG/Icon_Handbag'
@@ -10,7 +10,7 @@ import RewardTierLabelValue from './RewardTierLabelValue'
 
 interface RewardTierCardProps {
     tierName: string
-    earnedPoints: number
+    earnedPoints?: number
     orders: number
     color: string
     scrollY?: SharedValue<number>
@@ -71,7 +71,7 @@ const RewardTierCard: React.FC<RewardTierCardProps> = ({
                 {tierName}
             </Text>
             <View style={styles.labelValueContainer}>
-                <RewardTierLabelValue label="Earned points" value={earnedPoints?.toString()} icon={<Icon_Wavy />} />
+                {earnedPoints != null && <RewardTierLabelValue label="Earned points" value={earnedPoints.toString()} icon={<Icon_Wavy />} />}
                 <RewardTierLabelValue label="Orders" value={orders?.toString()} icon={<Icon_Handbag />} />
                 <Icon_Arrow_Right width={24} height={24} color={COLORS.black} style={{ marginLeft: 'auto' }} />
             </View>
@@ -80,13 +80,12 @@ const RewardTierCard: React.FC<RewardTierCardProps> = ({
 
     if (onPress) {
         return (
-            <TouchableOpacity
+            <Pressable
                 style={styles.container}
                 onPress={onPress}
-                activeOpacity={0.8}
             >
                 {CardContent}
-            </TouchableOpacity>
+            </Pressable>
         )
     }
 

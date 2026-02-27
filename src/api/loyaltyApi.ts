@@ -35,6 +35,7 @@ export const loyaltyApi = loyaltyBaseApi.injectEndpoints({
                 method: 'GET',
             }),
             providesTags: ['tiers'],
+            keepUnusedDataFor: 0,
         }),
         getTierProgress: builder.query<TierProgress, GetTierProgressParams>({
             query: () => ({
@@ -42,6 +43,7 @@ export const loyaltyApi = loyaltyBaseApi.injectEndpoints({
                 method: 'GET',
             }),
             providesTags: ['loyalty'],
+            keepUnusedDataFor: 0,
         }),
         getPointsHistory: builder.query<PointsHistoryResponse, GetPointsHistoryParams>({
             query: ({ unitKey }) => ({
@@ -50,6 +52,7 @@ export const loyaltyApi = loyaltyBaseApi.injectEndpoints({
                 params: unitKey ? { unit_key: unitKey } : undefined,
             }),
             providesTags: ['loyalty'],
+            keepUnusedDataFor: 0,
         }),
     }),
     overrideExisting: true,

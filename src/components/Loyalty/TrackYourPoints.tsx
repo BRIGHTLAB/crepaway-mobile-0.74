@@ -21,8 +21,7 @@ const TrackYourPoints: React.FC<TrackYourPointsProps> = ({
 }) => {
   const tabs: TabType[] = [
     { label: 'Earned', value: 'earned' },
-    { label: 'Redeemed', value: 'redeemed' },
-    { label: 'All', value: 'all' },
+    { label: 'Redeemed', value: 'redeemed', disabled: true },
   ];
 
   const [selectedTab, setSelectedTab] = useState<TabType>(tabs[0]);
@@ -64,7 +63,7 @@ const TrackYourPoints: React.FC<TrackYourPointsProps> = ({
           <View style={styles.listContent}>
             {pointsData.map((item) => (
               <Text key={item.id} style={styles.listItemText}>
-                {item.points}
+                {parseFloat(String(item.points))}
               </Text>
             ))}
           </View>

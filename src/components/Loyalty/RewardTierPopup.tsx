@@ -14,7 +14,7 @@ interface RewardTierPopupProps {
   visible: boolean;
   onClose: () => void;
   tierName: string;
-  earnedPoints: number | string;
+  earnedPoints?: number | string;
   orders: number | string;
   pointsRedemption: string;
   benefits: string[];
@@ -31,11 +31,6 @@ const RewardTierPopup: React.FC<RewardTierPopupProps> = ({
   benefits,
   color,
 }) => {
-  // Format earned points - display as provided (could be number or string with %)
-  const earnedPointsDisplay = typeof earnedPoints === 'number'
-    ? earnedPoints.toString()
-    : earnedPoints;
-
   // Format orders - display as provided (could be number or string with range)
   const ordersDisplay = typeof orders === 'number'
     ? orders.toString()
@@ -63,11 +58,13 @@ const RewardTierPopup: React.FC<RewardTierPopupProps> = ({
 
         {/* Content */}
         <View style={styles.content}>
-          <RewardTierLabelValue
-            label="Earned points"
-            value={earnedPointsDisplay}
-            icon={<Icon_Wavy color={color} />}
-          />
+          {earnedPoints != null && (
+            <RewardTierLabelValue
+              label="Earned points"
+              value={typeof earnedPoints === 'number' ? earnedPoints.toString() : earnedPoints}
+              icon={<Icon_Wavy color={color} />}
+            />
+          )}
           <RewardTierLabelValue
             label="Orders"
             value={ordersDisplay}

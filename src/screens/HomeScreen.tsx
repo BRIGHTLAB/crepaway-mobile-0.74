@@ -62,7 +62,7 @@ const HomeScreen = () => {
   const [showErrorPopup, setShowErrorPopup] = useState(false);
 
   // Fetch tier progress data
-  const { data: tierProgress, isLoading: isTierProgressLoading } = useGetTierProgressQuery({},
+  const { data: tierProgress, isLoading: isTierProgressLoading, refetch: refetchTierProgress } = useGetTierProgressQuery({},
     { skip: !state.id || !state.isLoggedIn }
   );
 
@@ -120,7 +120,9 @@ const HomeScreen = () => {
   };
 
   const { refreshing, onRefresh } = usePullToRefresh({
-    refetch,
+    refetch: async () => {
+      await Promise.all([refetch(), refetchTierProgress()]);
+    },
     isFetching,
     isLoading,
   });
