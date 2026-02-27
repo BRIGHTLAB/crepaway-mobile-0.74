@@ -5,6 +5,7 @@ import { COLORS, TYPOGRAPHY } from '../../theme';
 export interface TabType<T = string> {
   label: string;
   value: T;
+  disabled?: boolean;
 }
 
 interface SegmentedControlProps<T = string> {
@@ -24,23 +25,26 @@ const SegmentedControl = <T extends string = string>({
         const isSelected = selectedTab.value === tab.value;
         const isFirst = index === 0;
         const isLast = index === tabs.length - 1;
+        const isDisabled = tab.disabled === true;
 
         return (
           <React.Fragment key={tab.value}>
             <TouchableOpacity
               style={[
                 styles.segmentButton,
-                isSelected && styles.segmentButtonSelected,
+                isSelected && !isDisabled && styles.segmentButtonSelected,
                 isFirst && { borderTopLeftRadius: 5, borderBottomLeftRadius: 5 },
                 isLast && { borderTopRightRadius: 5, borderBottomRightRadius: 5 },
+                isDisabled && { opacity: 0.4 },
               ]}
               activeOpacity={0.9}
+              disabled={isDisabled}
               onPress={() => onTabChange(tab)}
             >
               <Text
                 style={[
                   styles.segmentButtonText,
-                  isSelected && styles.segmentButtonTextSelected,
+                  isSelected && !isDisabled && styles.segmentButtonTextSelected,
                 ]}
               >
                 {tab.label}

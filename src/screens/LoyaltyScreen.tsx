@@ -216,7 +216,7 @@ const LoyaltyScreen = () => {
                 description={
                   tierProgress.is_max_tier
                     ? `You've reached the highest tier!`
-                    : `Complete ${tierProgress.remaining_to_next_tier.toFixed(0)} more orders to reach ${tierProgress.next_tier?.name}`
+                    : `Complete ${tierProgress.remaining_to_next_tier?.toFixed(0)} more orders to reach ${tierProgress.next_tier?.name}`
                 }
                 pointsCount={tierProgress.current_balance >= 1000 ? `${(tierProgress.current_balance / 1000).toFixed(1)}K` : tierProgress.current_balance.toFixed(0)}
                 pointsUnit={tierProgress.unit?.name || 'Orders'}
@@ -270,7 +270,7 @@ const LoyaltyScreen = () => {
                     <RewardTierCard
                       scrollY={scrollY}
                       tierName={item.name}
-                      earnedPoints={item.extras?.earned_points ?? 0}
+                      earnedPoints={item.extras?.earned_points}
                       orders={item.extras?.orders ?? 0}
                       color={item.extras?.color ?? '#FFD700'}
                       onPress={() => {
@@ -343,7 +343,7 @@ const LoyaltyScreen = () => {
             setSelectedTier(null);
           }}
           tierName={selectedTier.name}
-          earnedPoints={selectedTier.extras?.earned_points ?? 0}
+          earnedPoints={selectedTier.extras?.earned_points}
           orders={selectedTier.extras?.orders ?? 0}
           pointsRedemption={selectedTier.extras?.points_redemption ?? ''}
           benefits={selectedTier.extras?.benefits ?? []}

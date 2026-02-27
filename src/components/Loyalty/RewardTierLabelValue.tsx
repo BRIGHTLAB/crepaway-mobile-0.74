@@ -10,10 +10,24 @@ type Props = {
 
 const RewardTierLabelValue = ({ label, value, icon }: Props) => {
     const renderValue = () => {
-        if (Array.isArray(value)) {
+        let parsedValue = value;
+
+        // Handle stringified JSON arrays from the API
+        if (typeof parsedValue === 'string') {
+            try {
+                const parsed = JSON.parse(parsedValue);
+                if (Array.isArray(parsed)) {
+                    parsedValue = parsed;
+                }
+            } catch {
+                // Not valid JSON, keep as string
+            }
+        }
+
+        if (Array.isArray(parsedValue)) {
             return (
                 <View style={styles.arrayContainer}>
-                    {value.map((item, index) => (
+                    {parsedValue.map((item, index) => (
                         <Text key={index} style={[styles.value, styles.bulletPoint]}>
                             • {item}
                         </Text>
@@ -21,7 +35,7 @@ const RewardTierLabelValue = ({ label, value, icon }: Props) => {
                 </View>
             )
         }
-        return <Text style={styles.value}>{value}</Text>
+        return <Text style={styles.value}>{parsedValue}</Text>
     }
 
     return (
