@@ -134,7 +134,7 @@ const CartScreen = ({ }: IProps) => {
         <View style={styles.boxContainer}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
             <Text style={{ ...TYPOGRAPHY.SUB_HEADLINE, paddingBottom: 6, color: COLORS.darkColor }}>All Items</Text>
-            <Pressable onPress={handleClearCart}>
+            {/* <Pressable onPress={handleClearCart}>
               <Text
                 style={{
                   color: COLORS.primaryColor,
@@ -144,7 +144,7 @@ const CartScreen = ({ }: IProps) => {
                 }}>
                 Clear Cart
               </Text>
-            </Pressable>
+            </Pressable> */}
           </View>
           {cartData &&
             Object.entries(cartData.items).map(([uuid, item], idx) => {
