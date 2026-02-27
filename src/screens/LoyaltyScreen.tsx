@@ -173,6 +173,8 @@ const LoyaltyScreen = () => {
   return (
     <Animated.ScrollView
       showsVerticalScrollIndicator={false}
+      bounces={false}
+      overScrollMode="never"
       onScroll={scrollHandler}
       scrollEventThrottle={16}
       contentContainerStyle={styles.container}>
