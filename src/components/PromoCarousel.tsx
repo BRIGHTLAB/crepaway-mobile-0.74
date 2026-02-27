@@ -7,10 +7,13 @@ import {
     FlatList,
     NativeSyntheticEvent,
     NativeScrollEvent,
+    TouchableOpacity,
 } from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
 import LinearGradient from 'react-native-linear-gradient';
 import Animated, { interpolate, SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import Icon_Spine from '../../assets/SVG/Icon_Spine';
+import Icon_Checkmark from '../../assets/SVG/Icon_Checkmark';
 import { UserPromo } from '../api/homeApi';
 import { COLORS, SCREEN_PADDING } from '../theme';
 
@@ -33,6 +36,7 @@ interface PromoCarouselProps {
 
 const PromoCarousel = ({ promos, currency }: PromoCarouselProps) => {
     const [activeIndex, setActiveIndex] = useState(0);
+    const [copiedCode, setCopiedCode] = useState<string | null>(null);
     const flatListRef = useRef<FlatList<UserPromo>>(null);
 
     if (!promos || promos.length === 0) {
@@ -63,6 +67,14 @@ const PromoCarousel = ({ promos, currency }: PromoCarouselProps) => {
         const offsetX = event.nativeEvent.contentOffset.x;
         const currentIndex = Math.round(offsetX / SNAP_WIDTH);
         setActiveIndex(currentIndex);
+    };
+
+    const handleCopyCode = (code: string) => {
+        Clipboard.setString(code);
+        setCopiedCode(code);
+        setTimeout(() => {
+            setCopiedCode(prev => (prev === code ? null : prev));
+        }, 2000);
     };
 
     const renderItem = ({ item }: { item: UserPromo }) => {
@@ -98,10 +110,22 @@ const PromoCarousel = ({ promos, currency }: PromoCarouselProps) => {
 
                         {/* Right side — Code + expiry */}
                         <View style={styles.rightContent}>
-                            <View style={styles.codePill}>
-                                <Text style={styles.codeLabel}>CODE</Text>
-                                <Text style={styles.codeText}>{item.code}</Text>
-                            </View>
+                            <TouchableOpacity
+                                activeOpacity={0.8}
+                                onPress={() => handleCopyCode(item.code)}
+                            >
+                                <View style={styles.codePill}>
+                                    <Text style={styles.codeLabel}>CODE</Text>
+                                    <Text style={styles.codeText}>{item.code}</Text>
+                                    <View style={styles.copyIconWrapper}>
+                                        {copiedCode === item.code ? (
+                                            <Icon_Checkmark width={14} height={14} color="#FFFFFF" />
+                                        ) : (
+                                            <Text style={styles.copyIconFallback}>⧉</Text>
+                                        )}
+                                    </View>
+                                </View>
+                            </TouchableOpacity>
                             {expiry && <Text style={styles.expiryText}>{expiry}</Text>}
                         </View>
                     </View>
@@ -248,6 +272,18 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: '#FFFFFF',
         letterSpacing: 1,
+        marginRight: 6,
+    },
+    copyIconWrapper: {
+        width: 18,
+        height: 18,
+        borderRadius: 9,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    copyIconFallback: {
+        fontSize: 12,
+        color: '#FFFFFF',
     },
     expiryText: {
         fontFamily: 'Poppins-Regular',
