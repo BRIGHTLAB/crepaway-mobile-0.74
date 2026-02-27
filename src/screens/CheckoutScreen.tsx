@@ -1015,7 +1015,11 @@ const CheckoutScreen = () => {
         <View style={styles.dialogOverlay}>
           <View style={styles.dialogContainer}>
             <View style={styles.dialogIconContainer}>
-              <Icon_Credit_Card color={COLORS.primaryColor} width={64} height={64} />
+              <FastImage
+                source={require('../../assets/images/payment/credit_card.png')}
+                style={{ width: 100, height: 100 }}
+                resizeMode={FastImage.resizeMode.contain}
+              />
             </View>
             <Text style={styles.dialogSubtitle}>
               Redirecting you to enter card details.
@@ -1157,7 +1161,7 @@ const styles = StyleSheet.create({
   sheetSubtitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: COLORS.secondaryColor,
+    // color: COLORS.secondaryColor,
     textAlign: 'center',
     marginTop: -4,
   },
@@ -1227,7 +1231,7 @@ const styles = StyleSheet.create({
   dialogSubtitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: COLORS.primaryColor,
+    // color: COLORS.secondaryColor,
     textAlign: 'center',
   },
   dialogTitle: {
