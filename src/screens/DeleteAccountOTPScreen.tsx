@@ -105,6 +105,7 @@ const DeleteAccountOTPScreen: React.FC = () => {
     <KeyboardAvoidingView
       style={{
         flex: 1,
+        backgroundColor: COLORS.backgroundColor,
       }}
       behavior={"padding"}
       keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight + 10 : 0}

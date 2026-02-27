@@ -171,9 +171,14 @@ const OTPScreen: React.FC<Props> = ({ navigation, route }) => {
     <KeyboardAvoidingView
       style={{
         flex: 1,
+        backgroundColor: COLORS.backgroundColor,
       }}
       behavior={"padding"}
       keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight + 10 : 0}
+      // contentContainerStyle={{
+      //   flex: 1,
+      //   backgroundColor: COLORS.backgroundColor,
+      // }}
     >
       <View style={styles.content}>
         <Text style={styles.title}>Phone Number Verification</Text>
@@ -204,7 +209,7 @@ const OTPScreen: React.FC<Props> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    // backgroundColor: COLORS.backgroundColor,
   },
   content: {
     padding: 24,
