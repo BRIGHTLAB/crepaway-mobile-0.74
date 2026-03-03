@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import Icon_Search from '../../assets/SVG/Icon_Search';
 import FastImage from 'react-native-fast-image';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import { useSelector } from 'react-redux';
@@ -133,7 +134,14 @@ const CategorySection = React.memo(
   }) => {
     return (
       <View key={category.id.toString()}>
-        <Text style={styles.sectionHeader}>{category.name}</Text>
+        <View style={{
+          position: 'relative', marginTop: 12,
+          marginBottom: 4,
+          gap: 6
+        }}>
+          <Text style={styles.sectionHeader}>{category.name}</Text>
+          {/* <View style={{ position: 'absolute', left: 0, bottom: 0, width: 100, height: 2, backgroundColor: COLORS.primaryColor }}></View> */}
+        </View>
         {category.items.map((item, idx) => (
           <MenuItem
             key={`${item.id}-${idx}`}
@@ -197,17 +205,12 @@ const CategoryTab = React.memo(
 
 interface IProps {
   route?: {
-    params: {
-      item: Category;
+    params?: {
+      item?: Category;
     };
   };
   navigation?: {
-    navigate: (
-      screen: string,
-      params?: {
-        itemId: number;
-      },
-    ) => void;
+    navigate: (screen: string, params?: Record<string, any>) => void;
   };
 }
 
@@ -223,9 +226,10 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
     [key: number]: number;
   }>({});
   const [dataReady, setDataReady] = useState(false);
+  const [searchBarHeight, setSearchBarHeight] = useState(0);
 
   const userState = useSelector((state: RootState) => state.user);
-  const selectedCategory = route?.params?.item;
+  const selectedCategory = route?.params?.item ?? undefined;
 
   const {
     data: categories = [],
@@ -343,6 +347,11 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
     }
 
     if (scrollViewRef.current && categoryOffsets[categoryId] !== undefined) {
+      // const scrollOffset = Math.max(
+      //   0,
+      //   categoryOffsets[categoryId] + searchBarHeight - 50,
+      // );
+
       const scrollOffset = Math.max(0, categoryOffsets[categoryId] - 50);
 
       scrollViewRef.current.scrollToOffset({
@@ -566,6 +575,22 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
             renderItem={renderCategorySection}
             keyExtractor={item => item.id.toString()}
             style={{ paddingHorizontal: SCREEN_PADDING.horizontal, zIndex: 2 }}
+            ListHeaderComponent={
+              <Pressable
+                style={styles.searchBar}
+                onPress={() => navigation?.navigate('MenuSearch')}
+                onLayout={e => setSearchBarHeight(e.nativeEvent.layout.height)}
+                android_ripple={{ color: COLORS.borderColor }}>
+                <Icon_Search
+                  width={18}
+                  height={18}
+                  color={COLORS.foregroundColor}
+                />
+                <Text style={styles.searchBarPlaceholder}>
+                  What are you craving?
+                </Text>
+              </Pressable>
+            }
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
@@ -639,9 +664,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.backgroundColor,
   },
   categoryList: {
-    maxHeight: 56,
-    backgroundColor: COLORS.backgroundColor,
+    maxHeight: 40,
 
+    backgroundColor: COLORS.backgroundColor,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
@@ -653,9 +678,10 @@ const styles = StyleSheet.create({
   },
   categoryTab: {
     alignItems: 'center',
-    paddingTop: 12,
-    paddingBottom: 3,
+    justifyContent: 'flex-end',
+    // paddingTop: 8,
     paddingHorizontal: 4,
+    // height: 56,
   },
   categoryTitle: {
     fontSize: 14,
@@ -677,8 +703,27 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primaryColor,
     marginTop: 4,
   },
+  searchBar: {
+    marginTop: 12,
+    marginBottom: 4,
+    height: 46,
+    backgroundColor: COLORS.lightColor,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.borderColor,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    gap: 10,
+  },
+  searchBarPlaceholder: {
+    flex: 1,
+    fontSize: normalizeFont(14),
+    fontFamily: 'Poppins-Regular',
+    color: COLORS.foregroundColor,
+  },
   sectionHeader: {
-    marginTop: 6,
+
     fontSize: normalizeFont(20),
     fontFamily: 'Poppins-SemiBold',
     fontWeight: '600',

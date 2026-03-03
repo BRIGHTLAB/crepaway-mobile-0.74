@@ -1,17 +1,19 @@
 import { TouchableOpacity } from '@gorhom/bottom-sheet';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { useNavigation } from '@react-navigation/native';
+import { NavigatorScreenParams, useNavigation } from '@react-navigation/native';
 import {
   createNativeStackNavigator,
   NativeStackNavigationProp,
 } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { COLORS } from '../theme';
+import { normalizeFont } from '../utils/normalizeFonts';
 import Icon_Nav_Fav from '../../assets/SVG/Icon_Nav_Fav';
 import Icon_Nav_Home from '../../assets/SVG/Icon_Nav_Home';
+import Icon_Nav_Menu from '../../assets/SVG/Icon_Nav_Menu';
 import Icon_Nav_Orders from '../../assets/SVG/Icon_Nav_Order';
 import Icon_Nav_Profile from '../../assets/SVG/Icon_Nav_Profile';
-import Icon_Nav_Search from '../../assets/SVG/Icon_Nav_Search';
 import { useGetCartQuery } from '../api/cartApi';
 import { CustomBottomTab } from '../components/CustomBottomTab';
 import CustomHeader from '../components/Header';
@@ -37,7 +39,6 @@ import ProfileAddressesScreen from '../screens/ProfileAddressesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ProfileSettingsScreen from '../screens/ProfileSettingsScreen';
 import DeleteAccountOTPScreen from '../screens/DeleteAccountOTPScreen';
-import SearchScreen from '../screens/SearchScreen';
 import TrackOrderScreen from '../screens/TrackOrderScreen';
 import WalletScreen from '../screens/WalletScreen';
 import { setCartFromFetch } from '../store/slices/cartSlice';
@@ -46,19 +47,41 @@ import LoyaltyStack from './LoyaltyStack';
 import { RootStackParamList } from './NavigationStack';
 import { useGetOrdersBadgeCountQuery } from '../api/ordersApi';
 
-export type DeliveryTakeawayStackParamList = {
-  HomeStack: any;
-  SearchStack: any;
-  OrderStack: any;
-  FavoritesStack: any;
-  ProfileStack: any;
+export type HomeStackParamList = {
   Home: undefined;
   Offers: undefined;
   OfferDetails: { itemId: number };
   FavoriteItems: undefined;
   NewItems: undefined;
   featuredItems: undefined;
-  MenuItems: { item: Category };
+  MenuItems: { item?: Category } | undefined;
+  Loyalty: undefined;
+  Cart: undefined;
+  Notifications: undefined;
+  Checkout: undefined;
+  AddressMap: { editAddress?: Address } | undefined;
+  TrackOrder: { orderId: number; order_type: string; addressLatitude?: number; addressLongitude?: number };
+};
+
+export type MenuStackParamList = {
+  MenuItems: { item?: Category } | undefined;
+};
+
+export type DeliveryTakeawayStackParamList = {
+  // Tab stacks
+  HomeStack: NavigatorScreenParams<HomeStackParamList>;
+  MenuStack: NavigatorScreenParams<MenuStackParamList>;
+  OrderStack: NavigatorScreenParams<OrdersStackParamList>;
+  FavoritesStack: NavigatorScreenParams<FavoritesStackParamList>;
+  ProfileStack: NavigatorScreenParams<ProfileStackParamList>;
+  // Individual screens — kept for NativeStackNavigationProp usage in nested screens
+  Home: undefined;
+  Offers: undefined;
+  OfferDetails: { itemId: number };
+  FavoriteItems: undefined;
+  NewItems: undefined;
+  featuredItems: undefined;
+  MenuItems: { item?: Category } | undefined;
   Cart: undefined;
   Notifications: undefined;
   Checkout: undefined;
@@ -73,7 +96,6 @@ export type DeliveryTakeawayStackParamList = {
   Allergies: undefined;
   Orders: undefined;
   OrderDetails: { id: number; order_type: string };
-  Search: undefined;
   Favorites: undefined;
 };
 
@@ -351,26 +373,41 @@ const HomeStack = () => {
   );
 };
 
-export type SearchStackParamList = {
-  Search: undefined;
-};
-
-const SearchStack = () => {
+const MenuStack = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   return (
     <Stack.Navigator
       screenOptions={{
         headerShadowVisible: false,
-
       }}
     >
       <Stack.Screen
-        name="Search"
-        component={SearchScreen}
+        name="MenuItems"
+        component={MenuItemsScreen}
         options={{
-          headerTitle: 'Search Menu',
           headerBackVisible: false,
+          headerLeft: () => null,
+          headerTitle: () => (
+            <Text
+              style={{
+                fontFamily: 'Poppins-Medium',
+                fontSize: normalizeFont(18),
+                color: COLORS.darkColor,
+              }}>
+              Our Loved Menu
+            </Text>
+          ),
+          headerRight: () => (
+            <View style={{ flexDirection: 'row', gap: 5 }}>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('HomeStack', { screen: 'Cart' })
+                }>
+                <CartCounter />
+              </TouchableOpacity>
+            </View>
+          ),
         }}
       />
     </Stack.Navigator>
@@ -586,12 +623,12 @@ const OrderStack = () => {
 
 export const navigationData = [
   {
-    name: 'SearchStack',
-    Component: SearchStack,
-    title: 'search',
-    Icon: Icon_Nav_Search,
+    name: 'MenuStack',
+    Component: MenuStack,
+    title: 'menu',
+    Icon: Icon_Nav_Menu,
     headerShown: false,
-    initialScreen: 'Search'
+    initialScreen: 'MenuItems',
   },
   {
     name: 'OrderStack',

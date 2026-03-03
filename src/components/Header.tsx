@@ -44,7 +44,7 @@ const CustomHeader: React.FC<IProps> = ({
     <View
       style={{
         height: 30,
-        paddingTop: 4,
+        // paddingTop: 4,
         flexDirection: 'row',
         alignItems: 'center',
       }}>
@@ -63,7 +63,8 @@ export default CustomHeader;
 const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: 'Poppins-Medium',
-    fontSize: normalizeFont(16),
+    fontSize: normalizeFont(18),
     color: COLORS.darkColor,
+
   },
 });

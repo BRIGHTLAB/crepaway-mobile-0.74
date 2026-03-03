@@ -1,6 +1,7 @@
-import {StyleSheet, Text, View} from 'react-native';
+import {StyleSheet} from 'react-native';
 import React from 'react';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import { SCREEN_PADDING } from '../../theme';
 
 const MenuItemSkeleton = () => {
   return (
@@ -8,6 +9,7 @@ const MenuItemSkeleton = () => {
       <SkeletonPlaceholder.Item
         flexDirection="row"
         flexWrap="wrap"
+        paddingHorizontal={SCREEN_PADDING.horizontal}
         marginTop={16}
         gap={16}>
         {[...Array(4)].map((_, index) => (
