@@ -21,7 +21,7 @@ const userPersistConfig = {
 const cartPersistConfig = {
   key: 'cart',
   storage: AsyncStorage,
-  whitelist: ['orderType', 'branchName', 'promoCode', 'deliveryInstructions', 'specialDeliveryInstructions', 'sendCutlery', 'scheduleOrder', 'scheduledDateTime'],
+  whitelist: ['orderType', 'branchName', 'promoCode', 'couponCode', 'deliveryInstructions', 'specialDeliveryInstructions', 'sendCutlery', 'scheduleOrder', 'scheduledDateTime'],
 };
 
 const persistedUserReducer = persistReducer(userPersistConfig, userReducer);

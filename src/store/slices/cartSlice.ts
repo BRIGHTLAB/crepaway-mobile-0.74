@@ -51,6 +51,8 @@ interface ICart {
   loading: boolean;
   error: string | null;
   isSyncing: boolean;
+  promoCode: string;
+  couponCode: string;
 }
 
 export const fetchCart = createAsyncThunk(
@@ -82,6 +84,8 @@ const initialState: ICart = {
   orderType: null,
   branchName: null,
   isSyncing: false,
+  promoCode: '',
+  couponCode: '',
 };
 
 const cartSlice = createSlice({
@@ -156,6 +160,8 @@ const cartSlice = createSlice({
       return {
         ...state,
         items: {},
+        promoCode: '',
+        couponCode: '',
       };
     },
     setCartFromFetch: (
@@ -187,6 +193,18 @@ const cartSlice = createSlice({
       return {
         ...state,
         isSyncing: action.payload,
+      };
+    },
+    setPromoCode: (state, action: PayloadAction<string>) => {
+      return {
+        ...state,
+        promoCode: action.payload,
+      };
+    },
+    setCouponCode: (state, action: PayloadAction<string>) => {
+      return {
+        ...state,
+        couponCode: action.payload,
       };
     },
   },
@@ -232,5 +250,7 @@ export const {
   setCartOrderType,
   setCartBranchName,
   setCartSyncing,
+  setPromoCode,
+  setCouponCode,
 } = cartSlice.actions;
 export default cartSlice.reducer;

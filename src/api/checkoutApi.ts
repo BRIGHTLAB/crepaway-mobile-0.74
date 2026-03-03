@@ -7,6 +7,14 @@ export interface Checkout {
     final_total: string;
     promo_code_applied: boolean;
     promo_code_error?: string | null;
+    coupon_applied?: {
+      code: string;
+      name: string;
+      value: number;
+      discount: number;
+    } | null;
+    coupon_discount?: number;
+    coupon_error?: string | null;
   };
   delivery_charge: string;
   points_rewarded: number;
@@ -23,6 +31,7 @@ export interface OrderFormData {
   order_type: string | null;
   cutleries?: number;
   promo_code?: string;
+  coupon_code?: string;
   save_card?: boolean;
   users_payment_methods_id?: number | null;
 }
@@ -96,12 +105,15 @@ export interface PaymentStatusResponse {
 
 export const checkoutApi = baseApi.injectEndpoints({
   endpoints: builder => ({
-    getCheckout: builder.query<Checkout, { promoCode: string | void }>({
-      query: ({ promoCode }) => {
+    getCheckout: builder.query<Checkout, { promoCode: string | void; couponCode?: string | void }>({
+      query: ({ promoCode, couponCode }) => {
         const params = new URLSearchParams();
 
         if (promoCode) {
           params.append('code', promoCode);
+        }
+        if (couponCode) {
+          params.append('coupon_code', couponCode);
         }
         const queryString = params.toString();
 

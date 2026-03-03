@@ -40,6 +40,8 @@ import BottomSheetInput from '../components/UI/BottomSheetInput';
 import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
 import {
   clearCart,
+  setPromoCode as setReduxPromoCode,
+  setCouponCode as setReduxCouponCode,
 } from '../store/slices/cartSlice';
 import { RootState, useAppDispatch } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
@@ -64,10 +66,30 @@ const CheckoutScreen = () => {
   const [saveCard, setSaveCard] = useState<boolean>(false);
 
   // Promo code state
-  const [promoCode, setPromoCode] = useState<string>('');
+  const promoCode = cart.promoCode;
   const [promoError, setPromoError] = useState<string | null>(null);
-  const [debouncedPromoCode, setDebouncedPromoCode] = useState<string>('');
+  const [debouncedPromoCode, setDebouncedPromoCode] = useState<string>(cart.promoCode);
   const [sheetPromoCode, setSheetPromoCode] = useState<string>('');
+
+  // Coupon code state
+  const couponCode = cart.couponCode;
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [debouncedCouponCode, setDebouncedCouponCode] = useState<string>(cart.couponCode);
+  const [sheetCouponCode, setSheetCouponCode] = useState<string>('');
+  const couponCodeSheetRef = useRef<BottomSheetMethods | null>(null);
+
+  // Sync local state when Redux codes change (e.g. clearCart after order)
+  useEffect(() => {
+    setDebouncedPromoCode(promoCode);
+    setSheetPromoCode(promoCode);
+    if (!promoCode) setPromoError(null);
+  }, [promoCode]);
+
+  useEffect(() => {
+    setDebouncedCouponCode(couponCode);
+    setSheetCouponCode(couponCode);
+    if (!couponCode) setCouponError(null);
+  }, [couponCode]);
 
   // Payment WebView state (for card payments)
   const [paymentWebViewUrl, setPaymentWebViewUrl] = useState<string | null>(null);
@@ -85,10 +107,12 @@ const CheckoutScreen = () => {
   const {
     data,
     isLoading,
+    isFetching,
     refetch,
     error: getCheckoutError,
   } = useGetCheckoutQuery({
     promoCode: debouncedPromoCode,
+    couponCode: debouncedCouponCode,
   });
 
   console.log('getCheckoutError', getCheckoutError);
@@ -267,6 +291,7 @@ const CheckoutScreen = () => {
       payment_methods_id: selectedPaymentMethodId,
       address_id: user?.addressId,
       promo_code: debouncedPromoCode,
+      coupon_code: debouncedCouponCode,
       is_scheduled: scheduleOrder === 'yes' ? 1 : 0,
       scheduled_date: scheduledDateTime
         ? scheduledDateTime
@@ -417,7 +442,7 @@ const CheckoutScreen = () => {
       setPromoError('Please enter a promo code');
       return;
     }
-    setPromoCode(trimmedCode);
+    dispatch(setReduxPromoCode(trimmedCode));
     setDebouncedPromoCode(trimmedCode);
     setPromoError(null);
     // We'll close the sheet after the query resolves if valid
@@ -429,6 +454,35 @@ const CheckoutScreen = () => {
       promoCodeSheetRef.current?.close();
     }
   }, [data?.summary?.promo_code_applied, debouncedPromoCode]);
+
+  // Handle coupon code errors from API
+  useEffect(() => {
+    if (data) {
+      if (data?.summary?.coupon_applied) {
+        setCouponError(null);
+      } else if (data?.summary?.coupon_error) {
+        setCouponError(data.summary.coupon_error);
+      }
+    }
+  }, [data, couponCode]);
+
+  const handleApplyCouponCode = () => {
+    const trimmedCode = sheetCouponCode.trim();
+    if (!trimmedCode) {
+      setCouponError('Please enter a coupon code');
+      return;
+    }
+    dispatch(setReduxCouponCode(trimmedCode));
+    setDebouncedCouponCode(trimmedCode);
+    setCouponError(null);
+  };
+
+  // Close coupon sheet when coupon is successfully applied
+  useEffect(() => {
+    if (data?.summary?.coupon_applied && debouncedCouponCode) {
+      couponCodeSheetRef.current?.close();
+    }
+  }, [data?.summary?.coupon_applied, debouncedCouponCode]);
 
 
   console.log('total123', data?.summary?.final_total);
@@ -724,7 +778,7 @@ const CheckoutScreen = () => {
                   <TouchableOpacity
                     style={styles.changeButton}
                     onPress={() => {
-                      setPromoCode('');
+                      dispatch(setReduxPromoCode(''));
                       setDebouncedPromoCode('');
                       setSheetPromoCode('');
                       setPromoError(null);
@@ -757,6 +811,47 @@ const CheckoutScreen = () => {
               ) : null}
             </View>
 
+            {/* Coupon Code - Compact Display */}
+            <View style={styles.boxContainer}>
+              <View style={styles.paymentHeaderRow}>
+                <Text style={styles.boxContainerTitle}>Coupon code</Text>
+                {data?.summary?.coupon_applied && couponCode ? (
+                  <TouchableOpacity
+                    style={styles.changeButton}
+                    onPress={() => {
+                      dispatch(setReduxCouponCode(''));
+                      setDebouncedCouponCode('');
+                      setSheetCouponCode('');
+                      setCouponError(null);
+                    }}
+                  >
+                    <Text style={[styles.changeButtonText, { color: COLORS.primaryColor }]}>Remove</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.addButton}
+                    onPress={() => {
+                      setSheetCouponCode(couponCode);
+                      setCouponError(null);
+                      couponCodeSheetRef.current?.expand();
+                    }}
+                  >
+                    <Text style={styles.addButtonText}>+ Add</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              {data?.summary?.coupon_applied && couponCode ? (
+                <Text style={{
+                  fontFamily: 'Poppins-Regular',
+                  fontSize: 14,
+                  color: COLORS.secondaryColor,
+                  marginTop: 4,
+                }}>
+                  {couponCode} applied
+                </Text>
+              ) : null}
+            </View>
+
             <TotalSection
               orderType={user?.orderType ?? 'delivery'}
               subtotal={`${data?.currency?.symbol ?? ''} ${data?.summary?.original_sub_total ?? ''
@@ -771,6 +866,11 @@ const CheckoutScreen = () => {
                   ? `${data?.currency?.symbol ?? ''} ${data?.summary?.total_discount
                   }`
                   : ''
+              }
+              couponDiscount={
+                data?.summary?.coupon_discount && data.summary.coupon_discount > 0
+                  ? `${data?.currency?.symbol ?? ''} ${data?.summary?.coupon_discount}`
+                  : undefined
               }
               isLoading={isLoading}
               canEdit={true}
@@ -837,7 +937,35 @@ const CheckoutScreen = () => {
           {promoError && (
             <Text style={styles.promoErrorText}>{promoError}</Text>
           )}
-          <Button onPress={handleApplyPromoCode} isLoading={isLoading}>
+          <Button onPress={handleApplyPromoCode} isLoading={isFetching}>
+            Apply
+          </Button>
+        </BottomSheetView>
+      </DynamicSheet>
+
+      {/* Coupon Code Bottom Sheet */}
+      <DynamicSheet ref={couponCodeSheetRef}>
+        <BottomSheetView
+          style={{
+            gap: 16,
+            paddingBottom: bottom + 20,
+            paddingTop: 8,
+          }}
+        >
+          <Text style={styles.sheetTitle}>Coupon Code</Text>
+          <BottomSheetInput
+            placeholder="Enter coupon code"
+            value={sheetCouponCode}
+            onChangeText={(text: string) => {
+              setSheetCouponCode(text);
+              if (couponError) setCouponError(null);
+            }}
+            autoCapitalize="characters"
+          />
+          {couponError && (
+            <Text style={styles.promoErrorText}>{couponError}</Text>
+          )}
+          <Button onPress={handleApplyCouponCode} isLoading={isFetching}>
             Apply
           </Button>
         </BottomSheetView>
