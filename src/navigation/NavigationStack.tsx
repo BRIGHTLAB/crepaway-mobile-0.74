@@ -15,8 +15,10 @@ import MenuItemScreen from '../screens/MenuItemScreen';
 import SplashScreen from '../screens/SplashScreen';
 import NavigationHelper from '../utils/NavigationHelper';
 import NotificationService from '../utils/NotificationService';
+import SearchScreen from '../screens/SearchScreen';
 import DeliveryTakeawayStack, {
   DeliveryTakeawayStackParamList,
+  HomeStackParamList,
   ProfileStackParamList,
 } from './DeliveryTakeawayStack';
 import DineInStack from './DineInStack';
@@ -38,10 +40,11 @@ export type RootStackParamList = {
   } | undefined;
   DineIn: undefined;
   MenuItem: { itemId: number; itemUuid?: string };
+  MenuSearch: undefined;
   Loyalty: undefined;
   HomeStack: {
-    screen: keyof DeliveryTakeawayStackParamList;
-    params?: DeliveryTakeawayStackParamList[keyof DeliveryTakeawayStackParamList];
+    screen: keyof HomeStackParamList;
+    params?: HomeStackParamList[keyof HomeStackParamList];
   };
   ServiceSelection: {
     screen: keyof ServiceSelectionStackParamList;
@@ -171,12 +174,21 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
               component={MenuItemScreen}
               options={{
                 headerTitle: () => null,
-                headerShown: true,
+                headerTransparent: true,
                 headerBackVisible: false,
-                headerLeft: () => <CustomHeader />,
+                headerLeft: () => <CustomHeader color="white" />,
               }}
             />
-
+            <Stack.Screen
+              name="MenuSearch"
+              component={SearchScreen}
+              options={{
+                headerTitle: () => null,
+                headerBackVisible: false,
+                headerLeft: () => <CustomHeader title="Search" />,
+                animation: 'fade',
+              }}
+            />
           </Stack.Navigator>
         );
       case 'dine-in':
@@ -194,11 +206,10 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
               name="MenuItem"
               component={MenuItemScreen}
               options={{
-                headerTitle: '',
-                headerShown: true,
+                headerTitle: () => null,
+                headerTransparent: true,
                 headerBackVisible: false,
-                headerLeft: () => <CustomHeader />,
-                headerTitleAlign: 'center',
+                headerLeft: () => <CustomHeader color="white" />,
               }}
             />
             <Stack.Screen

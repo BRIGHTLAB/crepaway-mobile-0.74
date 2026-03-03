@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
   },
   listsContainer: {
     gap: 20,
-    marginTop: 10,
+    // marginTop: 10,
     paddingTop: 15,
     borderTopRightRadius: 10,
     borderTopLeftRadius: 10,

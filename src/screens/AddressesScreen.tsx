@@ -1,9 +1,10 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import DeleteAnimation from '../../assets/lotties/Delete.json';
+import Icon_Spine from '../../assets/SVG/Icon_Spine';
 import {
   useDeleteAddressMutation,
   useGetAddressesQuery,
@@ -21,6 +22,8 @@ import {
 import { RootState } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import Button from '../components/UI/Button';
+import { normalizeFont } from '../utils/normalizeFonts';
 
 type NavigationProp = NativeStackNavigationProp<ServiceSelectionStackParamList>;
 
@@ -61,6 +64,8 @@ const AddressScreen = () => {
     isFetching,
     isLoading,
   });
+
+  const hasAddresses = (data?.length ?? 0) > 0;
 
   const handleConfirmDelete = async (id: number | null) => {
     if (!id) return;
@@ -150,11 +155,29 @@ const AddressScreen = () => {
     navigation.navigate('AddressMap');
   };
 
+  const EmptyAddressesState = () => (
+    <View style={styles.emptyContainer}>
+      <Icon_Spine
+        width={normalizeFont(100)}
+        height={normalizeFont(100)}
+        color={COLORS.primaryColor}
+        style={{ marginBottom: 16 }}
+      />
+      <Text style={styles.emptyTitle}>No Addresses Yet</Text>
+      <Text style={styles.emptySubText}>
+        Add a delivery address to place your order.
+      </Text>
+      <Button style={{ marginTop: 16 }} onPress={handleAddAddressPress}>
+        Add Address
+      </Button>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       {isLoading ? (
         <AddressSkeleton />
-      ) : (
+      ) : hasAddresses ? (
         <FlatList
           data={data}
           renderItem={({ item }) => renderAddressItem(item)}
@@ -170,6 +193,8 @@ const AddressScreen = () => {
             />
           }
         />
+      ) : (
+        <EmptyAddressesState />
       )}
       <AddAddressButton onPress={handleAddAddressPress} />
       <ConfirmationPopup
@@ -199,5 +224,21 @@ const styles = StyleSheet.create({
   listContainer: {
     gap: 12,
     paddingBottom: 20,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyTitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: normalizeFont(22),
+    color: COLORS.darkColor,
+  },
+  emptySubText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: normalizeFont(14),
+    color: COLORS.foregroundColor,
+    textAlign: 'center',
   },
 });

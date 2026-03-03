@@ -48,12 +48,12 @@ const SkeletonLoader = () => {
     <SkeletonPlaceholder>
       <SkeletonPlaceholder.Item>
         <SkeletonPlaceholder.Item
-          height={300}
+          height={276}
           width="100%"
         // borderBottomLeftRadius={16}
         // borderBottomRightRadius={16}
         />
-        <SkeletonPlaceholder.Item padding={16}>
+        <SkeletonPlaceholder.Item padding={16} borderTopLeftRadius={24} borderTopRightRadius={24} >
           <SkeletonPlaceholder.Item height={24} width="60%" marginBottom={8} />
           <SkeletonPlaceholder.Item height={18} width="80%" marginBottom={16} />
           <SkeletonPlaceholder.Item height={24} width="30%" marginBottom={8} />
@@ -414,7 +414,7 @@ const MenuItemScreen = ({ }: IProps) => {
                 </TouchableOpacity>
               )}
 
-              <View style={styles.contentContainer}>
+              <View style={[styles.contentContainer, styles.detailCard]}>
                 <View style={styles.headerContainer}>
                   <View
                     style={{
@@ -432,7 +432,9 @@ const MenuItemScreen = ({ }: IProps) => {
                       )}
                     </TouchableOpacity>
                   </View>
+                {!!item?.description && (
                   <Text style={styles.description}>{item?.description}</Text>
+                )}
                 </View>
 
                 <View style={{ paddingHorizontal: 16, marginBottom: 8, marginTop: 10, gap: 6 }}>
@@ -450,42 +452,46 @@ const MenuItemScreen = ({ }: IProps) => {
                 </View>
 
                 {/* Tags  */}
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    flexWrap: 'wrap',
-                    marginTop: 4,
-                    gap: 8,
-                  }}>
-                  {item?.tags &&
-                    item?.tags?.length > 0 &&
-                    item?.tags?.map((el, idx) => {
-                      return (
-                        <View
-                          key={idx}
-                          style={{
-                            backgroundColor: el?.color || '#F2CA4540',
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 4,
-                            borderRadius: 8,
-                            padding: 8,
-                          }}>
-                          <FastImage
-                            style={{ height: 16, width: 16 }}
-                            source={{
-                              uri: el.icon_url,
-                              priority: FastImage.priority.normal,
-                            }}
-                            resizeMode={FastImage.resizeMode.contain}
-                          />
+{item?.tags && item.tags.length > 0 &&
+(
+  <View
+  style={{
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 4,
+    gap: 8,
+    paddingHorizontal: SCREEN_PADDING.horizontal,
+  }}>
+  {
+    item?.tags?.map((el, idx) => {
+      return (
+        <View
+          key={idx}
+          style={{
+            backgroundColor: el?.color || '#F2CA4540',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 4,
+            borderRadius: 8,
+            padding: 8,
+          }}>
+          <FastImage
+            style={{ height: 16, width: 16 }}
+            source={{
+              uri: el.icon_url,
+              priority: FastImage.priority.normal,
+            }}
+            resizeMode={FastImage.resizeMode.contain}
+          />
 
-                          <Text style={{}}>{el.name}</Text>
-                        </View>
-                      );
-                    })}
-                </View>
+          <Text style={{}}>{el.name}</Text>
+        </View>
+      );
+    })}
+</View>
+)
+}
 
                 {/* <Button
                 style={styles.addToCartButton}
@@ -656,7 +662,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
   },
   contentContainer: {
-    paddingVertical: 16,
+    // paddingVertical: 16,
+  },
+  detailCard: {
+    marginTop: -24,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    backgroundColor: COLORS.backgroundColor,
+    paddingTop: 20,
+    paddingBottom: 20,
   },
   headerContainer: {
     paddingHorizontal: 16,
@@ -667,8 +681,8 @@ const styles = StyleSheet.create({
     color: COLORS.darkColor,
     width: '90%',
     // backgroundColor: 'red',
-    lineHeight: 40,
     textTransform: 'capitalize',
+    
   },
   description: {
     fontFamily: 'Poppins-Regular',

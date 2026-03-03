@@ -3,6 +3,7 @@ import React from 'react';
 import FastImage from 'react-native-fast-image';
 import LinearGradient from 'react-native-linear-gradient';
 import { FadeInFastImage } from '../FadeInFastImage';
+import { normalizeFont } from '../../utils/normalizeFonts';
 
 
 interface IProps {
@@ -79,9 +80,10 @@ const styles = StyleSheet.create({
   title: {
     marginTop: 2,
     fontFamily: 'Poppins-Medium',
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     color: 'white',
     paddingBottom: 2,
     textAlign: 'center',
+    paddingHorizontal: 4,
   },
 });
