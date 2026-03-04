@@ -269,24 +269,52 @@ const HomeScreen = () => {
             }}>
               <LoyaltyProgressCard
                 tierName={tierProgress.current_tier.name}
-                totalDashes={
-                  tierProgress.is_max_tier
-                    ? Math.round(tierProgress.current_tier.threshold)
-                    : tierProgress.next_tier
-                      ? Math.round(tierProgress.next_tier.threshold - tierProgress.current_tier.threshold)
-                      : 10
-                }
-                filledDashes={
-                  tierProgress.is_max_tier
-                    ? Math.round(tierProgress.current_balance)
-                    : Math.round(tierProgress.current_balance - tierProgress.current_tier.threshold)
-                }
+                totalDashes={(() => {
+                  // Needs to maintain current tier first (even if max tier)
+                  if (tierProgress.current_balance < tierProgress.current_tier.threshold && tierProgress.current_tier.threshold > 0) {
+                    return Math.round(tierProgress.current_tier.threshold);
+                  }
+                  if (tierProgress.is_max_tier) {
+                    return Math.round(tierProgress.current_tier.threshold) || 10;
+                  }
+                  // Progressing to next tier
+                  if (tierProgress.next_tier) {
+                    return Math.round(tierProgress.next_tier.threshold - tierProgress.current_tier.threshold);
+                  }
+                  return 10;
+                })()}
+                filledDashes={(() => {
+                  // Needs to maintain current tier first (even if max tier)
+                  if (tierProgress.current_balance < tierProgress.current_tier.threshold && tierProgress.current_tier.threshold > 0) {
+                    return Math.round(tierProgress.current_balance);
+                  }
+                  if (tierProgress.is_max_tier) {
+                    return Math.round(tierProgress.current_balance);
+                  }
+                  // Progressing to next tier
+                  return Math.round(tierProgress.current_balance - tierProgress.current_tier.threshold);
+                })()}
                 progressColor={tierProgress.current_tier.extras?.color || COLORS.primaryColor}
-                description={
-                  tierProgress.is_max_tier
-                    ? `You've reached the highest tier!`
-                    : `Complete ${tierProgress.remaining_to_next_tier?.toFixed(0)} more ${tierProgress.unit?.key || 'orders'} to reach ${tierProgress.next_tier?.name}`
-                }
+                description={(() => {
+                  let desc = '';
+                  // Needs to maintain current tier first (even if max tier)
+                  if (tierProgress.current_balance < tierProgress.current_tier.threshold && tierProgress.current_tier.threshold > 0) {
+                    const remaining = tierProgress.current_tier.threshold - tierProgress.current_balance;
+                    desc = `Earn ${remaining.toFixed(0)} more ${tierProgress.unit?.key || 'orders'} to maintain ${tierProgress.current_tier.name}`;
+                  } else if (tierProgress.is_max_tier) {
+                    desc = `You've reached the highest tier!`;
+                  } else if (tierProgress.next_tier) {
+                    desc = `Complete ${tierProgress.remaining_to_next_tier?.toFixed(0)} more ${tierProgress.unit?.key || 'orders'} to reach ${tierProgress.next_tier.name}`;
+                  }
+                  if (tierProgress.days_until_reset != null) {
+                    if (tierProgress.days_until_reset === 0) {
+                      desc += ' · Resets today';
+                    } else {
+                      desc += ` · Resets in ${tierProgress.days_until_reset} day${tierProgress.days_until_reset !== 1 ? 's' : ''}`;
+                    }
+                  }
+                  return desc;
+                })()}
                 pointsCount={tierProgress.current_balance >= 1000 ? `${(tierProgress.current_balance / 1000).toFixed(1)}K` : tierProgress.current_balance.toFixed(0)}
                 pointsUnit={tierProgress.unit?.name || 'Pts'}
                 scrollY={scrollY}
