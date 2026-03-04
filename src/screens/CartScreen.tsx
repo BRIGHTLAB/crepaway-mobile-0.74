@@ -2,7 +2,6 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import {
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -17,7 +16,7 @@ import Icon_Spine from '../../assets/SVG/Icon_Spine';
 import { useGetLoyaltyTierThresholdQuery } from '../api/dataApi';
 import CartItemComponent from '../components/Cart/CartItemComponent';
 import Button from '../components/UI/Button';
-import DashedProgressBar from '../components/UI/DashedProgressBar';
+
 import { RootStackParamList } from '../navigation/NavigationStack';
 import {
   CartItem,
@@ -122,8 +121,6 @@ const CartScreen = ({ }: IProps) => {
   const showLoyalty = threshold > 0;
   const progress = threshold > 0 ? Math.min(cartTotal / threshold, 1) : 0;
   const isComplete = progress >= 1;
-  const totalDashes = 10;
-  const filledDashes = Math.round(progress * totalDashes);
   const currencySymbol = getCurrencySymbol();
   const remaining = threshold - cartTotal;
 
@@ -188,48 +185,59 @@ const CartScreen = ({ }: IProps) => {
             {/* Loyalty Progress Card */}
             {showLoyalty && (
               <View style={styles.loyaltyCard}>
-                <View style={styles.loyaltyCardContent}>
-                  <View style={{ flex: 1, gap: 5 }}>
-                    <Text style={[styles.loyaltyTierName, { color: isComplete ? '#34C759' : COLORS.primaryColor }]}>
-                      {isComplete ? '🎉 Reward Earned!' : 'Loyalty Progress'}
-                    </Text>
-                    <DashedProgressBar
-                      totalDashes={totalDashes}
-                      filledDashes={filledDashes}
-                      color={isComplete ? '#34C759' : COLORS.primaryColor}
-                    />
-                    <Text style={styles.loyaltyDescription}>
-                      {isComplete
-                        ? `You've earned a loyalty reward!`
-                        : `Spend ${currencySymbol}${remaining.toFixed(2)} more to earn a reward`}
-                    </Text>
-                  </View>
-                  <View style={styles.loyaltyPointsContainer}>
-                    <Text style={styles.loyaltyPointsCount}>
-                      {cartTotal >= 1000 ? `${(cartTotal / 1000).toFixed(1)}K` : cartTotal.toFixed(0)}
-                    </Text>
-                    <Text style={styles.loyaltyPointsUnit}>
-                      {currencySymbol}
-                    </Text>
-                  </View>
+                {/* Header row */}
+                <View style={styles.loyaltyHeader}>
+                  <Text style={[styles.loyaltyTierName, { color: isComplete ? '#34C759' : COLORS.white }]}>
+                    {isComplete ? 'Reward Earned!' : 'Loyalty Progress'}
+                  </Text>
                 </View>
 
-                {/* Add More Items button - only when reward not reached */}
+                {/* Amounts row */}
+                <View style={styles.loyaltyAmountsRow}>
+                  <Text style={styles.loyaltyCurrentAmount}>
+                    {currencySymbol}{cartTotal.toFixed(2)}
+                  </Text>
+                  <Text style={styles.loyaltyThresholdAmount}>
+                    {currencySymbol}{threshold.toFixed(2)}
+                  </Text>
+                </View>
+
+                {/* Progress bar */}
+                <View style={styles.progressBarTrack}>
+                  <View
+                    style={[
+                      styles.progressBarFill,
+                      {
+                        width: `${progress * 100}%`,
+                        backgroundColor: isComplete ? '#34C759' : '#7C3AED',
+                      },
+                    ]}
+                  />
+                </View>
+
+                {/* Description */}
+                <Text style={styles.loyaltyDescription}>
+                  {isComplete
+                    ? `You've reached the threshold — your reward is ready!`
+                    : `Spend ${currencySymbol}${remaining.toFixed(2)} more to unlock your reward`}
+                </Text>
+
+                {/* Add More Items CTA */}
                 {!isComplete && (
                   <TouchableOpacity
                     style={styles.addMoreButton}
                     onPress={() => navigation.goBack()}
-                    activeOpacity={0.8}
+                    activeOpacity={0.7}
                   >
-                    <Text style={styles.addMoreButtonText}>Add More Items</Text>
+                    <Text style={styles.addMoreButtonText}>+ Add More Items</Text>
                   </TouchableOpacity>
                 )}
 
                 {/* Decorative spines */}
-                <View style={styles.spineLeft}>
+                <View style={styles.spineLeft} pointerEvents="none">
                   <Icon_Spine width={400} height={400} opacity={0.1} />
                 </View>
-                <View style={styles.spineRight}>
+                <View style={styles.spineRight} pointerEvents="none">
                   <Icon_Spine width={400} height={400} opacity={0.1} />
                 </View>
               </View>
@@ -310,44 +318,58 @@ const styles = StyleSheet.create({
   // Loyalty progress card
   loyaltyCard: {
     backgroundColor: COLORS.secondaryColor,
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 16,
+    gap: 10,
     overflow: 'hidden',
-    gap: 12,
   },
-  loyaltyCardContent: {
+  loyaltyHeader: {
     flexDirection: 'row',
-    gap: 15,
+    alignItems: 'center',
+    gap: 8,
+  },
+  loyaltyIcon: {
+    fontSize: normalizeFont(18),
   },
   loyaltyTierName: {
     fontFamily: 'Poppins-SemiBold',
-    fontSize: normalizeFont(14),
+    fontSize: normalizeFont(12),
+  },
+  loyaltyAmountsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  loyaltyCurrentAmount: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: normalizeFont(13),
+    color: COLORS.white,
+  },
+  loyaltyThresholdAmount: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: normalizeFont(11),
+    color: 'rgba(255, 255, 255, 0.5)',
+  },
+  progressBarTrack: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 4,
   },
   loyaltyDescription: {
     fontFamily: 'Poppins-Regular',
-    fontSize: normalizeFont(10),
-    color: '#bdbdbd',
-  },
-  loyaltyPointsContainer: {
-    flexDirection: 'row',
-    gap: 4,
-    alignItems: 'center',
-  },
-  loyaltyPointsCount: {
-    ...TYPOGRAPHY.HEADLINE,
-    fontFamily: 'Poppins-Regular',
-    fontWeight: 'bold',
-    color: COLORS.white,
-  },
-  loyaltyPointsUnit: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 12,
-    color: COLORS.white,
+    fontSize: normalizeFont(11),
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   addMoreButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 6,
-    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 8,
+    paddingVertical: 10,
     alignItems: 'center',
   },
   addMoreButtonText: {
