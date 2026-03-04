@@ -171,7 +171,7 @@ const CheckoutScreen = () => {
     if (placeOrderError) {
       console.log('placeOrderError', placeOrderError);
       const error = placeOrderError as any;
-      const errorMessage = error?.data?.message || 'Failed to place order';
+      const errorMessage = error?.data?.error || error?.data?.message || 'Failed to place order';
       const isUnknownError = !error?.data?.message;
       Toast.show({
         type: 'error',
@@ -887,6 +887,7 @@ const CheckoutScreen = () => {
                 isLoading={isSubmitLoading || isWaitingForOrder}
                 icon={<Icon_Checkout />}
                 onPress={handlerOrder}
+                disabled={!!(promoCode && promoError) || !!(couponCode && couponError)}
               >
                 Place Order
               </Button>
