@@ -1,6 +1,6 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useLayoutEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BackHandler,
@@ -24,7 +24,9 @@ import InfoPopup from '../components/Popups/InfoPopup';
 import PromoCarousel from '../components/PromoCarousel';
 import { RootStackParamList } from '../navigation/NavigationStack';
 import { setOrderType } from '../store/slices/userSlice';
+import { setPromoCode } from '../store/slices/cartSlice';
 import { RootState, useAppDispatch } from '../store/store';
+import Toast from 'react-native-toast-message';
 
 import Animated, {
   Extrapolation,
@@ -57,6 +59,7 @@ const HomeScreen = () => {
   const dispatch = useAppDispatch();
 
   const state = useSelector((state: RootState) => state.user);
+  const promoCode = useSelector((state: RootState) => state.cart.promoCode);
   const { bottom, top } = useSafeAreaInsets();
   const { data: content } = useGetContentQuery();
   const [showErrorPopup, setShowErrorPopup] = useState(false);
@@ -133,6 +136,25 @@ const HomeScreen = () => {
   const exclusiveOffers = data?.exclusive_offers;
   const favoriteItems = data?.favorite_items?.filter(item => item.is_paused !== 1) ?? [];
   const bestSellers = data?.best_sellers?.filter(item => item.is_paused !== 1) ?? [];
+
+  // Auto-apply promo code logic
+  const hasAutoApplied = useRef(false);
+  useEffect(() => {
+    if (!data?.user_promos || hasAutoApplied.current) return;
+    if (promoCode) return; // Already have a promo applied
+
+    const autoApplyPromo = data.user_promos.find(p => p.auto_apply);
+    if (autoApplyPromo) {
+      dispatch(setPromoCode(autoApplyPromo.code));
+      hasAutoApplied.current = true;
+      Toast.show({
+        type: 'success',
+        text1: `${autoApplyPromo.name} has been automatically applied.`,
+        visibilityTime: 2500,
+        position: 'bottom',
+      });
+    }
+  }, [data?.user_promos]);
 
   const scrollY = useSharedValue(0);
   const scrollHandler = useAnimatedScrollHandler({
@@ -216,6 +238,17 @@ const HomeScreen = () => {
           <Banner data={bannerData} />
         </View>
 
+        {/* Promo Codes Carousel */}
+        {state.isLoggedIn && (
+          <PromoCarousel
+            promos={data?.user_promos ?? []}
+            currency={data?.currency ?? null}
+            scrollY={scrollY}
+            appliedPromoCode={promoCode}
+            onApplyPromo={(code) => dispatch(setPromoCode(code))}
+          />
+        )}
+
         <View style={styles.listsContainer}>
 
           <CategoryList
@@ -262,15 +295,6 @@ const HomeScreen = () => {
                 }}
               />
             </View>
-          )}
-
-          {/* Promo Codes Carousel */}
-          {state.isLoggedIn && (
-            <PromoCarousel
-              promos={data?.user_promos ?? []}
-              currency={data?.currency ?? null}
-              scrollY={scrollY}
-            />
           )}
 
           {/* Featured Items */}

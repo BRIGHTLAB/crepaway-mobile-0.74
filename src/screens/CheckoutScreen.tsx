@@ -774,7 +774,7 @@ const CheckoutScreen = () => {
             <View style={styles.boxContainer}>
               <View style={styles.paymentHeaderRow}>
                 <Text style={styles.boxContainerTitle}>Promo code</Text>
-                {data?.summary?.promo_code_applied && promoCode ? (
+                {promoCode ? (
                   <TouchableOpacity
                     style={styles.changeButton}
                     onPress={() => {
@@ -799,14 +799,14 @@ const CheckoutScreen = () => {
                   </TouchableOpacity>
                 )}
               </View>
-              {data?.summary?.promo_code_applied && promoCode ? (
+              {promoCode ? (
                 <Text style={{
                   fontFamily: 'Poppins-Regular',
                   fontSize: 14,
-                  color: COLORS.secondaryColor,
+                  color: promoError ? COLORS.primaryColor : COLORS.secondaryColor,
                   marginTop: 4,
                 }}>
-                  {promoCode} applied
+                  {promoError ? promoError : `${promoCode} applied`}
                 </Text>
               ) : null}
             </View>
@@ -875,6 +875,12 @@ const CheckoutScreen = () => {
               isLoading={isLoading}
               canEdit={true}
             />
+
+            {selectedPaymentMethod?.type !== 'cash' && !selectedSavedCardId && (
+              <Text style={styles.cardNoteText}>
+                You'll be redirected to enter your card details.
+              </Text>
+            )}
 
             <View style={{ gap: 12 }}>
               <Button
@@ -1145,7 +1151,7 @@ const CheckoutScreen = () => {
             <View style={styles.dialogIconContainer}>
               <FastImage
                 source={require('../../assets/images/payment/credit_card.png')}
-                style={{ width: 100, height: 100 }}
+                style={{ width: 150, height: 150 }}
                 resizeMode={FastImage.resizeMode.contain}
               />
             </View>
@@ -1364,7 +1370,7 @@ const styles = StyleSheet.create({
   },
   dialogTitle: {
     fontFamily: 'Poppins-Medium',
-    fontSize: 16,
+    fontSize: 20,
     color: COLORS.darkColor,
     textAlign: 'center',
   },
@@ -1399,4 +1405,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.white,
   },
+  cardNoteText: {
+    fontSize: 14,
+    color: COLORS.secondaryColor,
+    textAlign: 'center',
+    backgroundColor: COLORS.secondaryColor + '20',
+    fontFamily: 'Poppins-Regular',
+    padding: 8,
+    borderRadius: 10,
+  }
 });
