@@ -831,7 +831,7 @@ const CheckoutScreen = () => {
                   <TouchableOpacity
                     style={styles.addButton}
                     onPress={() => {
-                      setSheetCouponCode(couponCode);
+                      setSheetCouponCode('');
                       setCouponError(null);
                       couponCodeSheetRef.current?.expand();
                     }}
@@ -939,7 +939,7 @@ const CheckoutScreen = () => {
               setSheetPromoCode(text);
               if (promoError) setPromoError(null);
             }}
-            autoCapitalize="characters"
+          // autoCapitalize="characters"
           />
           {promoError && (
             <Text style={styles.promoErrorText}>{promoError}</Text>
@@ -947,6 +947,18 @@ const CheckoutScreen = () => {
           <Button onPress={handleApplyPromoCode} isLoading={isFetching}>
             Apply
           </Button>
+          <TouchableOpacity
+            style={styles.sheetRemoveButton}
+            onPress={() => {
+              dispatch(setReduxPromoCode(''));
+              setDebouncedPromoCode('');
+              setSheetPromoCode('');
+              setPromoError(null);
+              promoCodeSheetRef.current?.close();
+            }}
+          >
+            <Text style={styles.sheetRemoveButtonText}>Clear</Text>
+          </TouchableOpacity>
         </BottomSheetView>
       </DynamicSheet>
 
@@ -967,7 +979,7 @@ const CheckoutScreen = () => {
               setSheetCouponCode(text);
               if (couponError) setCouponError(null);
             }}
-            autoCapitalize="characters"
+          // autoCapitalize="characters"
           />
           {couponError && (
             <Text style={styles.promoErrorText}>{couponError}</Text>
@@ -975,6 +987,18 @@ const CheckoutScreen = () => {
           <Button onPress={handleApplyCouponCode} isLoading={isFetching}>
             Apply
           </Button>
+          <TouchableOpacity
+            style={styles.sheetRemoveButton}
+            onPress={() => {
+              dispatch(setReduxCouponCode(''));
+              setDebouncedCouponCode('');
+              setSheetCouponCode('');
+              setCouponError(null);
+              couponCodeSheetRef.current?.close();
+            }}
+          >
+            <Text style={styles.sheetRemoveButtonText}>Clear</Text>
+          </TouchableOpacity>
         </BottomSheetView>
       </DynamicSheet>
 
@@ -1414,5 +1438,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     padding: 8,
     borderRadius: 10,
-  }
+  },
+  sheetRemoveButton: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  sheetRemoveButtonText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: COLORS.primaryColor,
+  },
 });
