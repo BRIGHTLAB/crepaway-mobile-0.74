@@ -94,28 +94,28 @@ const LoyaltyProgressCard: React.FC<LoyaltyProgressCardProps> = ({
                 <Text style={styles.pointsCountText}>
                     {pointsCount}
                 </Text>
-                <View style={styles.pointsUnitContainer}>
-                    <Text style={styles.pointsUnitText}>
-                        {pointsUnit}
-                    </Text>
-                    {!disabled && (
-                        <Icon_Arrow_Right width={24} height={24} color={COLORS.white} />
-                    )}
-                </View>
+                <Text style={styles.pointsUnitText}>
+                    {pointsUnit}
+                </Text>
+                {!disabled && (
+                    <Icon_Arrow_Right width={24} height={24} color={COLORS.white} />
+                )}
             </View>
 
             {/* absolute spines with rotation animation */}
-            {!hideBackground && (
-                <>
-                    <Animated.View style={[styles.spineLeftContainer, leftSpineStyle]}>
-                        <Icon_Spine width={400} height={400} opacity={0.1} />
-                    </Animated.View>
-                    <Animated.View style={[styles.spineRightContainer, rightSpineStyle]}>
-                        <Icon_Spine width={400} height={400} opacity={0.1} />
-                    </Animated.View>
-                </>
-            )}
-        </Pressable>
+            {
+                !hideBackground && (
+                    <>
+                        <Animated.View style={[styles.spineLeftContainer, leftSpineStyle]}>
+                            <Icon_Spine width={400} height={400} opacity={0.1} />
+                        </Animated.View>
+                        <Animated.View style={[styles.spineRightContainer, rightSpineStyle]}>
+                            <Icon_Spine width={400} height={400} opacity={0.1} />
+                        </Animated.View>
+                    </>
+                )
+            }
+        </Pressable >
     )
 }
 
@@ -136,8 +136,9 @@ const styles = StyleSheet.create({
     },
     rightContentContainer: {
         flexDirection: 'row',
-        gap: 5,
         alignItems: 'center',
+        justifyContent: 'center',
+        gap: 5,
     },
     tierNameText: {
         fontFamily: 'Poppins-SemiBold',
@@ -167,8 +168,8 @@ const styles = StyleSheet.create({
     pointsCountText: {
         ...TYPOGRAPHY.HEADLINE,
         fontFamily: 'Poppins-Regular',
-
         fontWeight: 'bold',
+        paddingBottom: 3,
         color: COLORS.white,
     },
     pointsUnitText: {
