@@ -9,9 +9,9 @@ import {
     NativeScrollEvent,
     TouchableOpacity,
 } from 'react-native';
-import Clipboard from '@react-native-clipboard/clipboard';
 import LinearGradient from 'react-native-linear-gradient';
-import Animated, { interpolate, SharedValue, useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { SharedValue } from 'react-native-reanimated';
+import Toast from 'react-native-toast-message';
 import Icon_Spine from '../../assets/SVG/Icon_Spine';
 import Icon_Checkmark from '../../assets/SVG/Icon_Checkmark';
 import { UserPromo } from '../api/homeApi';
@@ -32,11 +32,12 @@ interface PromoCarouselProps {
         exchange: number;
     } | null;
     scrollY?: SharedValue<number>;
+    appliedPromoCode: string;
+    onApplyPromo: (code: string) => void;
 }
 
-const PromoCarousel = ({ promos, currency }: PromoCarouselProps) => {
+const PromoCarousel = ({ promos, currency, appliedPromoCode, onApplyPromo }: PromoCarouselProps) => {
     const [activeIndex, setActiveIndex] = useState(0);
-    const [copiedCode, setCopiedCode] = useState<string | null>(null);
     const flatListRef = useRef<FlatList<UserPromo>>(null);
 
     if (!promos || promos.length === 0) {
@@ -69,80 +70,94 @@ const PromoCarousel = ({ promos, currency }: PromoCarouselProps) => {
         setActiveIndex(currentIndex);
     };
 
-    const handleCopyCode = (code: string) => {
-        Clipboard.setString(code);
-        setCopiedCode(code);
-        setTimeout(() => {
-            setCopiedCode(prev => (prev === code ? null : prev));
-        }, 2000);
+    const handleApplyPromo = (code: string) => {
+        if (appliedPromoCode === code) {
+            // Unapply the promo code
+            onApplyPromo('');
+            Toast.show({
+                type: 'success',
+                text1: 'Promo Code Removed',
+                visibilityTime: 2500,
+                position: 'bottom',
+            });
+            return;
+        }
+        onApplyPromo(code);
+        Toast.show({
+            type: 'success',
+            text1: 'Promo Code Applied!',
+            visibilityTime: 2500,
+            position: 'bottom',
+        });
     };
 
     const renderItem = ({ item }: { item: UserPromo }) => {
         const cap = formatCap(item);
         const expiry = formatExpiry(item.end_date);
+        const isApplied = appliedPromoCode === item.code;
 
         return (
-            <View style={styles.cardWrapper}>
-                <LinearGradient
-                    colors={[COLORS.primaryColor, '#B6022B']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.card}
-                >
-                    {/* Rotating spine decorations */}
-                    <Animated.View style={[styles.spineLeft]}>
-                        <Icon_Spine width={400} height={400} color={COLORS.primaryColor} />
-                    </Animated.View>
-                    <Animated.View style={[styles.spineRight]}>
-                        <Icon_Spine width={400} height={400} color={COLORS.primaryColor} />
-                    </Animated.View>
+            <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => handleApplyPromo(item.code)}
+            >
+                <View style={styles.cardWrapper}>
+                    <LinearGradient
+                        colors={isApplied ? ['#1B7A3D', '#145A2D'] : [COLORS.primaryColor, '#B6022B']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.card}
+                    >
+                        {/* Rotating spine decorations */}
+                        <Animated.View style={[styles.spineLeft]}>
+                            <Icon_Spine width={400} height={400} color={isApplied ? '#1B7A3D' : COLORS.primaryColor} />
+                        </Animated.View>
+                        <Animated.View style={[styles.spineRight]}>
+                            <Icon_Spine width={400} height={400} color={isApplied ? '#1B7A3D' : COLORS.primaryColor} />
+                        </Animated.View>
 
-                    {/* Content */}
-                    <View style={styles.contentRow}>
-                        {/* Left side — Discount info */}
-                        <View style={styles.leftContent}>
-                            <Text style={styles.promoName} numberOfLines={1}>
-                                {item.name}
-                            </Text>
-                            <Text style={styles.discountText}>{formatDiscount(item)}</Text>
-                            {cap && <Text style={styles.capText}>{cap}</Text>}
-                        </View>
+                        {/* Content */}
+                        <View style={styles.contentRow}>
+                            {/* Left side — Discount info */}
+                            <View style={styles.leftContent}>
+                                <Text style={styles.promoName} numberOfLines={1}>
+                                    {item.name}
+                                </Text>
+                                <Text style={styles.discountText}>{formatDiscount(item)}</Text>
+                                {cap && <Text style={styles.capText}>{cap}</Text>}
+                                <Text style={styles.codeText}>{item.code}</Text>
+                            </View>
 
-                        {/* Right side — Code + expiry */}
-                        <View style={styles.rightContent}>
-                            <TouchableOpacity
-                                activeOpacity={0.8}
-                                onPress={() => handleCopyCode(item.code)}
-                            >
-                                <View style={styles.codePill}>
-                                    <Text style={styles.codeLabel}>CODE</Text>
-                                    <Text style={styles.codeText}>{item.code}</Text>
-                                    <View style={styles.copyIconWrapper}>
-                                        {copiedCode === item.code ? (
-                                            <Icon_Checkmark width={14} height={14} color="#FFFFFF" />
-                                        ) : (
-                                            <Text style={styles.copyIconFallback}>⧉</Text>
-                                        )}
+                            {/* Right side — Apply / Applied */}
+                            <View style={styles.rightContent}>
+                                {isApplied ? (
+                                    <View style={styles.appliedBadge}>
+                                        <Icon_Checkmark width={14} height={14} color="#FFFFFF" />
+                                        <Text style={styles.appliedText}>Applied</Text>
                                     </View>
-                                </View>
-                            </TouchableOpacity>
-                            {expiry && <Text style={styles.expiryText}>{expiry}</Text>}
+                                ) : (
+                                    <View style={styles.applyButton}>
+                                        <Text style={styles.applyButtonText}>Apply</Text>
+                                    </View>
+                                )}
+                                {expiry && <Text style={styles.expiryText}>{expiry}</Text>}
+                            </View>
                         </View>
-                    </View>
 
-                    {/* Decorative circle cutouts */}
-                    <View style={[styles.circleCutout, styles.circleCutoutLeft]} />
-                    <View style={[styles.circleCutout, styles.circleCutoutRight]} />
-                </LinearGradient>
-            </View>
+                        {/* Decorative circle cutouts */}
+                        <View style={[styles.circleCutout, styles.circleCutoutLeft]} />
+                        <View style={[styles.circleCutout, styles.circleCutoutRight]} />
+                    </LinearGradient>
+                </View>
+            </TouchableOpacity>
         );
     };
 
     return (
         <View style={styles.container}>
-            <View style={styles.headerRow}>
+            {/* <View style={styles.headerRow}>
                 <Text style={styles.sectionTitle}>Your Offers</Text>
-            </View>
+            </View> */}
             <FlatList
                 ref={flatListRef}
                 data={promos}
@@ -156,6 +171,7 @@ const PromoCarousel = ({ promos, currency }: PromoCarouselProps) => {
                 scrollEventThrottle={16}
                 keyExtractor={item => item.id.toString()}
                 contentContainerStyle={styles.listContent}
+                extraData={appliedPromoCode}
             />
             {promos.length > 1 && (
                 <View style={styles.pagination}>
@@ -245,45 +261,47 @@ const styles = StyleSheet.create({
         color: 'rgba(255,255,255,0.8)',
         marginTop: 1,
     },
+    codeText: {
+        fontFamily: 'Poppins-Medium',
+        fontSize: 11,
+        color: 'rgba(255,255,255,0.55)',
+        marginTop: 2,
+        letterSpacing: 1,
+    },
     rightContent: {
         alignItems: 'flex-end',
         justifyContent: 'center',
     },
-    codePill: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.18)',
+    applyButton: {
+        backgroundColor: 'rgba(255,255,255,0.22)',
         borderRadius: 16,
-        paddingHorizontal: 12,
-        paddingVertical: 5,
+        paddingHorizontal: 18,
+        paddingVertical: 7,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.25)',
-        borderStyle: 'dashed',
+        borderColor: 'rgba(255,255,255,0.35)',
     },
-    codeLabel: {
-        fontFamily: 'Poppins-Medium',
-        fontSize: 9,
-        color: 'rgba(255,255,255,0.65)',
-        marginRight: 5,
-        letterSpacing: 1,
-    },
-    codeText: {
-        fontFamily: 'Poppins-Bold',
+    applyButtonText: {
+        fontFamily: 'Poppins-SemiBold',
         fontSize: 13,
         color: '#FFFFFF',
-        letterSpacing: 1,
-        marginRight: 6,
+        letterSpacing: 0.5,
     },
-    copyIconWrapper: {
-        width: 18,
-        height: 18,
-        borderRadius: 9,
+    appliedBadge: {
+        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        backgroundColor: 'rgba(255,255,255,0.22)',
+        borderRadius: 16,
+        paddingHorizontal: 14,
+        paddingVertical: 7,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.35)',
+        gap: 5,
     },
-    copyIconFallback: {
-        fontSize: 12,
+    appliedText: {
+        fontFamily: 'Poppins-SemiBold',
+        fontSize: 13,
         color: '#FFFFFF',
+        letterSpacing: 0.5,
     },
     expiryText: {
         fontFamily: 'Poppins-Regular',

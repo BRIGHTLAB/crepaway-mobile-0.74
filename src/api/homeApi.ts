@@ -8,6 +8,7 @@ export interface UserPromo {
     amount: number;
     max_amount: number | null;
     end_date: string | null;
+    auto_apply: boolean;
 }
 
 export interface HomepageResponse {
