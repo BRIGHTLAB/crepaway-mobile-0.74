@@ -1,8 +1,19 @@
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
-import {NavigationContainerRef} from '@react-navigation/native';
-import {Alert, AppState, Platform} from 'react-native';
-import PushNotification, {Importance} from 'react-native-push-notification';
-import {POST} from '../api';
+import {
+  AuthorizationStatus,
+  deleteToken,
+  getInitialNotification,
+  getMessaging,
+  getToken,
+  onMessage,
+  onNotificationOpenedApp,
+  onTokenRefresh,
+  requestPermission,
+} from '@react-native-firebase/messaging';
+import { NavigationContainerRef } from '@react-navigation/native';
+import { Alert, AppState, Platform } from 'react-native';
+import PushNotification, { Importance } from 'react-native-push-notification';
+import { POST } from '../api';
 import type { NavParams } from './NavigationHelper';
 
 // Lazy import to avoid circular dependency
@@ -11,39 +22,6 @@ const getNavigationHelper = () => require('./NavigationHelper').default;
 // Lazy import store to avoid circular dependency
 const getStore = () => require('../store/store').default;
 
-/**
- * IMPORTANT: Foreground Notification Handling on Android
- * 
- * On Android, react-native-push-notification's onNotification callback is ONLY called
- * when the app receives a DATA-ONLY payload (no "notification" field).
- * 
- * When AWS SNS sends a payload with BOTH "notification" and "data":
- * - Background/Killed: System shows notification, onNotification called when user taps
- * - Foreground: System shows notification automatically, onNotification is NOT called
- * 
- * When AWS SNS sends a DATA-ONLY payload (only "data" field):
- * - Background/Killed: System may show notification (if configured), onNotification called
- * - Foreground: onNotification SHOULD be called immediately
- * 
- * AWS SNS FCM Payload Format for Foreground Handling:
- * {
- *   "GCM": "{ \"data\": { \"title\": \"...\", \"body\": \"...\", \"screen\": \"...\", ... } }"
- * }
- * 
- * OR for direct FCM:
- * {
- *   "data": {
- *     "title": "...",
- *     "body": "...",
- *     "screen": "...",
- *     "order_type": "...",
- *     "menu_type": "...",
- *     "id": 277
- *   }
- * }
- * 
- * Note: The "notification" field should be omitted for foreground handling.
- */
 interface NotificationOptions {
   data?: Record<string, unknown>;
   enableSound?: boolean;
@@ -63,24 +41,15 @@ interface NotificationData {
   [key: string]: unknown;
 }
 
-type PushNotificationReceived = {
-  title?: string;
-  message?: string | object;
-  data?: NotificationData | Record<string, unknown>;
-  finish?: (fetchResult: string) => void;
-  userInteraction?: boolean; // true when user taps notification, false when just received
-  [key: string]: unknown;
-}
-
 class NotificationService {
   private token: string | null = null;
   private static instance: NotificationService | null = null;
   private isInitialized: boolean = false;
   private navigationRef: NavigationContainerRef<Record<string, unknown>> | null = null;
   private pendingNavigation: NavParams | null = null;
-  private appStateSubscription: {remove: () => void} | null = null;
+  private appStateSubscription: { remove: () => void } | null = null;
 
-  private constructor() {}
+  private constructor() { }
 
   private log = (...args: unknown[]): void => {
     if (__DEV__) {
@@ -95,7 +64,7 @@ class NotificationService {
     return NotificationService.instance;
   }
 
-  init = (navigationRef: NavigationContainerRef<Record<string, unknown>>): void => {
+  init = async (navigationRef: NavigationContainerRef<Record<string, unknown>>): Promise<void> => {
     if (this.isInitialized) {
       return;
     }
@@ -116,107 +85,135 @@ class NotificationService {
       previousAppState = nextAppState;
     });
 
-    PushNotification.configure({
-      onRegister: (tokenData: {token: string}): void => {
-        this.token = tokenData.token;
-        this.log('Push notification token registered:', tokenData.token);
+    // --- FCM Setup via modular @react-native-firebase/messaging ---
+    const messaging = getMessaging();
+
+    // Request permission (required for iOS, no-op on Android)
+    const authStatus = await requestPermission(messaging);
+    const enabled =
+      authStatus === AuthorizationStatus.AUTHORIZED ||
+      authStatus === AuthorizationStatus.PROVISIONAL;
+
+    if (enabled) {
+      this.log('FCM permission granted, status:', authStatus);
+    } else {
+      this.log('FCM permission denied');
+    }
+
+    // Get the FCM token
+    try {
+      const fcmToken = await getToken(messaging);
+      if (fcmToken) {
+        this.token = fcmToken;
+        this.log('FCM token:', fcmToken);
         this.sendDeviceTokenToBackend();
+      }
+    } catch (error) {
+      this.log('Error getting FCM token:', error);
+    }
+
+    // Listen for token refresh
+    onTokenRefresh(messaging, (newToken) => {
+      this.token = newToken;
+      this.log('FCM token refreshed:', newToken);
+      this.sendDeviceTokenToBackend();
+    });
+
+    // Handle foreground messages via Firebase
+    onMessage(messaging, async (remoteMessage) => {
+      this.log('=== FCM FOREGROUND MESSAGE ===');
+      this.log('Message:', JSON.stringify(remoteMessage, null, 2));
+
+      const title = remoteMessage.notification?.title || remoteMessage.data?.title as string || 'Notification';
+      const body = remoteMessage.notification?.body || remoteMessage.data?.body as string || remoteMessage.data?.message as string || '';
+
+      if (body) {
+        this.localNotification(
+          String(title),
+          String(body),
+          {
+            data: (remoteMessage.data as Record<string, unknown>) || {},
+            enableSound: true,
+            channelId: 'default-channel',
+          }
+        );
+      }
+
+      // Handle notification data for navigation
+      const notificationData = (remoteMessage.data || {}) as NotificationData;
+      if (notificationData.screen) {
+        this.pendingNavigation = {
+          screen: notificationData.screen,
+          order_type: notificationData.order_type || 'delivery',
+          menu_type: notificationData.menu_type || notificationData.order_type || 'delivery',
+          id: notificationData.id,
+          ...notificationData.params,
+        };
+      }
+
+      if (notificationData.type) {
+        this.handleNotificationAction(notificationData.type, notificationData);
+      }
+    });
+
+    // Handle notification opened from background/quit state
+    onNotificationOpenedApp(messaging, (remoteMessage) => {
+      this.log('Notification opened app from background:', remoteMessage);
+      const notificationData = (remoteMessage.data || {}) as NotificationData;
+
+      if (notificationData.screen) {
+        const params: NavParams = {
+          screen: notificationData.screen,
+          order_type: notificationData.order_type || 'delivery',
+          menu_type: notificationData.menu_type || notificationData.order_type || 'delivery',
+          id: notificationData.id,
+          ...notificationData.params,
+        };
+
+        if (this.navigationRef?.isReady()) {
+          this.processNavigation(params);
+        } else {
+          this.pendingNavigation = params;
+        }
+      }
+
+      this.setBadgeCount(0);
+    });
+
+    // Check if app was opened from a quit state notification
+    const initialNotification = await getInitialNotification(messaging);
+    if (initialNotification) {
+      this.log('App opened from quit state via notification:', initialNotification);
+      const notificationData = (initialNotification.data || {}) as NotificationData;
+
+      if (notificationData.screen) {
+        this.pendingNavigation = {
+          screen: notificationData.screen,
+          order_type: notificationData.order_type || 'delivery',
+          menu_type: notificationData.menu_type || notificationData.order_type || 'delivery',
+          id: notificationData.id,
+          ...notificationData.params,
+        };
+      }
+    }
+
+    // --- Legacy PushNotification setup (for local notifications & Android channels) ---
+
+    PushNotification.configure({
+      // We no longer rely on onRegister for the token — FCM handles that above
+      onRegister: (_tokenData: { token: string }): void => {
+        this.log('Legacy PushNotification onRegister (ignored, using FCM token)');
       },
 
-      onNotification: (notification: PushNotificationReceived): void => {
+      onNotification: (notification: any): void => {
         try {
-          const appState = AppState.currentState;
-          const notificationData = this.extractNotificationData(notification);
-
-          this.log('=== NOTIFICATION RECEIVED ===');
-          this.log('App state:', appState);
-          this.log('Platform:', Platform.OS);
-          this.log('User interaction (tapped):', notification.userInteraction);
-          this.log('Notification data:', notificationData);
-          this.log('Full notification object:', JSON.stringify(notification, null, 2));
-
-          // On Android, when app is in foreground, manually show notification
-          if (Platform.OS === 'android' && appState === 'active') {
-            // Extract title and message from notification payload
-            // AWS SNS may put title/message in notification object or data payload
-            const dataPayload = notification.data as Record<string, unknown> | undefined;
-            
-            // Try to get title from multiple sources (AWS SNS structure)
-            const title = notification.title || 
-                         dataPayload?.title as string ||
-                         (notificationData.title as string) || 
-                         'Notification';
-            
-            // Try to get message from multiple sources (AWS SNS uses "message" field)
-            const message = (typeof notification.message === 'string' ? notification.message : String(notification.message || '')) ||
-                           dataPayload?.body as string ||
-                           dataPayload?.message as string ||
-                           (notificationData.body as string) ||
-                           (notificationData.message as string) ||
-                           '';
-
-            // Show local notification when app is in foreground
-            // Only show if we have at least a message (title can be default)
-            if (message) {
-              this.log('Showing foreground notification - Title:', title, 'Message:', message);
-              this.localNotification(
-                String(title),
-                String(message),
-                {
-                  data: notificationData,
-                  enableSound: true,
-                  channelId: 'default-channel',
-                }
-              );
-            } else {
-              this.log('No message found in notification payload, skipping foreground notification display');
-              this.log('Available keys in dataPayload:', dataPayload ? Object.keys(dataPayload) : 'none');
-              this.log('Available keys in notification:', Object.keys(notification));
-            }
-          }
-
-          // Clear badge when user taps or swipes notification
+          // Clear badge when user taps notification
           if (notification.userInteraction) {
             this.log('User interacted with notification - clearing badge');
             this.setBadgeCount(0);
           }
-
-          // Handle navigation
-          // Only navigate when user taps the notification (userInteraction is true)
-          // When notification is just received in foreground (userInteraction is false), don't navigate
-          if (notificationData.screen) {
-            const params: NavParams = {
-              screen: notificationData.screen,
-              order_type: notificationData.order_type || 'delivery',
-              menu_type: notificationData.menu_type || notificationData.order_type || 'delivery',
-              id: notificationData.id,
-              ...notificationData.params,
-            };
-            
-            if (notification.userInteraction) {
-              // User tapped the notification - navigate immediately
-              this.log('User tapped notification - navigating to:', params.screen);
-              if (appState === 'active' && this.navigationRef?.isReady()) {
-                this.processNavigation(params);
-                this.pendingNavigation = null;
-              } else {
-                // App is opening from background/killed - store for when app becomes active
-                this.pendingNavigation = params;
-              }
-            } else {
-              // Notification was just received, not tapped
-              // Store navigation params for when user taps the notification later
-              this.pendingNavigation = params;
-              this.log('Notification received (not tapped) - navigation will happen when user taps notification');
-            }
-          }
-
-          // Handle custom actions
-          if (notificationData.type) {
-            this.handleNotificationAction(notificationData.type, notificationData);
-          }
         } catch (e) {
-          this.log('Error handling notification:', e);
+          this.log('Error handling legacy notification:', e);
         }
 
         // Required on iOS
@@ -235,33 +232,31 @@ class NotificationService {
         sound: true,
       },
 
-      popInitialNotification: true,
-      requestPermissions: true,
+      popInitialNotification: false, // Handled by Firebase getInitialNotification
+      requestPermissions: false, // Handled by Firebase requestPermission
     });
 
     if (Platform.OS === 'android') {
       this.createNotificationChannels();
     }
-    
+
     this.isInitialized = true;
   };
 
   private processNavigation(params: NavParams): void {
     if (!this.navigationRef?.isReady()) return;
-    
-    // Validate navigation requirements based on order type
+
     if (!this.validateNavigationRequirements(params)) {
-      return; // Validation failed, alert already shown
+      return;
     }
-    
+
     getNavigationHelper().getInstance().navigate(params);
   }
 
   private validateNavigationRequirements(params: NavParams): boolean {
     const state = getStore().getState();
     const orderType = params.order_type || state.user.orderType || 'delivery';
-    
-    // For delivery: check if address exists
+
     if (orderType === 'delivery') {
       const hasAddress = state.user.addressId !== null && state.user.addressTitle !== null;
       if (!hasAddress) {
@@ -274,8 +269,7 @@ class NotificationService {
         return false;
       }
     }
-    
-    // For takeaway: check if branch exists
+
     if (orderType === 'takeaway') {
       const hasBranch = state.user.branchName !== null;
       if (!hasBranch) {
@@ -288,32 +282,8 @@ class NotificationService {
         return false;
       }
     }
-    
-    return true;
-  }
 
-  private extractNotificationData(notification: PushNotificationReceived): NotificationData {
-    // Extract notification data - handle app_custom_obj or direct data
-    if (Platform.OS === 'android') {
-      const data = notification.data as Record<string, unknown> | undefined;
-      if (data?.app_custom_obj && typeof data.app_custom_obj === 'object') {
-        return data.app_custom_obj as NotificationData;
-      }
-      return (data as NotificationData) || {};
-    } else {
-      const data = notification.data as Record<string, unknown> | undefined;
-      if (data?.data && typeof data.data === 'object') {
-        const nestedData = data.data as Record<string, unknown>;
-        if (nestedData.app_custom_obj && typeof nestedData.app_custom_obj === 'object') {
-          return nestedData.app_custom_obj as NotificationData;
-        }
-        return nestedData as NotificationData;
-      }
-      if (data?.app_custom_obj && typeof data.app_custom_obj === 'object') {
-        return data.app_custom_obj as NotificationData;
-      }
-      return (data as NotificationData) || {};
-    }
+    return true;
   }
 
   private createNotificationChannels(): void {
@@ -326,9 +296,9 @@ class NotificationService {
         importance: Importance.HIGH,
         vibrate: true,
       },
-      () => {},
+      () => { },
     );
-    
+
     PushNotification.createChannel(
       {
         channelId: 'silent-channel',
@@ -338,7 +308,7 @@ class NotificationService {
         importance: Importance.HIGH,
         vibrate: false,
       },
-      () => {},
+      () => { },
     );
   }
 
@@ -418,7 +388,7 @@ class NotificationService {
 
   async sendDeviceTokenToBackend() {
     if (!this.token) return null;
-    
+
     try {
       const response = await POST({
         endpoint: '/users/tokens',
@@ -441,7 +411,15 @@ class NotificationService {
     }
   };
 
-  deregister = (): void => {
+  deregister = async (): Promise<void> => {
+    try {
+      const messaging = getMessaging();
+      await deleteToken(messaging);
+      this.log('FCM token deleted');
+    } catch (error) {
+      this.log('Error deleting FCM token:', error);
+    }
+
     if (Platform.OS === 'ios') {
       PushNotificationIOS.abandonPermissions();
     } else {
@@ -459,7 +437,6 @@ class NotificationService {
     if (Platform.OS === 'ios') {
       PushNotificationIOS.setApplicationIconBadgeNumber(count);
     } else {
-      // Android badge support via react-native-push-notification
       PushNotification.setApplicationIconBadgeNumber(count);
     }
   };
