@@ -18,6 +18,7 @@ import { RootState } from '../../store/store';
 import { COLORS } from '../../theme';
 import { FadeInFastImage } from '../FadeInFastImage';
 import { normalizeFont } from '../../utils/normalizeFonts';
+import CartBadge from './CartBadge';
 
 interface IProps {
   id: number;
@@ -95,19 +96,22 @@ const ItemCard = ({
     <Pressable onPress={() => onItemPress(id)}>
       <View style={[styles.container, style]}>
 
-        <FadeInFastImage
-          source={{
-            uri:
-              image_url ||
-              'https://d3vfh4cqgoixck.cloudfront.net/images/locations_placeholder1.webp',
-            priority: FastImage.priority.normal,
-          }}
-          style={styles.image}
-          containerStyle={styles.image}
-          duration={300}
-          resizeMode={FastImage.resizeMode.cover}
-          placeholderColor="#f2f2f2"
-        />
+        <View style={{ position: 'relative' }}>
+          <CartBadge itemId={id} />
+          <FadeInFastImage
+            source={{
+              uri:
+                image_url ||
+                'https://d3vfh4cqgoixck.cloudfront.net/images/locations_placeholder1.webp',
+              priority: FastImage.priority.normal,
+            }}
+            style={styles.image}
+            containerStyle={styles.image}
+            duration={300}
+            resizeMode={FastImage.resizeMode.cover}
+            placeholderColor="#f2f2f2"
+          />
+        </View>
         <View style={styles.content}>
           <View style={styles.leftContent}>
             <Text style={styles.name} numberOfLines={2}>
@@ -188,6 +192,7 @@ export default ItemCard;
 const styles = StyleSheet.create({
   container: {
     width: '100%',
+    paddingTop: 8,
   },
   image: {
     width: '100%',
