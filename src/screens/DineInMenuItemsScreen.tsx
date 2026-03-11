@@ -19,6 +19,7 @@ import {
 } from '../api/menuApi';
 import { RootState } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
+import CartBadge from '../components/Menu/CartBadge';
 
 // Fixed heights for more accurate calculations
 const ITEM_HEIGHT = 120; // Height of each menu item
@@ -63,18 +64,21 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
             gap: 10,
             flex: 1,
           }}>
-          <FastImage
-            source={{
-              uri: item?.image_url ?? '',
-              priority: FastImage.priority.normal,
-            }}
-            resizeMode={FastImage.resizeMode.cover}
-            style={{
-              width: 80,
-              height: 80,
-              borderRadius: 10,
-            }}
-          />
+          <View style={{ position: 'relative' }}>
+            <CartBadge itemId={item.id} style={{ top: 4, right: 4 }} />
+            <FastImage
+              source={{
+                uri: item?.image_url ?? '',
+                priority: FastImage.priority.normal,
+              }}
+              resizeMode={FastImage.resizeMode.cover}
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: 10,
+              }}
+            />
+          </View>
           <View style={styles.menuItem}>
             <Text style={styles.itemName}>{item.name}</Text>
             <Text style={styles.itemDescription} numberOfLines={2}>
@@ -201,10 +205,10 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
     ...category,
     items:
       items && items?.data?.length > 0
-        ? items?.data?.filter(item => 
-            item.menu_categories_id === category.id && 
-            !item.isHiddenFromUser
-          )
+        ? items?.data?.filter(item =>
+          item.menu_categories_id === category.id &&
+          !item.isHiddenFromUser
+        )
         : [],
   }));
 
