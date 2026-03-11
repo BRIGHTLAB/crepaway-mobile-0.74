@@ -15,6 +15,7 @@ type Props = {
   maxDynamicContentSize?: number;
   disableCollapse?: boolean;
   footerComponent?: React.FC<BottomSheetFooterProps>;
+  contentStyle?: object;
   onClose?: () => void;
   onChange?: (index: number) => void;
 };
@@ -29,6 +30,7 @@ const DynamicSheet = forwardRef<BottomSheet, Props>(
       onClose,
       onChange,
       footerComponent,
+      contentStyle,
     }: Props,
     ref,
   ) => {
@@ -116,7 +118,7 @@ const DynamicSheet = forwardRef<BottomSheet, Props>(
           keyboardBlurBehavior="restore"
           android_keyboardInputMode="adjustResize"
 
-          style={styles.contentContainer}>
+          style={[styles.contentContainer, contentStyle]}>
           {children}
         </BottomSheet>
       </Portal>

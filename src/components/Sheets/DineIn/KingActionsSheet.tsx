@@ -49,12 +49,21 @@ const KingActionsSheet = forwardRef<BottomSheet, Props>(
     return (
       <DynamicSheet ref={ref} footerComponent={Footer} snapPoints={['50%']}>
         <View style={styles.userProfile}>
-          <FastImage
-            style={styles.userSheetImage}
-            source={{
-              uri: user.image_url || 'https://placehold.co/200x200/png',
-            }}
-          />
+          {user.image_url ? (
+            <FastImage
+              style={styles.userSheetImage}
+              source={{
+                uri: user.image_url,
+              }}
+              resizeMode={FastImage.resizeMode.cover}
+            />
+          ) : (
+            <View style={styles.userSheetInitials}>
+              <Text style={styles.userSheetInitialsText}>
+                {user.name.split(' ').map(s => s.charAt(0).toUpperCase()).join('')}
+              </Text>
+            </View>
+          )}
           <Text style={styles.userSheetName}>{user.name}</Text>
         </View>
         <View
@@ -104,6 +113,21 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     marginRight: 16,
+  },
+  userSheetInitials: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 16,
+    backgroundColor: COLORS.darkColor,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userSheetInitialsText: {
+    color: COLORS.white,
+    fontSize: 20,
+    fontWeight: 'bold',
+    fontFamily: 'Poppins-SemiBold',
   },
   userSheetName: {
     ...TYPOGRAPHY.BODY,

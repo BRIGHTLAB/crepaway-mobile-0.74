@@ -1,15 +1,15 @@
+import LottieView, { AnimationObject } from 'lottie-react-native';
 import React from 'react';
 import {
+  StyleProp,
   StyleSheet,
   Text,
-  View,
-  TouchableOpacity,
-  Dimensions,
+  TextStyle,
+  View
 } from 'react-native';
-import DynamicPopup from '../UI/DynamicPopup';
-import LottieView, {AnimationObject} from 'lottie-react-native';
+import { COLORS, TYPOGRAPHY } from '../../theme';
 import Button from '../UI/Button';
-import {TYPOGRAPHY, COLORS} from '../../theme';
+import DynamicPopup from '../UI/DynamicPopup';
 
 interface ConfirmationPopupProps {
   visible: boolean;
@@ -17,10 +17,14 @@ interface ConfirmationPopupProps {
   onClose: () => void;
   onConfirm: () => void;
   lottieSrc?: AnimationObject;
+  icon?: React.ReactNode;
   message: string;
   btnLoading?: boolean;
   confirmText?: string;
   cancelText?: string;
+  cancelVariant?: 'accent' | 'secondary' | 'outline' | 'primary';
+  titleStyle?: StyleProp<TextStyle>;
+  descriptionStyle?: StyleProp<TextStyle>;
 }
 
 const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
@@ -30,9 +34,13 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
   title,
   message,
   lottieSrc,
+  icon,
   btnLoading,
   confirmText = 'Yes',
   cancelText = 'No',
+  cancelVariant = 'accent',
+  titleStyle,
+  descriptionStyle,
 }) => {
   return (
     <DynamicPopup visible={visible} onClose={onClose}>
@@ -41,20 +49,25 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
           <View style={styles.lottieContainer}>
             <LottieView
               source={lottieSrc}
-              style={{width: '100%', height: '100%'}}
+              style={{ width: '100%', height: '100%' }}
               autoPlay
               loop={true}
             />
           </View>
         )}
+        {!lottieSrc && icon && (
+          <View style={styles.iconContainer}>
+            {icon}
+          </View>
+        )}
         <View style={styles.textContainer}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.message}>{message}</Text>
+          <Text style={[styles.title, titleStyle]}>{title}</Text>
+          <Text style={[styles.message, descriptionStyle]}>{message}</Text>
         </View>
 
         <View style={styles.buttonContainer}>
           <Button
-            variant="accent"
+            variant={cancelVariant}
             onPress={onClose}
             style={styles.cancelButton}>
             {cancelText}
@@ -92,11 +105,14 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     width: '100%',
-    gap: 24,
+    gap: 12,
   },
   lottieContainer: {
     height: 150,
     width: 150,
+    alignSelf: 'center',
+  },
+  iconContainer: {
     alignSelf: 'center',
   },
   cancelButton: {

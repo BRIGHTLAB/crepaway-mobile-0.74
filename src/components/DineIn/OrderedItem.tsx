@@ -66,6 +66,7 @@ const OrderedItemCmp = ({
   currentUserId,
   isTableLocked,
   isCurrentUserKing,
+  isLastItem,
 }: {
   item: OrderedItem & { uuid: string };
   orderedByUser?: TableUser;
@@ -77,6 +78,7 @@ const OrderedItemCmp = ({
   currentUserId?: number | null;
   isTableLocked?: boolean;
   isCurrentUserKing?: boolean;
+  isLastItem?: boolean;
 }) => {
 
   const isOrderedByCurrentUser = currentUserId != null && String(item.added_by.id) === String(currentUserId);
@@ -105,22 +107,13 @@ const OrderedItemCmp = ({
   return (
     <View
       style={{
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        justifyContent: 'space-between',
-        gap: 8,
-        borderBottomWidth: 1,
+        borderBottomWidth: isLastItem ? 0 : 1,
         borderBottomColor: `${COLORS.foregroundColor}40`,
         paddingVertical: 10,
         opacity: shouldShowDisabledOpacity ? 0.5 : 1
       }}>
-      <View
-        style={{
-          flex: 1,
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-          gap: 8,
-        }}>
+      {/* Top row: image + name/price + quantity controls */}
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
         <TouchableOpacity onPress={onItemImageClick} disabled={isDisabled} style={{ position: 'relative' }}>
           <FastImage
             source={{
@@ -150,33 +143,75 @@ const OrderedItemCmp = ({
         </TouchableOpacity>
 
         <View style={{ flex: 1 }}>
-          <Text
-            numberOfLines={2}
-            style={{
-              fontFamily: 'Poppins-Medium',
-              fontSize: 16,
-              color: COLORS.darkColor,
-            }}>
-            {item.name}
-            {item?.quantity > 1 && <Text> x{item.quantity}</Text>}
-            {item.status === 'in-kitchen' && (
-              <Text style={{
-                fontSize: 12,
-                color: COLORS.secondaryColor,
-                fontFamily: 'Poppins-Medium',
-              }}> • In Kitchen</Text>
+          {/* Name + Price row with quantity controls centered */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Text
+                numberOfLines={2}
+                style={{
+                  fontFamily: 'Poppins-Medium',
+                  fontSize: 16,
+                  color: COLORS.darkColor,
+                }}>
+                {item?.quantity > 1 && <Text style={{ color: COLORS.primaryColor, fontFamily: 'Poppins-Bold', fontSize: 16 }}>{item.quantity} </Text>}
+                {item.name}
+                {item.status === 'in-kitchen' && (
+                  <Text style={{
+                    fontSize: 12,
+                    color: COLORS.secondaryColor,
+                    fontFamily: 'Poppins-Medium',
+                  }}> • In Kitchen</Text>
+                )}
+              </Text>
+
+              <Text
+                style={{
+                  fontFamily: 'Poppins-Medium',
+                  fontSize: 16,
+                  color: COLORS.secondaryColor,
+                }}>
+                {item.symbol}{calculateItemTotal().toFixed(2)}
+              </Text>
+            </View>
+
+            {!isDisabled && canEditItem && onQuantityDecrease && onQuantityIncrease ? (
+              <View style={{
+                backgroundColor: COLORS.primaryColor,
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingVertical: 4,
+                paddingHorizontal: 8,
+                borderRadius: 8,
+              }}>
+                <TouchableOpacity
+                  style={{ width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}
+                  onPress={onQuantityDecrease}>
+                  <Icon_Decrease_Quantity color={'#FFF'} />
+                </TouchableOpacity>
+                <Text style={{ color: '#FFF', fontSize: 18, width: 32, height: 32, paddingTop: 2, textAlign: 'center', fontFamily: 'Poppins-Medium' }}>
+                  {item?.quantity}
+                </Text>
+                <TouchableOpacity
+                  style={{ width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}
+                  onPress={onQuantityIncrease}>
+                  <Icon_Increase_Quantity color={'#FFF'} />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={{
+                backgroundColor: COLORS.primaryColor,
+                paddingVertical: 6,
+                paddingHorizontal: 12,
+                borderRadius: 8,
+                minWidth: 36,
+                alignItems: 'center',
+              }}>
+                <Text style={{ color: '#FFF', fontSize: 14, fontFamily: 'Poppins-Medium' }}>
+                  {item?.quantity}
+                </Text>
+              </View>
             )}
-          </Text>
-
-          <Text
-            style={{
-              fontFamily: 'Poppins-Medium',
-              fontSize: 16,
-              color: COLORS.secondaryColor,
-            }}>
-            {item.symbol} {calculateItemTotal().toFixed(2)}
-          </Text>
-
+          </View>
 
           {/* Modifier Groups */}
           {item.modifier_groups && item.modifier_groups.length > 0 && (
@@ -200,13 +235,15 @@ const OrderedItemCmp = ({
                         justifyContent: 'space-between',
                       }}>
                       <Text
+                        numberOfLines={2}
                         style={{
+                          flex: 1,
                           fontFamily: 'Poppins-Regular',
                           fontSize: 10,
                           color: COLORS.foregroundColor,
                         }}>
-                        {modItem.name}{' '}
-                        {modItem.quantity > 1 ? `x${modItem.quantity}` : ''}
+                        {modItem.quantity > 1 && <Text style={{ color: COLORS.primaryColor, fontFamily: 'Poppins-Bold' }}>{modItem.quantity} </Text>}
+                        {modItem.name}
                       </Text>
                       {modItem.price ? (
                         <Text
@@ -239,45 +276,6 @@ const OrderedItemCmp = ({
           )}
         </View>
       </View>
-
-
-      {!isDisabled && canEditItem && onQuantityDecrease && onQuantityIncrease ? (
-        <View style={{
-          backgroundColor: COLORS.primaryColor,
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingVertical: 4,
-          paddingHorizontal: 8,
-          borderRadius: 8,
-        }}>
-          <TouchableOpacity
-            style={{ width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}
-            onPress={onQuantityDecrease}>
-            <Icon_Decrease_Quantity color={'#FFF'} />
-          </TouchableOpacity>
-          <Text style={{ color: '#FFF', fontSize: 18, width: 32, height: 32, paddingTop: 2, textAlign: 'center', fontFamily: 'Poppins-Medium' }}>
-            {item?.quantity}
-          </Text>
-          <TouchableOpacity
-            style={{ width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}
-            onPress={onQuantityIncrease}>
-            <Icon_Increase_Quantity color={'#FFF'} />
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <View style={{
-          backgroundColor: COLORS.primaryColor,
-          paddingVertical: 6,
-          paddingHorizontal: 12,
-          borderRadius: 8,
-          minWidth: 36,
-          alignItems: 'center',
-        }}>
-          <Text style={{ color: '#FFF', fontSize: 14, fontFamily: 'Poppins-Medium' }}>
-            {item?.quantity}
-          </Text>
-        </View>
-      )}
     </View>
   );
 };
