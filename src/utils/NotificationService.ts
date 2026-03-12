@@ -430,6 +430,7 @@ class NotificationService {
     this.appStateSubscription = null;
     this.pendingNavigation = null;
     this.token = null;
+    this.isInitialized = false;
     this.clearAllNotifications();
   };
 
