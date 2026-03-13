@@ -69,11 +69,7 @@ const DineInOffersScreen = () => {
           renderItem={renderItem}
           keyExtractor={item => item.id?.toString()}
           numColumns={1}
-          contentContainerStyle={{ gap: 2 }}
-        // columnWrapperStyle={{
-        //   gap: 16,
-        // }}
-        // ItemSeparatorComponent={() => <View style={{width: 16}} />}
+          ItemSeparatorComponent={() => <View style={{ height: 4 }} />}
         />
       )}
     </View>

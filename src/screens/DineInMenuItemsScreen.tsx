@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   FlatList,
   Pressable,
   StyleSheet,
@@ -10,6 +11,7 @@ import {
 import FastImage from 'react-native-fast-image';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import { useSelector } from 'react-redux';
+import Icon_Search from '../../assets/SVG/Icon_Search';
 import Icon_WishList from '../../assets/SVG/Icon_Wishlist';
 import Icon_Wishlist_Filled from '../../assets/SVG/Icon_Wishlist_Filled';
 import {
@@ -19,6 +21,7 @@ import {
 } from '../api/menuApi';
 import { RootState } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
+import { normalizeFont } from '../utils/normalizeFonts';
 import CartBadge from '../components/Menu/CartBadge';
 
 // Fixed heights for more accurate calculations
@@ -65,7 +68,7 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
             flex: 1,
           }}>
           <View style={{ position: 'relative' }}>
-            <CartBadge itemId={item.id} style={{ top: 4, right: 4 }} />
+            <CartBadge itemId={item.id} style={{ top: -4, right: -4 }} />
             <FastImage
               source={{
                 uri: item?.image_url ?? '',
@@ -135,7 +138,13 @@ const CategorySection = React.memo(
   }) => {
     return (
       <View key={category.id.toString()}>
-        <Text style={styles.sectionHeader}>{category.name}</Text>
+        <View style={{
+          position: 'relative', marginTop: 12,
+          marginBottom: 4,
+          gap: 6
+        }}>
+          <Text style={styles.sectionHeader}>{category.name}</Text>
+        </View>
         {category.items.map((item, idx) => (
           <MenuItem
             key={`${item.id}-${idx}`}
@@ -149,6 +158,55 @@ const CategorySection = React.memo(
     );
   },
 );
+
+const CategoryTab = React.memo(
+  ({
+    item,
+    isSelected,
+    onPress,
+  }: {
+    item: Category;
+    isSelected: boolean;
+    onPress: () => void;
+  }) => {
+    const indicatorAnim = useRef(new Animated.Value(isSelected ? 1 : 0)).current;
+
+    useEffect(() => {
+      Animated.spring(indicatorAnim, {
+        toValue: isSelected ? 1 : 0,
+        damping: 20,
+        stiffness: 200,
+        mass: 0.8,
+        useNativeDriver: true,
+      }).start();
+    }, [isSelected]);
+
+    return (
+      <TouchableOpacity
+        hitSlop={20}
+        style={styles.categoryTab}
+        onPress={onPress}>
+        <Text
+          style={[
+            styles.categoryTitle,
+            isSelected && styles.activeCategoryTitle,
+          ]}>
+          {item.name}
+        </Text>
+        <Animated.View
+          style={[
+            styles.categoryIndicator,
+            {
+              transform: [{ scaleX: indicatorAnim }],
+              opacity: indicatorAnim,
+            },
+          ]}
+        />
+      </TouchableOpacity>
+    );
+  },
+);
+
 interface IProps {
   route?: {
     params: {
@@ -177,6 +235,7 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
     [key: number]: number;
   }>({});
   const [dataReady, setDataReady] = useState(false);
+  const [searchBarHeight, setSearchBarHeight] = useState(0);
 
   const selectedCategory = route?.params?.item;
   const userState = useSelector((state: RootState) => state.user)
@@ -410,24 +469,11 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
   const renderCategoryItem = useCallback(
     ({ item, index }: { item: Category; index: number }) => {
       return (
-        <TouchableOpacity
-          hitSlop={20}
-          style={[
-            {
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-            },
-            selectedCategoryIndex === index ? styles.activeCategory : null,
-          ]}
-          onPress={() => {
-            scrollToCategory(index, item.id);
-          }}>
-          <Text style={[
-            styles.categoryTitle,
-            selectedCategoryIndex === index ? styles.activeCategoryTitle : null,
-          ]}>{item.name}</Text>
-        </TouchableOpacity>
+        <CategoryTab
+          item={item}
+          isSelected={selectedCategoryIndex === index}
+          onPress={() => scrollToCategory(index, item.id)}
+        />
       );
     },
     [selectedCategoryIndex, scrollToCategory],
@@ -529,6 +575,22 @@ const MenuItemsScreen = ({ route, navigation }: IProps) => {
             renderItem={renderCategorySection}
             keyExtractor={item => item.id.toString()}
             style={{ paddingHorizontal: SCREEN_PADDING.horizontal, zIndex: 2 }}
+            ListHeaderComponent={
+              <Pressable
+                style={styles.searchBar}
+                onPress={() => navigation?.navigate('MenuSearch')}
+                onLayout={e => setSearchBarHeight(e.nativeEvent.layout.height)}
+                android_ripple={{ color: COLORS.borderColor }}>
+                <Icon_Search
+                  width={18}
+                  height={18}
+                  color={COLORS.foregroundColor}
+                />
+                <Text style={styles.searchBarPlaceholder}>
+                  What are you craving?
+                </Text>
+              </Pressable>
+            }
             showsVerticalScrollIndicator={false}
             onScrollToIndexFailed={info => {
               const wait = new Promise(resolve => setTimeout(resolve, 50));
@@ -591,12 +653,11 @@ export default MenuItemsScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.backgroundColor,
   },
   categoryList: {
-    paddingTop: 4,
-    maxHeight: 50,
-    backgroundColor: 'white',
+    maxHeight: 40,
+    backgroundColor: COLORS.backgroundColor,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
@@ -605,29 +666,51 @@ const styles = StyleSheet.create({
     zIndex: 5,
     overflow: 'visible',
   },
+  categoryTab: {
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 4,
+  },
   categoryTitle: {
     fontSize: 14,
     fontFamily: 'Poppins-Regular',
     fontWeight: '400',
     color: COLORS.darkColor,
-    opacity: 0.9,
-    borderBottomColor: 'transparent',
-    borderBottomWidth: 2,
-  },
-  activeCategory: {
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    borderBottomColor: 'red',
-    borderBottomWidth: 2,
+    opacity: 0.45,
   },
   activeCategoryTitle: {
+    fontFamily: 'Poppins-SemiBold',
     fontWeight: '600',
     color: COLORS.darkColor,
+    opacity: 1,
+  },
+  categoryIndicator: {
+    height: 2.5,
+    width: '100%',
+    backgroundColor: COLORS.primaryColor,
+    marginTop: 4,
+  },
+  searchBar: {
+    marginTop: 12,
+    marginBottom: 4,
+    height: 46,
+    backgroundColor: COLORS.lightColor,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.borderColor,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    gap: 10,
+  },
+  searchBarPlaceholder: {
+    flex: 1,
+    fontSize: normalizeFont(14),
+    fontFamily: 'Poppins-Regular',
+    color: COLORS.foregroundColor,
   },
   sectionHeader: {
-    marginTop: 6,
-    fontSize: 22,
+    fontSize: normalizeFont(20),
     fontFamily: 'Poppins-SemiBold',
     fontWeight: '600',
     color: COLORS.darkColor,
@@ -643,23 +726,27 @@ const styles = StyleSheet.create({
   },
   menuItem: {
     flex: 1,
-    gap: 3,
     paddingTop: 0,
+    gap: 1,
   },
   itemName: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontFamily: 'Poppins-Medium',
     fontWeight: '500',
     color: COLORS.darkColor,
+    lineHeight: 18,
+    textTransform: 'capitalize',
   },
   itemPrice: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontFamily: 'Poppins-Medium',
     fontWeight: '500',
     color: COLORS.secondaryColor,
+    lineHeight: 20,
+    marginTop: 6,
   },
   itemDescription: {
-    fontSize: 12,
+    fontSize: normalizeFont(12),
     color: COLORS.foregroundColor,
   },
 });
