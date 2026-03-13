@@ -1,7 +1,9 @@
 import BottomSheet, { TouchableOpacity } from '@gorhom/bottom-sheet';
 import {
+  RouteProp,
   useFocusEffect,
-  useNavigation
+  useNavigation,
+  useRoute
 } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -46,7 +48,6 @@ import {
 import store, { RootState } from '../store/store';
 import {
   COLORS,
-  DINEIN_SOCKET_URL,
   SCREEN_PADDING,
   TYPOGRAPHY
 } from '../theme';
@@ -142,6 +143,8 @@ type TableScreenNavigationProp = NativeStackNavigationProp<
   'Table'
 >;
 
+type TableScreenRouteProp = RouteProp<DineInStackParamList, 'Table'>;
+
 const kingActions: Action[] = [
   { id: 1, key: 'remove-from-table', text: 'Remove from table' },
   { id: 2, key: 'make-table-admin', text: 'Make table admin' },
@@ -163,6 +166,7 @@ const TableScreen = () => {
   const currentUser = useSelector((state: RootState) => state.user);
 
   const navigation = useNavigation<TableScreenNavigationProp>();
+  const route = useRoute<TableScreenRouteProp>();
   const userState = store.getState().user;
 
   const [orderedItems, setOrderedItems] = useState<OrderedItems>({});
@@ -273,7 +277,7 @@ const TableScreen = () => {
   useEffect(() => {
     if (!userState) return;
     const socketInstance = SocketService.getInstance();
-    socketInstance.connect(DINEIN_SOCKET_URL, {
+    socketInstance.connect(route.params.socketUrl, {
       authorization: `Bearer ${userState.jwt}` || '',
     });
 

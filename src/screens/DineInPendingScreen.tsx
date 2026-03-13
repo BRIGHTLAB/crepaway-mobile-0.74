@@ -1,7 +1,9 @@
 import { TouchableOpacity } from '@gorhom/bottom-sheet';
 import {
+    RouteProp,
     useFocusEffect,
-    useNavigation
+    useNavigation,
+    useRoute
 } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useRef, useState } from 'react';
@@ -29,7 +31,6 @@ import {
 import store from '../store/store';
 import {
     COLORS,
-    DINEIN_SOCKET_URL,
     SCREEN_PADDING,
     TYPOGRAPHY
 } from '../theme';
@@ -111,12 +112,15 @@ type DineInPendingScreenNavigationProp = NativeStackNavigationProp<
     'Table'
 >;
 
+type DineInPendingScreenRouteProp = RouteProp<DineInStackParamList, 'Pending'>;
+
 
 
 const DineInPendingScreen = () => {
     const dispatch = useDispatch();
 
     const navigation = useNavigation<DineInPendingScreenNavigationProp>();
+    const route = useRoute<DineInPendingScreenRouteProp>();
     const userState = store.getState().user;
     const screenHeight = Dimensions.get('window').height;
     const translateY = useRef(new Animated.Value(screenHeight)).current;
@@ -195,7 +199,7 @@ const DineInPendingScreen = () => {
             if (message.approved) {
                 console.log('join request approved', message);
                 dispatch(setSessionTableId(message.session_table));
-                navigation.navigate('Table')
+                navigation.navigate('Table', { socketUrl: route.params.socketUrl })
             } else {
                 dispatch(setSessionTableId(null));
                 dispatch(setBranchTable(null));
@@ -211,7 +215,7 @@ const DineInPendingScreen = () => {
 
     useEffect(() => {
 
-        socketInstance.connect(DINEIN_SOCKET_URL, {
+        socketInstance.connect(route.params.socketUrl, {
             authorization: `Bearer ${userState.jwt}` || '',
         });
 

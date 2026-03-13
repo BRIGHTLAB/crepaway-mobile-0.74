@@ -12,8 +12,8 @@ import DineInOrderStack from './DineInOrderStack';
 const Stack = createNativeStackNavigator();
 export type DineInStackParamList = {
   ScanTable: undefined;
-  Pending: undefined;
-  Table: undefined;
+  Pending: { socketUrl: string };
+  Table: { socketUrl: string };
   Checkout: undefined;
   AddCard: undefined;
   OrderStack:
