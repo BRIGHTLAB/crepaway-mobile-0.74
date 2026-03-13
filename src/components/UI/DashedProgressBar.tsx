@@ -49,6 +49,6 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   unfilledDash: {
-    backgroundColor: '#bdbdbd',
+    backgroundColor: '#F3F4F666',
   },
 });

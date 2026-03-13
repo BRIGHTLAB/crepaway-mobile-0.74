@@ -71,6 +71,7 @@ const LoyaltyProgressCard: React.FC<LoyaltyProgressCardProps> = ({
         <Pressable
             style={[
                 styles.container,
+                { backgroundColor: progressColor },
                 hideBackground && styles.containerNoBackground
             ]}
             onPress={onPress}
@@ -78,25 +79,24 @@ const LoyaltyProgressCard: React.FC<LoyaltyProgressCardProps> = ({
             {...pressableProps}
         >
             <View style={styles.leftContentContainer}>
-                <Text style={[styles.tierNameText, { color: progressColor }]}>
+                <Text style={[styles.tierNameText, { color: COLORS.white }]}>
                     {tierName}
                 </Text>
-                <DashedProgressBar
-                    totalDashes={totalDashes}
-                    filledDashes={filledDashes}
-                    color={progressColor}
-                />
+                <View style={{
+                    maxWidth: 260
+                }}>
+                    <DashedProgressBar
+                        totalDashes={totalDashes}
+                        filledDashes={filledDashes}
+                        color={COLORS.lightColor}
+                    />
+                </View>
                 <Text style={styles.descriptionText}>
                     {description}
                 </Text>
             </View>
             <View style={styles.rightContentContainer}>
-                <Text style={styles.pointsCountText}>
-                    {pointsCount}
-                </Text>
-                <Text style={styles.pointsUnitText}>
-                    {pointsUnit}
-                </Text>
+
                 {!disabled && (
                     <Icon_Arrow_Right width={24} height={24} color={COLORS.white} />
                 )}
@@ -123,7 +123,7 @@ export default LoyaltyProgressCard
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: COLORS.secondaryColor,
+
         borderRadius: 8,
         padding: 16,
         overflow: 'hidden',
@@ -141,13 +141,14 @@ const styles = StyleSheet.create({
         gap: 5,
     },
     tierNameText: {
-        fontFamily: 'Poppins-SemiBold',
+        fontFamily: 'Poppins-Bold',
         fontSize: normalizeFont(16),
     },
     descriptionText: {
         fontFamily: 'Poppins-Regular',
-        fontSize: normalizeFont(10),
-        color: '#bdbdbd',
+        marginTop: 4,
+        fontSize: normalizeFont(12),
+        color: '#F3F4F6',
     },
     pointsUnitContainer: {
         flexDirection: 'row',
@@ -156,8 +157,8 @@ const styles = StyleSheet.create({
     },
     spineLeftContainer: {
         position: 'absolute',
-        left: -150,
-        bottom: -325,
+        left: -180,
+        bottom: -290,
     },
     spineRightContainer: {
         position: 'absolute',
