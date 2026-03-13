@@ -19,6 +19,15 @@ export interface Checkout {
   delivery_charge: string;
   points_rewarded: number;
   currency: Currency;
+  dinein_payment?: {
+    pay_all: string;
+    pay_my_order: string;
+    divide_bill: {
+      persons: number;
+      amount: string;
+    };
+    payment_handled_by?: string | null;
+  };
 }
 
 export interface OrderFormData {

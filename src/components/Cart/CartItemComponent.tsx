@@ -1,10 +1,9 @@
 import { Text, TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
-import Icon_Decrease_Quantity from '../../../assets/SVG/Icon_Decrease_Quantity';
-import Icon_Increase_Quantity from '../../../assets/SVG/Icon_Increase_Quantity';
 import { OrderItem } from '../../api/ordersApi';
 import { CartItem } from '../../store/slices/cartSlice';
 import { COLORS } from '../../theme';
+import QuantityControl from '../UI/QuantityControl';
 import { normalizeFont } from '../../utils/normalizeFonts';
 
 // Cart Item
@@ -151,50 +150,13 @@ const CartItemComponent = ({
       </TouchableOpacity>
 
       {/* Quantity Controls */}
-      {onQuantityDecrease && onQuantityDecrease && (
-        <View
-          style={{
-            backgroundColor: COLORS.primaryColor,
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingVertical: 4,
-            paddingHorizontal: 8,
-            borderRadius: 8,
-          }}>
-          <TouchableOpacity
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            onPress={onQuantityDecrease}>
-            <Icon_Decrease_Quantity color={'#FFF'} />
-          </TouchableOpacity>
-          <Text
-            style={{
-              color: '#FFF',
-              fontSize: 18,
-              width: 32,
-              height: 32,
-              paddingTop: 2,
-              textAlign: 'center',
-            }}>
-            {item?.quantity}
-          </Text>
-          <TouchableOpacity
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            onPress={onQuantityIncrease}>
-            <Icon_Increase_Quantity color={'#FFF'} />
-          </TouchableOpacity>
-        </View>
+      {onQuantityDecrease && onQuantityIncrease && (
+        <QuantityControl
+          value={item?.quantity ?? 0}
+          onDecrease={onQuantityDecrease}
+          onIncrease={onQuantityIncrease}
+          min={0}
+        />
       )}
     </View>
   );

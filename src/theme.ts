@@ -14,6 +14,7 @@ export const COLORS = {
   yellowLight: '#F9CA0356',
   accentColor: '#D9D9D9',
   tertiaryColor: '#BABABA',
+  success: '#5EB524',
   errorColor: '#DB0032',
   black: '#191919',
   white: '#ffffff',
@@ -31,12 +32,12 @@ export const INPUT_HEIGHT = 53;
 
 // export const BASE_URL = 'http://192.168.10.151:8080/api/app';
 // export const BASE_URL = 'https://cc9099b8927d.ngrok-free.app/api/app';
-export const BASE_URL = 'https://crepaway.staging-api.thenewexperience.app/api/app';
-export const LOYALTY_BASE_URL = 'https://crepaway.api.grantloyalty.com/api';
+export const BASE_URL = 'https://dev.staging-api.thenewexperience.app/api/app';
+export const LOYALTY_BASE_URL = 'https://dev.api.grantloyalty.com/api';
 // export const LOYALTY_BASE_URL = 'http://192.168.18.70:8000/api';
 
 export const API_MAP_KEY = 'AIzaSyA0IxviANpXAl-sTNcYjH1zU5cjgXimKuk';
-export const DRIVER_SOCKET_URL = 'wss://crepaway.realtime.driver-tracking.com';
+export const DRIVER_SOCKET_URL = 'wss://dev.realtime.driver-tracking.com';
 // export const DINEIN_SOCKET_URL =
 //   'http://chris.pc:5003';
 export const DINEIN_SOCKET_URL =

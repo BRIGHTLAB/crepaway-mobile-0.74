@@ -298,7 +298,7 @@ const DineInPendingScreen = () => {
         }]}>
             <View style={styles.headerContainer}>
                 <TouchableOpacity onPress={handleLeaveTable}>
-                    <Icon_Sign_Out color={COLORS.white} />
+                    <Icon_Sign_Out color="black" />
                 </TouchableOpacity>
             </View>
             <View style={styles.pendingContainer}>
@@ -355,7 +355,7 @@ export default DineInPendingScreen;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.primaryColor,
+        backgroundColor: COLORS.white,
     },
     headerContainer: {
         flexDirection: 'row',

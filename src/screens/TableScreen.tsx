@@ -22,6 +22,7 @@ import Icon_Arrow_Right from '../../assets/SVG/Icon_Arrow_Right';
 import Icon_BackArrow from '../../assets/SVG/Icon_BackArrow';
 import Icon_Bell from '../../assets/SVG/Icon_Bell';
 import Icon_Checkmark from '../../assets/SVG/Icon_Checkmark';
+import Icon_Checkout from '../../assets/SVG/Icon_Checkout';
 import KingIcon from '../../assets/SVG/Icon_King';
 import Icon_Profile from '../../assets/SVG/Icon_Profile';
 import Icon_Spine_Thin from '../../assets/SVG/Icon_Spine_Thin';
@@ -106,6 +107,7 @@ export type TableUser = {
   image_url: string | null;
   isOnline: boolean;
   isKing: boolean;
+  isReady?: boolean;
 };
 
 export type TableUsers = Record<string, TableUser>;
@@ -170,7 +172,6 @@ const TableScreen = () => {
   const [showBannedPopup, setShowBannedPopup] = useState(false);
   const [showTableClosedPopup, setShowTableClosedPopup] = useState(false);
   const [selectedPendingUser, setSelectedPendingUser] = useState<TableUser | null>(null);
-  const [isReady, setIsReady] = useState(false);
 
   // Expanded state for table items groups (collapsed by default)
   const [expandedUsers, setExpandedUsers] = useState<Record<string, boolean>>({});
@@ -186,6 +187,7 @@ const TableScreen = () => {
   const { top, bottom } = useSafeAreaInsets();
 
   const isCurrentUserKing = tableUsers?.[currentUser.id ?? '']?.isKing;
+  const isReady = tableUsers?.[currentUser.id ?? '']?.isReady ?? false;
 
   const handleInstructionSelect = (instruction: WaiterInstruction) => {
     socketInstance.emit(
@@ -602,6 +604,19 @@ const TableScreen = () => {
     );
   };
 
+  const handleSetReady = (ready: boolean) => {
+    socketInstance.emit(
+      'message',
+      {
+        type: 'setUserReady',
+        data: {
+          tableName: userState.branchTable,
+          isReady: ready,
+        },
+      },
+    );
+  };
+
   const toggleUserExpanded = (key: string) => {
     setExpandedUsers(prev => ({ ...prev, [key]: !prev[key] }));
   };
@@ -627,7 +642,12 @@ const TableScreen = () => {
         style={[styles.userBubble, isMe && styles.userBubbleMe]}
         activeOpacity={0.8}
       >
-        {isKing ? (
+        {user.isReady ? (
+          // Ready user gets green checkmark avatar
+          <View style={styles.readyAvatar}>
+            <Icon_Checkmark width={16} height={16} color={COLORS.white} />
+          </View>
+        ) : isKing ? (
           // King gets purple tinted crown background
           <View style={styles.kingAvatar}>
             <KingIcon width={14} height={10} />
@@ -672,14 +692,24 @@ const TableScreen = () => {
 
         <Text style={styles.headerTitle}>Table</Text>
 
-        <TouchableOpacity
-          onPress={handleOpenWaiterSheet}
-          style={styles.headerBellButton}
-          disabled={Object.keys(tableWaiters).length === 0}
-          activeOpacity={0.7}
-        >
-          <Icon_Bell width={20} height={18} color={Object.keys(tableWaiters).length === 0 ? COLORS.foregroundColor : COLORS.primaryColor} />
-        </TouchableOpacity>
+        <View style={styles.headerRightButtons}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Checkout')}
+            style={styles.headerIconButton}
+            activeOpacity={0.7}
+          >
+            <Icon_Checkout width={20} height={16} color={COLORS.primaryColor} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleOpenWaiterSheet}
+            style={styles.headerIconButton}
+            disabled={Object.keys(tableWaiters).length === 0}
+            activeOpacity={0.7}
+          >
+            <Icon_Bell width={20} height={18} color={Object.keys(tableWaiters).length === 0 ? COLORS.foregroundColor : COLORS.primaryColor} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Users Row - sticky, outside ScrollView */}
@@ -826,7 +856,11 @@ const TableScreen = () => {
                         activeOpacity={0.8}
                       >
                         <View style={styles.tableUserInfo}>
-                          {tableUser?.isKing ? (
+                          {tableUser?.isReady ? (
+                            <View style={styles.readyAvatarLarge}>
+                              <Icon_Checkmark width={18} height={18} color={COLORS.white} />
+                            </View>
+                          ) : tableUser?.isKing ? (
                             <View style={styles.tableUserKingAvatar}>
                               <KingIcon width={15} height={12} />
                             </View>
@@ -964,7 +998,7 @@ const TableScreen = () => {
           {myItems.length > 0 && (
             isReady ? (
               <TouchableOpacity
-                onPress={() => setIsReady(false)}
+                onPress={() => handleSetReady(false)}
                 activeOpacity={0.8}
                 style={styles.readyActiveButton}
               >
@@ -978,7 +1012,7 @@ const TableScreen = () => {
               </TouchableOpacity>
             ) : (
               <Button
-                onPress={() => setIsReady(true)}
+                onPress={() => handleSetReady(true)}
                 variant="primary"
               >
                 Ready
@@ -1107,8 +1141,13 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-SemiBold',
     fontSize: 18,
   },
-  headerBellButton: {
-    width: 40,
+  headerRightButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  headerIconButton: {
+    width: 36,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1159,6 +1198,22 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 15,
     backgroundColor: COLORS.darkColor,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  readyAvatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: COLORS.success,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  readyAvatarLarge: {
+    width: 32,
+    height: 32,
+    borderRadius: 18,
+    backgroundColor: COLORS.success,
     alignItems: 'center',
     justifyContent: 'center',
   },

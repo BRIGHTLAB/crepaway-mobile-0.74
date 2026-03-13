@@ -1,8 +1,7 @@
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { COLORS } from '../../theme';
-import Icon_Add from '../../../assets/SVG/Icon_Add';
 import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import { COLORS } from '../../theme';
 
 interface IProps {
   subtotal: string;
@@ -86,10 +85,8 @@ const TotalSection = ({
       {/* Tips */}
       {tips && (
         <View style={styles.subTotalContainer}>
-          <Text style={styles.subTotalTitle}>Add Tips</Text>
-          <TouchableOpacity style={styles.tipsButton} onPress={tips.onPress}>
-            <Text style={styles.tipsButtonText}>% {tips.value}</Text>
-          </TouchableOpacity>
+          <Text style={styles.subTotalTitle}>Tips</Text>
+          <Text style={styles.subTotalValue}>{tips.value}%</Text>
         </View>
       )}
 

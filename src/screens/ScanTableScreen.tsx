@@ -1,6 +1,6 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { BackHandler, StyleSheet, View } from 'react-native';
 import { Code } from 'react-native-vision-camera';
 import { useDispatch, useSelector } from 'react-redux';
@@ -27,9 +27,9 @@ const ScanTableScreen = () => {
   useFocusEffect(
     React.useCallback(() => {
 
-          setTimeout(() => {
-      dispatch(setBranchTable('ashrafieh.table1'));
-    }, 100);
+      setTimeout(() => {
+        dispatch(setBranchTable('ashrafieh.table2'));
+      }, 100);
       if (userState.branchTable || userState.tableSessionId) {
         navigation.navigate('Pending');
         setMounted(false);
