@@ -38,10 +38,6 @@ export const LOYALTY_BASE_URL = 'https://dev.api.grantloyalty.com/api';
 
 export const API_MAP_KEY = 'AIzaSyA0IxviANpXAl-sTNcYjH1zU5cjgXimKuk';
 export const DRIVER_SOCKET_URL = 'wss://dev.realtime.driver-tracking.com';
-// export const DINEIN_SOCKET_URL =
-//   'http://chris.pc:5003';
-export const DINEIN_SOCKET_URL =
-  'wss://crepaway-dinein-websocket-ts-hgga.onrender.com';
 
 
 export const GOOGLE_API_KEY =
