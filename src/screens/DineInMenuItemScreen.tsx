@@ -1,8 +1,10 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet';
-import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
+
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,7 +13,7 @@ import {
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import uuid from 'react-native-uuid';
 import { useSelector } from 'react-redux';
@@ -26,14 +28,13 @@ import {
   useToggleFavoriteMutation,
 } from '../api/menuApi';
 import ModifierGroup from '../components/Menu/ModifierGroup';
-import TasteTriadProgress from '../components/Menu/TasteTriadProgress';
-import DynamicSheet from '../components/Sheets/DynamicSheet';
 import Button from '../components/UI/Button';
 import Input from '../components/UI/Input';
 import { TYPOGRAPHY } from '../constants/typography';
 import { DineInOrderStackParamList } from '../navigation/DineInOrderStack';
 import { RootState } from '../store/store';
-import { COLORS } from '../theme';
+import { COLORS, SCREEN_PADDING } from '../theme';
+import { normalizeFont } from '../utils/normalizeFonts';
 import SocketService from '../utils/SocketService';
 import { OrderedItem } from './TableScreen';
 
@@ -42,12 +43,10 @@ const SkeletonLoader = () => {
     <SkeletonPlaceholder>
       <SkeletonPlaceholder.Item>
         <SkeletonPlaceholder.Item
-          height={300}
+          height={276}
           width="100%"
-        // borderBottomLeftRadius={16}
-        // borderBottomRightRadius={16}
         />
-        <SkeletonPlaceholder.Item padding={16}>
+        <SkeletonPlaceholder.Item padding={16} borderTopLeftRadius={24} borderTopRightRadius={24}>
           <SkeletonPlaceholder.Item height={24} width="60%" marginBottom={8} />
           <SkeletonPlaceholder.Item height={18} width="80%" marginBottom={16} />
           <SkeletonPlaceholder.Item height={24} width="30%" marginBottom={8} />
@@ -68,20 +67,6 @@ const SkeletonLoader = () => {
             <SkeletonPlaceholder.Item height={24} width={60} borderRadius={8} />
             <SkeletonPlaceholder.Item height={24} width={60} borderRadius={8} />
           </SkeletonPlaceholder.Item>
-          {/* <SkeletonPlaceholder.Item
-            flexDirection="row"
-            alignItems="center"
-            justifyContent="space-between"
-            gap={30}
-            width="50%"
-            marginHorizontal="auto"
-            marginTop={20}
-            marginBottom={16}>
-            <SkeletonPlaceholder.Item width={25} height={25} />
-            <SkeletonPlaceholder.Item width={40} height={24} />
-            <SkeletonPlaceholder.Item width={25} height={25} />
-          </SkeletonPlaceholder.Item> */}
-          {/* <SkeletonPlaceholder.Item height={50} width="100%" borderRadius={8} /> */}
         </SkeletonPlaceholder.Item>
       </SkeletonPlaceholder.Item>
     </SkeletonPlaceholder>
@@ -107,7 +92,6 @@ const DineInMenuItemScreen = ({ }: IProps) => {
   const route = useRoute<DineInMenuItemScreenRouteProp>();
   const { itemId, itemUuid, item } = route.params;
   const [quantity, setQuantity] = useState(1);
-  const tasteSheetRef = useRef<BottomSheetMethods | null>(null);
   const [favorite, setFavorite] = useState(false);
   const [selectedModifiers, setSelectedModifiers] = useState<
     SelectedModifierGroup[]
@@ -294,7 +278,7 @@ const DineInMenuItemScreen = ({ }: IProps) => {
     // Navigate back
     navigation.goBack();
   };
-  const { bottom } = useSafeAreaInsets();
+
 
   const handleIncreaseQuantity = () => {
     setQuantity(prev => prev + 1);
@@ -327,164 +311,163 @@ const DineInMenuItemScreen = ({ }: IProps) => {
       {isLoading ? (
         <SkeletonLoader />
       ) : (
-        <View style={{ flex: 1 }}>
-          <ScrollView style={{ backgroundColor: '#fff' }}>
-            <FastImage
-              source={{
-                uri:
-                  itemData?.image_url ||
-                  'https://d3vfh4cqgoixck.cloudfront.net/images/locations_placeholder1.webp',
-                priority: FastImage.priority.normal,
-              }}
-              resizeMode={FastImage.resizeMode.cover}
-              style={styles.image}
-            />
+        <View style={{ flex: 1, backgroundColor: COLORS.backgroundColor }}>
 
-            {itemData?.taste_triad && itemData?.taste_triad?.length > 0 && (
-              <TouchableOpacity
-                style={styles?.tasteContainer}
-                onPress={() => tasteSheetRef.current?.expand()}>
-                {itemData?.taste_triad?.map((el, idx) => (
-                  <TasteTriadProgress
-                    key={idx}
-                    percentage={el?.percentage}
-                    color={el.hex_color}
-                    title={el.title}
-                  />
-                ))}
-              </TouchableOpacity>
-            )}
+          <KeyboardAvoidingView
+            style={{
+              flex: 1,
+            }}
+            behavior={"padding"}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
+          >
+            <ScrollView
+              contentContainerStyle={{ flexGrow: 1 }}
+              alwaysBounceVertical={true}
+              bounces={true}
+              overScrollMode="always"
+            >
 
-            <View style={styles.contentContainer}>
-              <View style={styles.header}>
-                <View
-                  style={{
-                    width: '100%',
-                    flexDirection: 'row',
-                    gap: 6,
-                    justifyContent: 'space-between',
-                  }}>
-                  <Text style={styles.title}>{itemData?.name}</Text>
-                  <TouchableOpacity onPress={handleWishList}>
-                    {favorite ? (
-                      <Icon_Wishlist_Filled style={{ marginTop: 4 }} />
-                    ) : (
-                      <Icon_WishList style={{ marginTop: 4 }} />
-                    )}
-                  </TouchableOpacity>
+              <FastImage
+                source={{
+                  uri:
+                    itemData?.image_url ||
+                    'https://d3vfh4cqgoixck.cloudfront.net/images/locations_placeholder1.webp',
+                  priority: FastImage.priority.normal,
+                }}
+                resizeMode={FastImage.resizeMode.cover}
+                style={styles.image}
+              />
+
+
+
+              <View style={[styles.contentContainer, styles.detailCard]}>
+                <View style={styles.headerContainer}>
+                  <View
+                    style={{
+                      width: '100%',
+                      flexDirection: 'row',
+                      gap: 6,
+                      justifyContent: 'space-between',
+                    }}>
+                    <Text style={styles.title}>{itemData?.name}</Text>
+                    <TouchableOpacity onPress={handleWishList}>
+                      {favorite ? (
+                        <Icon_Wishlist_Filled style={{ marginTop: 4 }} />
+                      ) : (
+                        <Icon_WishList style={{ marginTop: 4 }} />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                  {!!itemData?.description && (
+                    <Text style={styles.description}>{itemData?.description}</Text>
+                  )}
                 </View>
-                <Text style={styles.description}>{itemData?.description}</Text>
-              </View>
 
-              <View style={{ marginBottom: 8, marginTop: 10, gap: 6 }}>
-                {/* Price  */}
-                <Text style={styles.price}>
-                  {itemData?.symbol} {itemData?.price}
-                </Text>
+                <View style={{ paddingHorizontal: 16, marginBottom: 8, marginTop: 10, gap: 6 }}>
+                  {/* Price  */}
+                  <Text style={styles.price}>
+                    {itemData?.symbol} {itemData?.price}
+                  </Text>
 
-                {/* Rating  */}
-                {/* <View style={styles.ratingContainer}>
-                  <Icon_Star style={{marginBottom: 4}} />
-                  <Text style={styles.rating}>4.93</Text>
-                  <Text style={styles.nbrRating}>(300 ratings)</Text>
-                </View> */}
-              </View>
+                  {/* Rating  */}
+                  {/* <View style={styles.ratingContainer}>
+                    <Icon_Star style={{marginBottom: 4}} />
+                    <Text style={styles.rating}>4.93</Text>
+                    <Text style={styles.nbrRating}>(300 ratings)</Text>
+                  </View> */}
+                </View>
 
-              {/* Tags  */}
-              <View
-                style={{
-                  flexDirection: 'row',
-                  flexWrap: 'wrap',
-                  marginTop: 4,
-                  gap: 8,
-                }}>
-                {itemData?.tags &&
-                  itemData?.tags?.length > 0 &&
-                  itemData?.tags?.map((el, idx) => {
+                {/* Tags  */}
+                {itemData?.tags && itemData.tags.length > 0 && (
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      flexWrap: 'wrap',
+                      marginTop: 4,
+                      gap: 8,
+                      paddingHorizontal: SCREEN_PADDING.horizontal,
+                    }}>
+                    {itemData?.tags?.map((el, idx) => {
+                      return (
+                        <View
+                          key={idx}
+                          style={{
+                            backgroundColor: el?.color || '#F2CA4540',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 4,
+                            borderRadius: 8,
+                            padding: 8,
+                          }}>
+                          <FastImage
+                            style={{ height: 16, width: 16 }}
+                            source={{
+                              uri: el.icon_url,
+                              priority: FastImage.priority.normal,
+                            }}
+                            resizeMode={FastImage.resizeMode.contain}
+                          />
+
+                          <Text style={{}}>{el.name}</Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                )}
+
+                {/* Modifiers  */}
+                <View style={{ marginTop: 16, gap: 16 }}>
+                  {itemData?.modifier_groups.map((group, idx) => {
                     return (
-                      <View
-                        key={idx}
-                        style={{
-                          backgroundColor: el?.color || '#F2CA4540',
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 4,
-                          borderRadius: 8,
-                          padding: 8,
-                        }}>
-                        <FastImage
-                          style={{ height: 16, width: 16 }}
-                          source={{
-                            uri: el.icon_url,
-                            priority: FastImage.priority.normal,
-                          }}
-                          resizeMode={FastImage.resizeMode.contain}
+                      <React.Fragment key={idx}>
+                        <ModifierGroup
+                          group={group}
+                          selectedModifiers={selectedModifiers}
+                          setSelectedModifiers={setSelectedModifiers}
+                          isEditMode={!!itemUuid}
                         />
-
-                        <Text style={{}}>{el.name}</Text>
-                      </View>
+                        <View style={{
+                          height: 10,
+                          backgroundColor: COLORS.borderColor,
+                          opacity: 0.03,
+                        }} />
+                      </React.Fragment>
                     );
                   })}
-              </View>
+                </View>
 
-              {/* <Button
-                style={styles.addToCartButton}
-                icon={<Icon_Cart />}
-                iconPosition="right"
-                textSize="large"
-                onPress={handleAddToOrder}>
-                {!!itemUuid ? 'Update Cart' : 'Add to Cart'} - {item?.symbol}{' '}
-                {item
-                  ? (item.price * quantity + calculateModifiersTotal()).toFixed(
-                      2,
-                    )
-                  : '0.00'}
-              </Button> */}
-
-              {/* Modifiers  */}
-              <View style={{ marginTop: 16, gap: 16 }}>
-                {itemData?.modifier_groups.map((group, idx) => {
-                  return (
-                    <ModifierGroup
-                      key={idx}
-                      group={group}
-                      selectedModifiers={selectedModifiers}
-                      setSelectedModifiers={setSelectedModifiers}
-                      isEditMode={!!itemUuid}
-                    />
-                  );
-                })}
+                <View style={{ marginTop: 16, gap: 6, paddingHorizontal: 16 }}>
+                  <Text
+                    style={{
+                      fontFamily: 'Poppins-Medium',
+                      fontSize: 16,
+                      color: COLORS.darkColor,
+                    }}>
+                    Special Instruction
+                  </Text>
+                  <Input
+                    placeholder=""
+                    value={specialInstruction}
+                    onChangeText={setSpecialInstruction}
+                    returnKeyType="done"
+                    onSubmitEditing={() => Keyboard.dismiss()}
+                  />
+                </View>
               </View>
-
-              <View style={{ marginTop: 25, gap: 6 }}>
-                {/* <Text
-                  style={{
-                    fontFamily: 'Poppins-Medium',
-                    fontSize: 16,
-                    color: COLORS.darkColor,
-                  }}>
-                  Special Instruction
-                </Text> */}
-                <Input
-                  placeholder="Special Instruction"
-                  value={specialInstruction}
-                  onChangeText={setSpecialInstruction}
-                />
-              </View>
-            </View>
-          </ScrollView>
+            </ScrollView>
+          </KeyboardAvoidingView>
           <View
             style={{
-              paddingHorizontal: 16,
+              paddingHorizontal: SCREEN_PADDING.horizontal,
               paddingBottom: 34,
-              backgroundColor: '#fff',
+              backgroundColor: COLORS.backgroundColor,
               shadowColor: '#000',
               shadowOffset: {
                 width: 0,
                 height: -4,
               },
-              shadowOpacity: 0.5,
+              shadowOpacity: 0.03,
               shadowRadius: 4,
               elevation: 5,
             }}>
@@ -497,13 +480,15 @@ const DineInMenuItemScreen = ({ }: IProps) => {
                 gap: 30,
                 width: '50%',
                 marginHorizontal: 'auto',
-                marginTop: 20,
+                marginTop: 15,
               }}>
               <TouchableOpacity
                 onPress={handleDecreaseQuantity}
                 style={[styles.quantityButton]}
                 disabled={quantity < 2}>
                 <Icon_Decrease_Quantity
+                  width={14}
+                  height={2}
                   color={quantity < 2 ? '#8391A1' : COLORS.primaryColor}
                 />
               </TouchableOpacity>
@@ -511,7 +496,7 @@ const DineInMenuItemScreen = ({ }: IProps) => {
               <TouchableOpacity
                 onPress={handleIncreaseQuantity}
                 style={styles.quantityButton}>
-                <Icon_Increase_Quantity />
+                <Icon_Increase_Quantity width={15} height={15} />
               </TouchableOpacity>
             </View>
 
@@ -544,34 +529,7 @@ const DineInMenuItemScreen = ({ }: IProps) => {
         </View>
       )}
 
-      <DynamicSheet ref={tasteSheetRef}>
-        <BottomSheetView style={
-          { paddingBottom: bottom }
-        }>
-          <Text style={{ color: COLORS.darkColor }}>Taste Triad</Text>
-          <Text style={{ color: COLORS.foregroundColor }}>
-            Elevating Your Culinary Experience with Flavor, Texture, and Spice
-          </Text>
 
-          <View style={{ flexDirection: 'column', gap: 7 }}>
-            {itemData?.taste_triad?.map((el, idx) => (
-              <View
-                key={idx}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <TasteTriadProgress
-                  percentage={el?.percentage}
-                  color={el.hex_color}
-                  title={el.title}
-                />
-
-                <Text style={{ fontFamily: 'Poppins-Normal', fontSize: 16 }}>
-                  {el?.description}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </BottomSheetView>
-      </DynamicSheet>
     </>
   );
 };
@@ -585,35 +543,42 @@ const styles = StyleSheet.create({
   image: {
     height: 300,
     width: '100%',
-    // aspectRatio: 1.31,
-    // borderBottomLeftRadius: 16,
-    // borderBottomRightRadius: 16,
   },
   tasteContainer: {
     paddingTop: 16,
-    paddingHorizontal: 16,
+    paddingHorizontal: SCREEN_PADDING.horizontal,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    justifyContent: 'space-around',
   },
   contentContainer: {
-    padding: 16,
+    // paddingVertical: 16,
   },
-  header: {},
+  detailCard: {
+    marginTop: -24,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    backgroundColor: COLORS.backgroundColor,
+    paddingTop: 20,
+    paddingBottom: 20,
+  },
+  headerContainer: {
+    paddingHorizontal: 16,
+  },
   title: {
     fontFamily: 'Poppins-Medium',
-    fontSize: 24,
+    fontSize: normalizeFont(22),
     color: COLORS.darkColor,
     width: '90%',
+    textTransform: 'capitalize',
   },
   description: {
     fontFamily: 'Poppins-Regular',
-    fontSize: 14,
+    fontSize: normalizeFont(13),
     color: COLORS.foregroundColor,
   },
   price: {
     fontFamily: 'Poppins-Medium',
-    fontSize: 24,
+    fontSize: normalizeFont(22),
     fontWeight: '500',
     color: COLORS.secondaryColor,
     lineHeight: 32,
@@ -642,7 +607,7 @@ const styles = StyleSheet.create({
   },
   quantityText: {
     fontFamily: 'Poppins-SemiBold',
-    fontSize: 24,
+    fontSize: 20,
     color: COLORS.primaryColor,
   },
   addToCartButton: {
@@ -650,8 +615,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 16,
     width: '100%',
+    gap: 16,
   },
   addToCartText: {
     color: '#FFFFFF',

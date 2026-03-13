@@ -1,5 +1,4 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet';
-import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
+
 import { useHeaderHeight } from '@react-navigation/elements';
 import { CommonActions, RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -17,7 +16,7 @@ import {
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import ReactNativeHapticFeedback from "react-native-haptic-feedback";
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import Toast from 'react-native-toast-message';
 import { useSelector } from 'react-redux';
@@ -31,8 +30,6 @@ import {
   useToggleFavoriteMutation,
 } from '../api/menuApi';
 import ModifierGroup from '../components/Menu/ModifierGroup';
-import TasteTriadProgress from '../components/Menu/TasteTriadProgress';
-import DynamicSheet from '../components/Sheets/DynamicSheet';
 import Button from '../components/UI/Button';
 import Input from '../components/UI/Input';
 import { TYPOGRAPHY } from '../constants/typography';
@@ -109,7 +106,6 @@ const MenuItemScreen = ({ }: IProps) => {
   const { itemId, itemUuid } = route.params;
   const [quantity, setQuantity] = useState(1);
   const dispatch = useAppDispatch();
-  const tasteSheetRef = useRef<BottomSheetMethods | null>(null);
   const [favorite, setFavorite] = useState(false);
   const [selectedModifiers, setSelectedModifiers] = useState<
     SelectedModifierGroup[]
@@ -118,7 +114,7 @@ const MenuItemScreen = ({ }: IProps) => {
   const cartState = useSelector((state: RootState) => state.cart);
 
   const userState = useSelector((state: RootState) => state.user)
-  const { bottom } = useSafeAreaInsets();
+
 
   const {
     data: item,
@@ -399,20 +395,8 @@ const MenuItemScreen = ({ }: IProps) => {
                 style={styles.image}
               />
 
-              {item?.taste_triad && item?.taste_triad?.length > 0 && (
-                <TouchableOpacity
-                  style={styles?.tasteContainer}
-                  onPress={() => tasteSheetRef.current?.expand()}>
-                  {item?.taste_triad?.map((el, idx) => (
-                    <TasteTriadProgress
-                      key={idx}
-                      percentage={el?.percentage}
-                      color={el.hex_color}
-                      title={el.title}
-                    />
-                  ))}
-                </TouchableOpacity>
-              )}
+
+
 
               <View style={[styles.contentContainer, styles.detailCard]}>
                 <View style={styles.headerContainer}>
@@ -613,34 +597,7 @@ const MenuItemScreen = ({ }: IProps) => {
 
       )}
 
-      <DynamicSheet ref={tasteSheetRef}>
-        <BottomSheetView style={{
-          paddingBottom: bottom
-        }}>
-          <Text style={{ color: COLORS.darkColor }}>Taste Triad</Text>
-          <Text style={{ color: COLORS.foregroundColor }}>
-            Elevating Your Culinary Experience with Flavor, Texture, and Spice
-          </Text>
 
-          <View style={{ flexDirection: 'column', gap: 7 }}>
-            {item?.taste_triad?.map((el, idx) => (
-              <View
-                key={idx}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <TasteTriadProgress
-                  percentage={el?.percentage}
-                  color={el.hex_color}
-                  title={el.title}
-                />
-
-                <Text style={{ fontFamily: 'Poppins-Normal', fontSize: 16 }}>
-                  {el?.description}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </BottomSheetView>
-      </DynamicSheet>
     </>
   );
 };

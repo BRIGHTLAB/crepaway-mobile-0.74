@@ -7,6 +7,7 @@ import DineInMenuItemsScreen from '../screens/DineInMenuItemsScreen';
 import DineInNewItemsScreen from '../screens/DineInNewItemsScreen';
 import DineInOffersScreen from '../screens/DineInOffersScreen';
 import DineInOrderScreen from '../screens/DineInOrderScreen';
+import DineInSearchScreen from '../screens/DineInSearchScreen';
 import OfferDetailsScreen from '../screens/OfferDetailsScreen';
 import { OrderedItem } from '../screens/TableScreen';
 
@@ -15,6 +16,7 @@ const Stack = createNativeStackNavigator();
 export type DineInOrderStackParamList = {
   Order: undefined;
   MenuItems: { item: any };
+  MenuSearch: undefined;
   NewItems: undefined;
   MenuItem: { itemId: number; itemUuid?: string; item?: OrderedItem };
   Favorites: undefined;
@@ -36,7 +38,10 @@ const DineInOrderStack = () => {
         name="Order"
         component={DineInOrderScreen}
         options={{
-          headerShown: false,
+          headerTransparent: true,
+          headerTitle: '',
+          headerBackVisible: false,
+          headerLeft: () => null,
         }}
       />
       <Stack.Screen
@@ -45,6 +50,7 @@ const DineInOrderStack = () => {
         options={{
           headerBackVisible: false,
           headerLeft: () => <CustomHeader />,
+          headerTitle: 'Menu',
           headerTitleAlign: 'center',
         }}
       />
@@ -70,9 +76,10 @@ const DineInOrderStack = () => {
         name="MenuItem"
         component={DineInMenuItemScreen}
         options={{
+          headerTitle: () => null,
+          headerTransparent: true,
           headerBackVisible: false,
-          headerLeft: () => <CustomHeader />,
-          headerTitleAlign: 'center',
+          headerLeft: () => <CustomHeader color="white" />,
         }}
       />
       <Stack.Screen
@@ -82,6 +89,16 @@ const DineInOrderStack = () => {
           headerBackVisible: false,
           headerLeft: () => <CustomHeader />,
           headerTitleAlign: 'center',
+        }}
+      />
+      <Stack.Screen
+        name="MenuSearch"
+        component={DineInSearchScreen}
+        options={{
+          headerBackVisible: false,
+          headerLeft: () => <CustomHeader title="Search" />,
+          headerTitleAlign: 'center',
+          animation: 'fade',
         }}
       />
       {/* <Stack.Screen name="BestSellers" component={BestSellersScreen} /> */}

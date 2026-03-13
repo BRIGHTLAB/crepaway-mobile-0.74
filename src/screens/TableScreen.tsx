@@ -14,6 +14,15 @@ import {
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { useDispatch, useSelector } from 'react-redux';
@@ -175,6 +184,7 @@ const TableScreen = () => {
 
   // Expanded state for table items groups (collapsed by default)
   const [expandedUsers, setExpandedUsers] = useState<Record<string, boolean>>({});
+  const [myItemsExpanded, setMyItemsExpanded] = useState(false);
 
   const isTableLocked = useSelector((state: RootState) => state.dineIn.isTableLocked);
   const previousTableLockRef = useRef<boolean | null>(null);
@@ -188,6 +198,62 @@ const TableScreen = () => {
 
   const isCurrentUserKing = tableUsers?.[currentUser.id ?? '']?.isKing;
   const isReady = tableUsers?.[currentUser.id ?? '']?.isReady ?? false;
+
+  // Empty state crown animations
+  const outerRotation = useSharedValue(0);
+  const innerRotation = useSharedValue(0);
+  const outerScale = useSharedValue(1);
+  const innerScale = useSharedValue(1);
+
+  useEffect(() => {
+    // Outer icon: slow clockwise rotation
+    outerRotation.value = withRepeat(
+      withTiming(360, { duration: 20000, easing: Easing.linear }),
+      -1,
+      false,
+    );
+    // Inner icon: slow counter-clockwise rotation
+    innerRotation.value = withRepeat(
+      withTiming(-360, { duration: 14000, easing: Easing.linear }),
+      -1,
+      false,
+    );
+    // Outer scale pulse
+    outerScale.value = withRepeat(
+      withSequence(
+        withTiming(1.08, { duration: 3000, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 3000, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      false,
+    );
+    // Inner scale pulse (offset timing)
+    innerScale.value = withDelay(
+      1500,
+      withRepeat(
+        withSequence(
+          withTiming(1.1, { duration: 2800, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1, { duration: 2800, easing: Easing.inOut(Easing.ease) }),
+        ),
+        -1,
+        false,
+      ),
+    );
+  }, []);
+
+  const outerIconStyle = useAnimatedStyle(() => ({
+    transform: [
+      { rotate: `${outerRotation.value}deg` },
+      { scale: outerScale.value },
+    ],
+  }));
+
+  const innerIconStyle = useAnimatedStyle(() => ({
+    transform: [
+      { rotate: `${innerRotation.value}deg` },
+      { scale: innerScale.value },
+    ],
+  }));
 
   const handleInstructionSelect = (instruction: WaiterInstruction) => {
     socketInstance.emit(
@@ -437,6 +503,25 @@ const TableScreen = () => {
       .map(([key, item]) => ({ ...item, uuid: key }))
       .sort((a, b) => (a.order || 0) - (b.order || 0));
   }, [filteredOrderedItems, currentUser.id]);
+
+  // Split my items into kitchen items and new (pending) items
+  const myKitchenItems = useMemo(() => myItems.filter(item => item.status === 'in-kitchen'), [myItems]);
+  const myNewItems = useMemo(() => myItems.filter(item => item.status !== 'in-kitchen'), [myItems]);
+
+  // Calculate total price for my items including modifiers
+  const myItemsTotal = useMemo(() => {
+    return myItems.reduce((acc, item) => {
+      let itemTotal = item?.price ? item.price * item.quantity : 0;
+      if (item.modifier_groups) {
+        item.modifier_groups.forEach(group => {
+          group.modifier_items.forEach(modItem => {
+            itemTotal += (modItem.price || 0) * (modItem.quantity || 1);
+          });
+        });
+      }
+      return acc + itemTotal;
+    }, 0);
+  }, [myItems]);
 
   // Group table items by user
   const tableItemsByUser = useMemo(() => {
@@ -764,8 +849,12 @@ const TableScreen = () => {
           /* Empty State - when no items at all */
           <View style={styles.emptyStateContainer}>
             <View style={styles.emptyStateIcons}>
-              <Icon_Spine_Thin width={120} height={120} color={COLORS.primaryColor} style={{ position: 'absolute' }} />
-              <Icon_Spine_Thin width={90} height={90} color={COLORS.secondaryColor} style={{ marginTop: 0 }} />
+              <Animated.View style={[{ position: 'absolute' }, outerIconStyle]}>
+                <Icon_Spine_Thin width={120} height={120} color={COLORS.primaryColor} />
+              </Animated.View>
+              <Animated.View style={innerIconStyle}>
+                <Icon_Spine_Thin width={90} height={90} color={COLORS.secondaryColor} />
+              </Animated.View>
             </View>
             <Text style={styles.emptyStateTitle}>Still not decided?</Text>
             <Text style={styles.emptyStateSubtitle}>Add items to see them here</Text>
@@ -784,47 +873,145 @@ const TableScreen = () => {
                 <Text style={styles.sectionCount}>{myItems.length} {myItems.length === 1 ? 'item' : 'items'}</Text>
               </View>
 
-              <View style={styles.myItemsCard}>
-                {myItems.length === 0 ? (
-                  <View style={styles.myItemsEmptyContainer}>
-                    <Text style={styles.myItemsEmptyText}>No items added, add items to your order.</Text>
-                  </View>
-                ) : (
-                  myItems.map((item, index) => {
-                    const isWaiterItem = item.added_by.type === 'waiter';
-                    const isOwnItem = item.added_by.type === 'user' && String(item.added_by.id) === String(currentUser.id);
-                    const canKingEdit = isCurrentUserKing && !isWaiterItem;
-                    const canUserEdit = isOwnItem;
-                    const isItemDisabled = isTableLocked || item.is_disabled || isWaiterItem || (!canKingEdit && !canUserEdit);
-
-                    return (
-                      <View key={item.uuid} style={styles.itemWrapper}>
-                        <OrderedItemCmp
-                          item={item}
-                          isDisabled={isItemDisabled}
-                          currentUserId={currentUser.id}
-                          isTableLocked={isTableLocked}
-                          isCurrentUserKing={isCurrentUserKing}
-                          isLastItem={index === myItems.length - 1}
-                          onQuantityDecrease={
-                            !isItemDisabled
-                              ? () => handleDecreaseQuantity(item.uuid, item)
-                              : undefined
-                          }
-                          onQuantityIncrease={
-                            !isItemDisabled
-                              ? () => handleIncreaseQuantity(item.uuid, item)
-                              : undefined
-                          }
-                          onItemImageClick={
-                            !isItemDisabled
-                              ? () => handleItemClick(item.uuid, item)
-                              : undefined
-                          }
-                        />
+              <View style={styles.tableUserCard}>
+                {/* Collapsible header */}
+                <TouchableOpacity
+                  onPress={() => setMyItemsExpanded(!myItemsExpanded)}
+                  style={styles.tableUserHeader}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.tableUserInfo}>
+                    {isReady ? (
+                      <View style={styles.readyAvatarLarge}>
+                        <Icon_Checkmark width={18} height={18} color={COLORS.white} />
                       </View>
-                    );
-                  })
+                    ) : isCurrentUserKing ? (
+                      <View style={styles.tableUserKingAvatar}>
+                        <KingIcon width={15} height={12} />
+                      </View>
+                    ) : (
+                      <View style={styles.initialsAvatar}>
+                        <Text style={styles.initialsText}>
+                          {getInitials(currentUser.name || 'Me')}
+                        </Text>
+                      </View>
+                    )}
+                    <View>
+                      <Text style={styles.tableUserName}>Me</Text>
+                      <Text style={styles.tableUserItemCount}>
+                        {myItems.length} {myItems.length === 1 ? 'item' : 'items'} ordered
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.tableUserRight}>
+                    <Text style={styles.tableUserTotal}>
+                      ${myItemsTotal.toFixed(1)}
+                    </Text>
+                    <View style={{ transform: [{ rotate: myItemsExpanded ? '-90deg' : '90deg' }] }}>
+                      <Icon_Arrow_Right width={18} height={18} color={COLORS.primaryColor} />
+                    </View>
+                  </View>
+                </TouchableOpacity>
+
+                {/* Expanded items */}
+                {myItemsExpanded && (
+                  <View style={styles.expandedItemsContainer}>
+                    {myItems.length === 0 ? (
+                      <View style={styles.myItemsEmptyContainer}>
+                        <Text style={styles.myItemsEmptyText}>No items added, add items to your order.</Text>
+                      </View>
+                    ) : (
+                      <>
+                        {/* In-Kitchen items - checkout style */}
+                        {myKitchenItems.map((item, index) => (
+                          <View
+                            key={item.uuid}
+                            style={[
+                              styles.kitchenItemContainer,
+                              index < myKitchenItems.length - 1 && myNewItems.length === 0
+                                ? styles.kitchenItemBorder
+                                : index < myKitchenItems.length - 1
+                                  ? styles.kitchenItemBorder
+                                  : undefined,
+                            ]}
+                          >
+                            <View style={styles.kitchenItemRow}>
+                              <View style={styles.kitchenItemLeft}>
+                                <Text style={styles.kitchenItemQuantity}>{item.quantity}</Text>
+                                <Text style={styles.kitchenItemName} numberOfLines={2}>{item.name}</Text>
+                              </View>
+                              <Text style={styles.kitchenItemPrice}>
+                                {item.symbol} {item.price ? (item.price * item.quantity).toFixed(2) : '0.00'}
+                              </Text>
+                            </View>
+                            {item.modifier_groups?.map((modGroup) => (
+                              <View key={modGroup.id} style={styles.kitchenModifierGroup}>
+                                <Text style={styles.kitchenModifierGroupName}>{modGroup.name}</Text>
+                                {modGroup.modifier_items.map((modItem) => (
+                                  <View key={modItem.id} style={styles.kitchenModifierItemRow}>
+                                    <View style={styles.kitchenItemLeft}>
+                                      {modItem.quantity > 1 ? (
+                                        <Text style={styles.kitchenModifierItemQuantity}>{modItem.quantity}</Text>
+                                      ) : null}
+                                      <Text style={styles.kitchenModifierItemName}>{modItem.name}</Text>
+                                    </View>
+                                    {modItem.price && modItem.price > 0 ? (
+                                      <Text style={styles.kitchenModifierItemPrice}>{item.symbol} {modItem.price}</Text>
+                                    ) : null}
+                                  </View>
+                                ))}
+                              </View>
+                            ))}
+                            {item.special_instruction ? (
+                              <Text numberOfLines={1} style={styles.kitchenItemNote}>Note: {item.special_instruction}</Text>
+                            ) : null}
+                          </View>
+                        ))}
+
+                        {/* New Items sub-header */}
+                        {myNewItems.length > 0 && (
+                          <Text style={styles.newItemsSubHeader}>New Items</Text>
+                        )}
+
+                        {/* Pending items - original OrderedItemCmp */}
+                        {myNewItems.map((item, index) => {
+                          const isWaiterItem = item.added_by.type === 'waiter';
+                          const isOwnItem = item.added_by.type === 'user' && String(item.added_by.id) === String(currentUser.id);
+                          const canKingEdit = isCurrentUserKing && !isWaiterItem;
+                          const canUserEdit = isOwnItem;
+                          const isItemDisabled = isTableLocked || item.is_disabled || isWaiterItem || (!canKingEdit && !canUserEdit);
+
+                          return (
+                            <View key={item.uuid} style={styles.itemWrapper}>
+                              <OrderedItemCmp
+                                item={item}
+                                isDisabled={isItemDisabled}
+                                currentUserId={currentUser.id}
+                                isTableLocked={isTableLocked}
+                                isCurrentUserKing={isCurrentUserKing}
+                                isLastItem={index === myNewItems.length - 1}
+                                onQuantityDecrease={
+                                  !isItemDisabled
+                                    ? () => handleDecreaseQuantity(item.uuid, item)
+                                    : undefined
+                                }
+                                onQuantityIncrease={
+                                  !isItemDisabled
+                                    ? () => handleIncreaseQuantity(item.uuid, item)
+                                    : undefined
+                                }
+                                onItemImageClick={
+                                  !isItemDisabled
+                                    ? () => handleItemClick(item.uuid, item)
+                                    : undefined
+                                }
+                              />
+                            </View>
+                          );
+                        })}
+                      </>
+                    )}
+                  </View>
                 )}
               </View>
             </View>
@@ -889,23 +1076,61 @@ const TableScreen = () => {
                       </TouchableOpacity>
 
                       {/* Expanded items */}
-                      {isExpanded && (
-                        <View style={styles.expandedItemsContainer}>
-                          {group.items.map((item) => {
-                            const isWaiterItem = item.added_by.type === 'waiter';
-                            const isOwnItem = item.added_by.type === 'user' && String(item.added_by.id) === String(currentUser.id);
-                            const canKingEdit = isCurrentUserKing && !isWaiterItem;
-                            const canUserEdit = isOwnItem;
-                            const isItemDisabled = isTableLocked || item.is_disabled || isWaiterItem || (!canKingEdit && !canUserEdit);
+                      {isExpanded && (() => {
+                        const groupKitchenItems = group.items.filter(item => item.status === 'in-kitchen');
+                        const groupNewItems = group.items.filter(item => item.status !== 'in-kitchen');
 
-                            const orderedByUser = item.added_by.type === 'user'
-                              ? tableUsers[String(item.added_by.id)]
-                              : undefined;
-                            const orderedByWaiter = item.added_by.type === 'waiter'
-                              ? tableWaiters[String(item.added_by.id)]
-                              : undefined;
+                        return (
+                          <View style={styles.expandedItemsContainer}>
+                            {/* In-Kitchen items - checkout style */}
+                            {groupKitchenItems.map((item, index) => (
+                              <View
+                                key={item.uuid}
+                                style={[
+                                  styles.kitchenItemContainer,
+                                  index < groupKitchenItems.length - 1 ? styles.kitchenItemBorder : undefined,
+                                ]}
+                              >
+                                <View style={styles.kitchenItemRow}>
+                                  <View style={styles.kitchenItemLeft}>
+                                    <Text style={styles.kitchenItemQuantity}>{item.quantity}</Text>
+                                    <Text style={styles.kitchenItemName} numberOfLines={2}>{item.name}</Text>
+                                  </View>
+                                  <Text style={styles.kitchenItemPrice}>
+                                    {item.symbol} {item.price ? (item.price * item.quantity).toFixed(2) : '0.00'}
+                                  </Text>
+                                </View>
+                                {item.modifier_groups?.map((modGroup) => (
+                                  <View key={modGroup.id} style={styles.kitchenModifierGroup}>
+                                    <Text style={styles.kitchenModifierGroupName}>{modGroup.name}</Text>
+                                    {modGroup.modifier_items.map((modItem) => (
+                                      <View key={modItem.id} style={styles.kitchenModifierItemRow}>
+                                        <View style={styles.kitchenItemLeft}>
+                                          {modItem.quantity > 1 ? (
+                                            <Text style={styles.kitchenModifierItemQuantity}>{modItem.quantity}</Text>
+                                          ) : null}
+                                          <Text style={styles.kitchenModifierItemName}>{modItem.name}</Text>
+                                        </View>
+                                        {modItem.price && modItem.price > 0 ? (
+                                          <Text style={styles.kitchenModifierItemPrice}>{item.symbol} {modItem.price}</Text>
+                                        ) : null}
+                                      </View>
+                                    ))}
+                                  </View>
+                                ))}
+                                {item.special_instruction ? (
+                                  <Text numberOfLines={1} style={styles.kitchenItemNote}>Note: {item.special_instruction}</Text>
+                                ) : null}
+                              </View>
+                            ))}
 
-                            return (
+                            {/* New Items sub-header */}
+                            {groupNewItems.length > 0 && (
+                              <Text style={styles.newItemsSubHeader}>New Items</Text>
+                            )}
+
+                            {/* Pending items - original inline rendering with image */}
+                            {groupNewItems.map((item) => (
                               <View key={item.uuid} style={styles.tableItemRow}>
                                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', flex: 1, gap: 8 }}>
                                   <FastImage
@@ -931,16 +1156,16 @@ const TableScreen = () => {
                                     {/* Modifier Groups */}
                                     {item.modifier_groups && item.modifier_groups.length > 0 && (
                                       <View style={{ marginTop: 4 }}>
-                                        {item.modifier_groups.map(group => (
-                                          <View key={group.id}>
+                                        {item.modifier_groups.map(mg => (
+                                          <View key={mg.id}>
                                             <Text style={{
                                               fontFamily: 'Poppins-Medium',
                                               fontSize: 11,
                                               color: COLORS.darkColor,
                                             }}>
-                                              {group.name}:
+                                              {mg.name}:
                                             </Text>
-                                            {group.modifier_items.map(modItem => (
+                                            {mg.modifier_items.map(modItem => (
                                               <View
                                                 key={modItem.id}
                                                 style={{
@@ -981,10 +1206,10 @@ const TableScreen = () => {
                                   </View>
                                 </View>
                               </View>
-                            );
-                          })}
-                        </View>
-                      )}
+                            ))}
+                          </View>
+                        );
+                      })()}
                     </View>
                   );
                 })
@@ -1263,7 +1488,7 @@ const styles = StyleSheet.create({
   myItemsCard: {
     backgroundColor: COLORS.white,
     borderRadius: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 4,
   },
   myItemsEmptyContainer: {
@@ -1488,5 +1713,87 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
     color: COLORS.secondaryColor,
+  },
+  // Kitchen (checkout-style) item styles
+  kitchenItemContainer: {
+    paddingVertical: 10,
+  },
+  kitchenItemBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: `${COLORS.foregroundColor}15`,
+  },
+  kitchenItemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  kitchenItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    flex: 1,
+    gap: 6,
+  },
+  kitchenItemQuantity: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: COLORS.darkColor,
+    minWidth: 18,
+  },
+  kitchenItemName: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: COLORS.darkColor,
+    flex: 1,
+  },
+  kitchenItemPrice: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: COLORS.foregroundColor,
+    marginLeft: 8,
+  },
+  kitchenModifierGroup: {
+    marginTop: 4,
+    marginLeft: 38,
+  },
+  kitchenModifierGroupName: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 12,
+    color: COLORS.darkColor,
+  },
+  kitchenModifierItemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  kitchenModifierItemQuantity: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 12,
+    color: COLORS.darkColor,
+    minWidth: 14,
+  },
+  kitchenModifierItemName: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: COLORS.foregroundColor,
+    flex: 1,
+  },
+  kitchenModifierItemPrice: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: COLORS.secondaryColor,
+  },
+  kitchenItemNote: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: COLORS.foregroundColor,
+    marginTop: 4,
+    marginLeft: 24,
+  },
+  newItemsSubHeader: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 14,
+    color: COLORS.darkColor,
+    marginTop: 12,
+    marginBottom: 4,
   },
 });

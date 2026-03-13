@@ -1,13 +1,17 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useSelector } from 'react-redux';
 import { useNewItemsQuery } from '../api/newItemsApi';
 import ItemCard from '../components/Menu/ItemCard';
 import MenuItemSkeleton from '../components/SkeletonLoader/MenuItemSkeleton';
 import { DineInOrderStackParamList } from '../navigation/DineInOrderStack';
 import { RootState } from '../store/store';
+import { COLORS, SCREEN_PADDING } from '../theme';
+import Icon_Spine from '../../assets/SVG/Icon_Spine';
+import Button from '../components/UI/Button';
+import { normalizeFont } from '../utils/normalizeFonts';
 
 type NavigationProp = NativeStackNavigationProp<DineInOrderStackParamList>;
 
@@ -22,6 +26,8 @@ const NewItemsScreen = () => {
   });
 
   const navigation = useNavigation<NavigationProp>();
+
+  const hasNewItems = !!newItems && newItems.length > 0;
 
   const renderItem = ({ item }: { item: Item }) => (
     <View style={styles.cardContainer}>
@@ -42,23 +48,54 @@ const NewItemsScreen = () => {
     </View>
   );
 
+  const EmptyNewItemsState = () => (
+    <View style={styles.emptyContainer}>
+      <Icon_Spine
+        width={normalizeFont(100)}
+        height={normalizeFont(100)}
+        color={COLORS.primaryColor}
+        style={{ marginBottom: 16 }}
+      />
+      <Text style={styles.emptyTitle}>No New Items Yet</Text>
+      <Text style={styles.emptySubText}>
+        Check back soon for the latest additions to our menu!
+      </Text>
+      <Button
+        style={{ marginTop: 16 }}
+        onPress={() =>
+          navigation.navigate('MenuItems', {
+            item: undefined as any,
+          })
+        }>
+        Browse Menu
+      </Button>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
-      {/* <Text style={styles.title}>Offers</Text> */}
       {isLoading ? (
         <MenuItemSkeleton />
-      ) : (
+      ) : hasNewItems ? (
         <FlatList
           data={newItems}
           renderItem={renderItem}
           keyExtractor={item => item.id?.toString()}
           numColumns={2}
-          contentContainerStyle={{ gap: 16 }}
+          showsVerticalScrollIndicator={false}
+          ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
+          ListHeaderComponent={() => (
+            <View style={{ height: SCREEN_PADDING.vertical }} />
+          )}
+          ListFooterComponent={() => (
+            <View style={{ height: SCREEN_PADDING.vertical }} />
+          )}
           columnWrapperStyle={{
             gap: 16,
           }}
-          showsVerticalScrollIndicator={false}
         />
+      ) : (
+        <EmptyNewItemsState />
       )}
     </View>
   );
@@ -69,7 +106,8 @@ export default NewItemsScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: SCREEN_PADDING.horizontal,
+    backgroundColor: COLORS.backgroundColor,
   },
   title: {
     fontSize: 24,
@@ -80,5 +118,21 @@ const styles = StyleSheet.create({
   cardContainer: {
     flex: 1,
     maxWidth: '48%',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyTitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: normalizeFont(22),
+    color: COLORS.darkColor,
+  },
+  emptySubText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: normalizeFont(14),
+    color: COLORS.foregroundColor,
+    textAlign: 'center',
   },
 });

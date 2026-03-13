@@ -174,7 +174,7 @@ const OrderedItemCmp = ({
               </Text>
             </View>
 
-            {!isDisabled && canEditItem && onQuantityDecrease && onQuantityIncrease ? (
+            {!isDisabled && canEditItem && onQuantityDecrease && onQuantityIncrease && (
               <View style={{
                 backgroundColor: COLORS.primaryColor,
                 flexDirection: 'row',
@@ -196,19 +196,6 @@ const OrderedItemCmp = ({
                   onPress={onQuantityIncrease}>
                   <Icon_Increase_Quantity color={'#FFF'} />
                 </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={{
-                backgroundColor: COLORS.primaryColor,
-                paddingVertical: 6,
-                paddingHorizontal: 12,
-                borderRadius: 8,
-                minWidth: 36,
-                alignItems: 'center',
-              }}>
-                <Text style={{ color: '#FFF', fontSize: 14, fontFamily: 'Poppins-Medium' }}>
-                  {item?.quantity}
-                </Text>
               </View>
             )}
           </View>
