@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Alert, BackHandler, StyleSheet, View } from 'react-native';
 import { Code } from 'react-native-vision-camera';
 import { useDispatch, useSelector } from 'react-redux';
+import { setSocketUrl } from '../store/slices/dineInSlice';
 import QrCodeCamera from '../components/QrCodeCamera';
 import { DineInStackParamList } from '../navigation/DineInStack';
 import {
@@ -24,11 +25,12 @@ const ScanTableScreen = () => {
   const [mounted, setMounted] = useState(false);
   const [checkingConfig, setCheckingConfig] = useState(false);
   const [getDineInConfig] = useLazyGetDineInConfigQuery();
+  const storedSocketUrl = useSelector((state: RootState) => state.dineIn.socketUrl);
 
   useFocusEffect(
     React.useCallback(() => {
-      if (userState.branchTable || userState.tableSessionId) {
-        navigation.navigate('Pending', { socketUrl: '' });
+      if ((userState.branchTable || userState.tableSessionId) && storedSocketUrl) {
+        navigation.navigate('Pending', { socketUrl: storedSocketUrl });
         setMounted(false);
       } else {
         setMounted(true);
@@ -48,7 +50,7 @@ const ScanTableScreen = () => {
       );
 
       return () => backHandler.remove();
-    }, [userState.branchTable, userState.tableSessionId, navigation, dispatch]),
+    }, [userState.branchTable, userState.tableSessionId, storedSocketUrl, navigation, dispatch]),
   );
 
   const handleScan = async (code: Code) => {
@@ -99,6 +101,7 @@ const ScanTableScreen = () => {
           }
 
           dispatch(setBranchTable(branchTable));
+          dispatch(setSocketUrl(result.dinein_socket_url));
           navigation.navigate('Pending', { socketUrl: result.dinein_socket_url });
         } catch (error) {
           console.error('Error fetching dine-in config:', error);
