@@ -1,8 +1,14 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon_Decrease_Quantity from '../../../assets/SVG/Icon_Decrease_Quantity';
 import Icon_Increase_Quantity from '../../../assets/SVG/Icon_Increase_Quantity';
 import { COLORS } from '../../theme';
+
+const hapticOptions = {
+  enableVibrateFallback: true,
+  ignoreAndroidSystemSettings: false,
+};
 
 type QuantityControlProps = {
   value: number;
@@ -19,18 +25,28 @@ const QuantityControl = ({
   min = 1,
   max,
 }: QuantityControlProps) => {
+  const handleIncrease = () => {
+    ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
+    onIncrease();
+  };
+
+  const handleDecrease = () => {
+    ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
+    onDecrease();
+  };
+
   return (
     <View style={styles.container}>
       <TouchableOpacity
         style={styles.button}
-        onPress={onDecrease}
+        onPress={handleDecrease}
         disabled={value <= min}>
         <Icon_Decrease_Quantity color={'#FFF'} />
       </TouchableOpacity>
       <Text style={styles.value}>{value}</Text>
       <TouchableOpacity
         style={styles.button}
-        onPress={onIncrease}
+        onPress={handleIncrease}
         disabled={max !== undefined && value >= max}>
         <Icon_Increase_Quantity color={'#FFF'} />
       </TouchableOpacity>

@@ -1,6 +1,6 @@
 
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -15,9 +15,9 @@ import FastImage from 'react-native-fast-image';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import Toast from 'react-native-toast-message';
 import uuid from 'react-native-uuid';
 import { useSelector } from 'react-redux';
-import Toast from 'react-native-toast-message';
 import Icon_Cart from '../../assets/SVG/Icon_Cart';
 import Icon_Decrease_Quantity from '../../assets/SVG/Icon_Decrease_Quantity';
 import Icon_Increase_Quantity from '../../assets/SVG/Icon_Increase_Quantity';
@@ -37,6 +37,11 @@ import { COLORS, SCREEN_PADDING } from '../theme';
 import { normalizeFont } from '../utils/normalizeFonts';
 import SocketService from '../utils/SocketService';
 import { OrderedItem } from './TableScreen';
+
+const hapticOptions = {
+  enableVibrateFallback: true,
+  ignoreAndroidSystemSettings: false,
+};
 
 const SkeletonLoader = () => {
   return (
@@ -82,10 +87,7 @@ type DineInMenuItemScreenRouteProp = RouteProp<
   'MenuItem'
 >;
 
-const hapticOptions = {
-  enableVibrateFallback: true,
-  ignoreAndroidSystemSettings: false,
-};
+
 
 const DineInMenuItemScreen = ({ }: IProps) => {
   const navigation = useNavigation();
@@ -257,7 +259,7 @@ const DineInMenuItemScreen = ({ }: IProps) => {
       data: messageData,
     });
 
-    const toastMessage = itemUuid 
+    const toastMessage = itemUuid
       ? `${itemData.name} (x${quantity}) updated in order`
       : `${itemData.name} (x${quantity}) added to order`;
     Toast.show({
@@ -281,10 +283,12 @@ const DineInMenuItemScreen = ({ }: IProps) => {
 
 
   const handleIncreaseQuantity = () => {
+    ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
     setQuantity(prev => prev + 1);
   };
 
   const handleDecreaseQuantity = () => {
+    ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
     setQuantity(prev => (prev > 1 ? prev - 1 : 1));
   };
 

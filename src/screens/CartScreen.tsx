@@ -7,7 +7,6 @@ import {
   Text,
   View
 } from 'react-native';
-import ReactNativeHapticFeedback from "react-native-haptic-feedback";
 import { useSelector } from 'react-redux';
 import Icon_Cart from '../../assets/SVG/Icon_Cart';
 import Icon_Checkmark from '../../assets/SVG/Icon_Checkmark';
@@ -147,18 +146,10 @@ const CartScreen = ({ }: IProps) => {
             Object.entries(cartData.items).map(([uuid, item], idx) => {
               const handleIncreaseQuantity = () => {
                 dispatch(increaseQuantity(uuid));
-                ReactNativeHapticFeedback.trigger("impactLight", {
-                  enableVibrateFallback: true,
-                  ignoreAndroidSystemSettings: false,
-                });
               };
 
               const handleDecreaseQuantity = () => {
                 dispatch(decreaseQuantity(uuid));
-                ReactNativeHapticFeedback.trigger("impactLight", {
-                  enableVibrateFallback: true,
-                  ignoreAndroidSystemSettings: false,
-                });
               };
 
               const handleNavigateToMenuItem = () => {

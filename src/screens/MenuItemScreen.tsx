@@ -1,8 +1,8 @@
 
 import { useHeaderHeight } from '@react-navigation/elements';
-import { CommonActions, RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -33,12 +33,17 @@ import ModifierGroup from '../components/Menu/ModifierGroup';
 import Button from '../components/UI/Button';
 import Input from '../components/UI/Input';
 import { TYPOGRAPHY } from '../constants/typography';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { RootStackParamList } from '../navigation/NavigationStack';
 import { addItem, updateItem } from '../store/slices/cartSlice';
 import { RootState, useAppDispatch } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
-import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { normalizeFont } from '../utils/normalizeFonts';
+
+const hapticOptions = {
+  enableVibrateFallback: true,
+  ignoreAndroidSystemSettings: false,
+};
 
 const SkeletonLoader = () => {
   return (
@@ -256,7 +261,7 @@ const MenuItemScreen = ({ }: IProps) => {
         dispatch(addItem(cartItem));
       }
 
-      const toastMessage = itemUuid 
+      const toastMessage = itemUuid
         ? `${item.name} (x${quantity}) has been updated`
         : `${item.name} (x${quantity}) has been added to your cart`;
 
@@ -266,7 +271,7 @@ const MenuItemScreen = ({ }: IProps) => {
         text1: toastMessage,
         visibilityTime: 3000,
         position: 'bottom',
-        ...( !itemUuid && {
+        ...(!itemUuid && {
           props: {
             onViewCart: () => {
               navigation.navigate('DeliveryTakeaway', {
@@ -294,10 +299,12 @@ const MenuItemScreen = ({ }: IProps) => {
   };
 
   const handleIncreaseQuantity = () => {
+    ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
     setQuantity(prev => prev + 1);
   };
 
   const handleDecreaseQuantity = () => {
+    ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
     setQuantity(prev => (prev > 1 ? prev - 1 : 1));
   };
 
@@ -359,7 +366,7 @@ const MenuItemScreen = ({ }: IProps) => {
       {isLoading ? (
         <SkeletonLoader />
       ) : (
-        <View style={{ flex: 1, backgroundColor: COLORS.backgroundColor}}>
+        <View style={{ flex: 1, backgroundColor: COLORS.backgroundColor }}>
 
           <KeyboardAvoidingView
             style={{
@@ -416,9 +423,9 @@ const MenuItemScreen = ({ }: IProps) => {
                       )}
                     </TouchableOpacity>
                   </View>
-                {!!item?.description && (
-                  <Text style={styles.description}>{item?.description}</Text>
-                )}
+                  {!!item?.description && (
+                    <Text style={styles.description}>{item?.description}</Text>
+                  )}
                 </View>
 
                 <View style={{ paddingHorizontal: 16, marginBottom: 8, marginTop: 10, gap: 6 }}>
@@ -436,46 +443,46 @@ const MenuItemScreen = ({ }: IProps) => {
                 </View>
 
                 {/* Tags  */}
-{item?.tags && item.tags.length > 0 &&
-(
-  <View
-  style={{
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 4,
-    gap: 8,
-    paddingHorizontal: SCREEN_PADDING.horizontal,
-  }}>
-  {
-    item?.tags?.map((el, idx) => {
-      return (
-        <View
-          key={idx}
-          style={{
-            backgroundColor: el?.color || '#F2CA4540',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 4,
-            borderRadius: 8,
-            padding: 8,
-          }}>
-          <FastImage
-            style={{ height: 16, width: 16 }}
-            source={{
-              uri: el.icon_url,
-              priority: FastImage.priority.normal,
-            }}
-            resizeMode={FastImage.resizeMode.contain}
-          />
+                {item?.tags && item.tags.length > 0 &&
+                  (
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        flexWrap: 'wrap',
+                        marginTop: 4,
+                        gap: 8,
+                        paddingHorizontal: SCREEN_PADDING.horizontal,
+                      }}>
+                      {
+                        item?.tags?.map((el, idx) => {
+                          return (
+                            <View
+                              key={idx}
+                              style={{
+                                backgroundColor: el?.color || '#F2CA4540',
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 4,
+                                borderRadius: 8,
+                                padding: 8,
+                              }}>
+                              <FastImage
+                                style={{ height: 16, width: 16 }}
+                                source={{
+                                  uri: el.icon_url,
+                                  priority: FastImage.priority.normal,
+                                }}
+                                resizeMode={FastImage.resizeMode.contain}
+                              />
 
-          <Text style={{}}>{el.name}</Text>
-        </View>
-      );
-    })}
-</View>
-)
-}
+                              <Text style={{}}>{el.name}</Text>
+                            </View>
+                          );
+                        })}
+                    </View>
+                  )
+                }
 
                 {/* <Button
                 style={styles.addToCartButton}
@@ -639,7 +646,7 @@ const styles = StyleSheet.create({
     width: '90%',
     // backgroundColor: 'red',
     textTransform: 'capitalize',
-    
+
   },
   description: {
     fontFamily: 'Poppins-Regular',
