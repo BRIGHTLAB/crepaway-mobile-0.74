@@ -120,23 +120,30 @@ class NotificationService {
     });
 
     // Handle foreground messages via Firebase
+    // NOTE: On iOS, the native AppDelegate willPresentNotification already displays
+    // the FCM notification as a banner, so we must NOT create a local notification
+    // on iOS (it would cause duplicates). On Android, FCM does NOT auto-display
+    // notifications in the foreground, so we must create a local notification.
     onMessage(messaging, async (remoteMessage) => {
       this.log('=== FCM FOREGROUND MESSAGE ===');
       this.log('Message:', JSON.stringify(remoteMessage, null, 2));
 
-      const title = remoteMessage.notification?.title || remoteMessage.data?.title as string || 'Notification';
-      const body = remoteMessage.notification?.body || remoteMessage.data?.body as string || remoteMessage.data?.message as string || '';
+      // Android does not auto-display FCM notifications in foreground — show a local one
+      if (Platform.OS === 'android') {
+        const title = remoteMessage.notification?.title || remoteMessage.data?.title as string || 'Notification';
+        const body = remoteMessage.notification?.body || remoteMessage.data?.body as string || remoteMessage.data?.message as string || '';
 
-      if (body) {
-        this.localNotification(
-          String(title),
-          String(body),
-          {
-            data: (remoteMessage.data as Record<string, unknown>) || {},
-            enableSound: true,
-            channelId: 'default-channel',
-          }
-        );
+        if (body) {
+          this.localNotification(
+            String(title),
+            String(body),
+            {
+              data: (remoteMessage.data as Record<string, unknown>) || {},
+              enableSound: true,
+              channelId: 'default-channel',
+            }
+          );
+        }
       }
 
       // Handle notification data for navigation
