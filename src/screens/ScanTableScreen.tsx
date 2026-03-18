@@ -1,19 +1,19 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, BackHandler, StyleSheet, View } from 'react-native';
 import { Code } from 'react-native-vision-camera';
 import { useDispatch, useSelector } from 'react-redux';
-import { setSocketUrl } from '../store/slices/dineInSlice';
+import { useLazyGetDineInConfigQuery } from '../api/branchesApi';
 import QrCodeCamera from '../components/QrCodeCamera';
 import { DineInStackParamList } from '../navigation/DineInStack';
+import { setSocketUrl } from '../store/slices/dineInSlice';
 import {
   setBranchTable,
   setOrderType
 } from '../store/slices/userSlice';
 import { RootState } from '../store/store';
 import { parseQueryParams } from '../utils/parseQueryParams';
-import { useLazyGetDineInConfigQuery } from '../api/branchesApi';
 
 type NavigationProp = NativeStackNavigationProp<DineInStackParamList>;
 
@@ -26,6 +26,12 @@ const ScanTableScreen = () => {
   const [checkingConfig, setCheckingConfig] = useState(false);
   const [getDineInConfig] = useLazyGetDineInConfigQuery();
   const storedSocketUrl = useSelector((state: RootState) => state.dineIn.socketUrl);
+
+  // TEST: auto-set branchTable to bypass QR scanning
+  useEffect(() => {
+    dispatch(setBranchTable('ashrafieh.table4'));
+    dispatch(setSocketUrl('wss://crepaway-dinein-websocket-ts-hgga.onrender.com'));
+  }, []);
 
   useFocusEffect(
     React.useCallback(() => {

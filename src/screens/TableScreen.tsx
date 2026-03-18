@@ -61,6 +61,7 @@ import {
   TYPOGRAPHY
 } from '../theme';
 import SocketService from '../utils/SocketService';
+import { normalizeFont } from '../utils/normalizeFonts';
 
 export type OrderedItem = {
   id: number;
@@ -83,6 +84,7 @@ export type OrderedItem = {
   status: 'pending' | 'in-kitchen';
   isHiddenFromUser?: boolean | null;
   order: number;
+  orderMode: 'quick' | 'standard';
   modifier_groups: Array<{
     id: number;
     name: string;
@@ -509,8 +511,8 @@ const TableScreen = () => {
   }, [filteredOrderedItems, currentUser.id]);
 
   // Split my items into kitchen items and new (pending) items
-  const myKitchenItems = useMemo(() => myItems.filter(item => item.status === 'in-kitchen'), [myItems]);
-  const myNewItems = useMemo(() => myItems.filter(item => item.status !== 'in-kitchen'), [myItems]);
+  const myKitchenItems = useMemo(() => myItems.filter(item => item.status === 'in-kitchen' || item.orderMode === 'quick'), [myItems]);
+  const myNewItems = useMemo(() => myItems.filter(item => item.status !== 'in-kitchen' && item.orderMode !== 'quick'), [myItems]);
 
   // Calculate total price for my items including modifiers
   const myItemsTotal = useMemo(() => {
@@ -942,7 +944,12 @@ const TableScreen = () => {
                             <View style={styles.kitchenItemRow}>
                               <View style={styles.kitchenItemLeft}>
                                 <Text style={styles.kitchenItemQuantity}>{item.quantity}</Text>
-                                <Text style={styles.kitchenItemName} numberOfLines={2}>{item.name}</Text>
+                                <Text style={styles.kitchenItemName} numberOfLines={2}>
+                                  {item.name}
+                                  {item.orderMode === 'quick' && (
+                                    <Text style={styles.quickOrderBadgeText}> ⚡ Quick</Text>
+                                  )}
+                                </Text>
                               </View>
                               <Text style={styles.kitchenItemPrice}>
                                 {item.symbol} {item.price ? (item.price * item.quantity).toFixed(2) : '0.00'}
@@ -1081,8 +1088,8 @@ const TableScreen = () => {
 
                       {/* Expanded items */}
                       {isExpanded && (() => {
-                        const groupKitchenItems = group.items.filter(item => item.status === 'in-kitchen');
-                        const groupNewItems = group.items.filter(item => item.status !== 'in-kitchen');
+                        const groupKitchenItems = group.items.filter(item => item.status === 'in-kitchen' || item.orderMode === 'quick');
+                        const groupNewItems = group.items.filter(item => item.status !== 'in-kitchen' && item.orderMode !== 'quick');
 
                         return (
                           <View style={styles.expandedItemsContainer}>
@@ -1098,7 +1105,12 @@ const TableScreen = () => {
                                 <View style={styles.kitchenItemRow}>
                                   <View style={styles.kitchenItemLeft}>
                                     <Text style={styles.kitchenItemQuantity}>{item.quantity}</Text>
-                                    <Text style={styles.kitchenItemName} numberOfLines={2}>{item.name}</Text>
+                                    <Text style={styles.kitchenItemName} numberOfLines={2}>
+                                      {item.name}
+                                      {item.orderMode === 'quick' && (
+                                        <Text style={styles.quickOrderBadgeText}> ⚡ Quick</Text>
+                                      )}
+                                    </Text>
                                   </View>
                                   <Text style={styles.kitchenItemPrice}>
                                     {item.symbol} {item.price ? (item.price * item.quantity).toFixed(2) : '0.00'}
@@ -1151,6 +1163,9 @@ const TableScreen = () => {
                                         <Text style={styles.tableItemQuantity}>{item.quantity} </Text>
                                       )}
                                       {item.name}
+                                      {item.orderMode === 'quick' && (
+                                        <Text style={styles.quickOrderBadgeText}> ⚡ Quick</Text>
+                                      )}
                                     </Text>
                                     <Text style={styles.tableItemPrice}>
                                       {item.symbol}
@@ -1240,12 +1255,32 @@ const TableScreen = () => {
                 <Text style={styles.readyActiveText}>Ready</Text>
               </TouchableOpacity>
             ) : (
-              <Button
-                onPress={() => handleSetReady(true)}
-                variant="primary"
-              >
-                Ready
-              </Button>
+              <View style={styles.actionBarRow}>
+                <Button
+                  onPress={() => handleSetReady(true)}
+                  variant="primary"
+                  style={{ flex: 1 }}
+                >
+                  I'm ready
+                </Button>
+                <Button
+                  onPress={() => {
+                    const itemUuids = myNewItems.map(item => item.uuid);
+                    socketInstance.emit('message', {
+                      type: 'setItemsQuickOrder',
+                      data: {
+                        tableName: userState.branchTable,
+                        itemUuids,
+                      },
+                    });
+                  }}
+                  variant="outline"
+                  style={{ flex: 1 }}
+                  disabled={myNewItems.length === 0}
+                >
+                  Quick Order
+                </Button>
+              </View>
             )
           )}
           <View style={myItems.length === 0 ? styles.actionBarColumn : styles.actionBarRow}>
@@ -1745,7 +1780,8 @@ const styles = StyleSheet.create({
   },
   kitchenItemName: {
     fontFamily: 'Poppins-Regular',
-    fontSize: 12,
+    fontSize: normalizeFont(12),
+    lineHeight: 23,
     color: COLORS.darkColor,
     flex: 1,
   },
@@ -1799,5 +1835,10 @@ const styles = StyleSheet.create({
     color: COLORS.darkColor,
     marginTop: 12,
     marginBottom: 4,
+  },
+  quickOrderBadgeText: {
+    fontSize: 11,
+    color: COLORS.primaryColor,
+    fontFamily: 'Poppins-SemiBold',
   },
 });

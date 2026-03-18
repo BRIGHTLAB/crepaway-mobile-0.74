@@ -162,6 +162,13 @@ const OrderedItemCmp = ({
                     fontFamily: 'Poppins-Medium',
                   }}> • In Kitchen</Text>
                 )}
+                {item.orderMode === 'quick' && (
+                  <Text style={{
+                    fontSize: 11,
+                    color: COLORS.primaryColor,
+                    fontFamily: 'Poppins-SemiBold',
+                  }}> ⚡ Quick</Text>
+                )}
               </Text>
 
               <Text
