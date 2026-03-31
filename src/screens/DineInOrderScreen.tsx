@@ -8,8 +8,8 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import { useSelector } from 'react-redux';
 import { useGetContentQuery } from '../api/dataApi';
 import { useGetHomepageQuery } from '../api/homeApi';
@@ -17,10 +17,10 @@ import Banner from '../components/Banner';
 import CategoryList from '../components/Menu/CategoryList';
 import ItemsList from '../components/Menu/ItemsList';
 import OffersList from '../components/Menu/OffersList';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { DineInOrderStackParamList } from '../navigation/DineInOrderStack';
 import { RootState } from '../store/store';
 import { COLORS } from '../theme';
-import { usePullToRefresh } from '../hooks/usePullToRefresh';
 
 import Animated, {
   Extrapolation,
@@ -49,6 +49,11 @@ const DineInOrderScreen = () => {
       ? state.branchTable.split('.')?.[0]?.toLowerCase()
       : null,
   });
+
+  console.log('branchis', state.menuType);
+  console.log('branchis', state.branchTable
+    ? state.branchTable.split('.')?.[0]?.toLowerCase()
+    : null,)
 
   const categories = data?.categories;
   const newItems = data?.new_items?.filter(item => item.is_paused !== 1) ?? [];

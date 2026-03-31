@@ -1,6 +1,6 @@
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
-import { useNavigation } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -24,9 +24,10 @@ import Toast from 'react-native-toast-message';
 import { useSelector } from 'react-redux';
 import Icon_Credit_Card from '../../assets/SVG/Icon_Credit_Card';
 import Icon_Delete from '../../assets/SVG/Icon_Delete';
-import { useDeleteSavedCardMutation, useGetCheckoutQuery, useGetPaymentMethodsQuery, useGetSavedCardsQuery, useLazyGetPaymentStatusQuery, usePlaceOrderMutation } from '../api/checkoutApi';
+import { useDeleteSavedCardMutation, useGetDineInCheckoutQuery, useGetPaymentMethodsQuery, useGetSavedCardsQuery } from '../api/checkoutApi';
 import PaymentWebViewModal from '../components/Checkout/PaymentWebViewModal';
 import TotalSection from '../components/Menu/TotalSection';
+import InfoPopup from '../components/Popups/InfoPopup';
 import PartialPaymentSheet, { OrderItem, PaymentMode } from '../components/Sheets/DineIn/PartialPaymentSheet';
 import DynamicSheet from '../components/Sheets/DynamicSheet';
 import BottomSheetInput from '../components/UI/BottomSheetInput';
@@ -34,16 +35,43 @@ import Button from '../components/UI/Button';
 import RadioButton from '../components/UI/RadioButton';
 import { DineInStackParamList } from '../navigation/DineInStack';
 import {
-  clearCart,
   setCouponCode as setReduxCouponCode,
   setPromoCode as setReduxPromoCode,
 } from '../store/slices/cartSlice';
 import { RootState, useAppDispatch } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
+import SocketService from '../utils/SocketService';
+
+// Map selected payment method alias to socket PaymentMethod type
+const getSocketPaymentMethod = (alias?: string): 'Card' | 'Cash' | 'Whish' => {
+  switch (alias) {
+    case 'whish':
+      return 'Whish';
+    case 'cash':
+    case 'cod':
+      return 'Cash';
+    default:
+      return 'Card';
+  }
+};
+
+// Map PartialPaymentSheet mode to socket paymentMode
+const getSocketPaymentMode = (mode: PaymentMode): 'FULL' | 'CUSTOM' | 'SPLIT' => {
+  switch (mode) {
+    case 'divideBill':
+      return 'SPLIT';
+    case 'myOrder':
+    case 'custom':
+    default:
+      return 'CUSTOM';
+  }
+};
 
 const DineInCheckoutScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<DineInStackParamList>>();
+  const route = useRoute<RouteProp<DineInStackParamList, 'Checkout'>>();
+  const orderId = route.params.orderId;
 
   const promoCodeSheetRef = useRef<BottomSheetMethods | null>(null);
   const paymentMethodSheetRef = useRef<BottomSheetMethods | null>(null);
@@ -51,10 +79,11 @@ const DineInCheckoutScreen = () => {
   const dispatch = useAppDispatch();
   const user = useSelector((state: RootState) => state.user);
   const cart = useSelector((state: RootState) => state.cart);
+  const tableBill = useSelector((state: RootState) => state.dineIn.tableBill);
+  const canPayBill = useSelector((state: RootState) => state.dineIn.canPayBill);
 
   const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<number | null>(null);
   const [selectedSavedCardId, setSelectedSavedCardId] = useState<number | null>(null);
-  const [saveCard, setSaveCard] = useState<boolean>(false);
 
   // Ordered items expand/collapse
   const COLLAPSED_HEIGHT = 200;
@@ -115,19 +144,38 @@ const DineInCheckoutScreen = () => {
 
   // Payment WebView state (for card payments)
   const [paymentWebViewUrl, setPaymentWebViewUrl] = useState<string | null>(null);
-  const [paymentId, setPaymentId] = useState<number | null>(null);
-
-  // Payment polling state (waiting for order_id after successful card payment)
-  const [isWaitingForOrder, setIsWaitingForOrder] = useState(false);
-  const [pendingPaymentId, setPendingPaymentId] = useState<number | null>(null);
 
   // Save card dialog state
   const [showSaveCardDialog, setShowSaveCardDialog] = useState(false);
+  const [pendingPaymentArgs, setPendingPaymentArgs] = useState<{ amount: number; paymentMode: 'FULL' | 'CUSTOM' | 'SPLIT' } | null>(null);
+
+  // Payment error popup state
+  const [paymentErrorMessage, setPaymentErrorMessage] = useState<string | null>(null);
 
   // Partial payment sheet mode state
   const [partialPaymentInitialMode, setPartialPaymentInitialMode] = useState<PaymentMode>('myOrder');
 
   const { bottom } = useSafeAreaInsets();
+
+  // Compute tips amount for the query
+  const tipsAmount = useMemo(() => {
+    if (selectedTip) {
+      return selectedTip;
+    }
+    if (isCustomTipActive && customTip) {
+      return parseInt(customTip, 10) || null;
+    }
+    return null;
+  }, [selectedTip, isCustomTipActive, customTip]);
+
+  // Debounce tips to avoid rapid API calls
+  const [debouncedTips, setDebouncedTips] = useState<number | null>(null);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedTips(tipsAmount);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [tipsAmount]);
 
   const {
     data,
@@ -135,18 +183,18 @@ const DineInCheckoutScreen = () => {
     isFetching,
     refetch,
     error: getCheckoutError,
-  } = useGetCheckoutQuery({
+  } = useGetDineInCheckoutQuery({
+    orderId,
     promoCode: debouncedPromoCode,
     couponCode: debouncedCouponCode,
+    tips: debouncedTips,
   });
 
+
+  console.log('checkout', data);
   const { data: paymentMethodsData, isLoading: isPaymentMethodsLoading } = useGetPaymentMethodsQuery();
 
-  const [placeOrder, { isLoading: isSubmitLoading, error: placeOrderError }] =
-    usePlaceOrderMutation();
 
-  // Lazy query for polling payment status
-  const [getPaymentStatus] = useLazyGetPaymentStatusQuery();
 
   // Fetch saved cards for the user
   const { data: savedCardsData } = useGetSavedCardsQuery(undefined, { refetchOnMountOrArgChange: true });
@@ -182,67 +230,7 @@ const DineInCheckoutScreen = () => {
     }
   }, [getCheckoutError, navigation]);
 
-  // Handle API errors from usePlaceOrderMutation
-  useEffect(() => {
-    if (placeOrderError) {
-      console.log('placeOrderError', placeOrderError);
-      const error = placeOrderError as any;
-      const errorMessage = error?.data?.error || error?.data?.message || 'Failed to place order';
-      Toast.show({
-        type: 'error',
-        text1: errorMessage,
-        visibilityTime: 4000,
-        position: 'bottom',
-      });
-    }
-  }, [placeOrderError, navigation]);
 
-  // Polling for payment status after successful card payment
-  useEffect(() => {
-    let pollingInterval: NodeJS.Timeout | null = null;
-
-    if (isWaitingForOrder && pendingPaymentId) {
-      const pollPaymentStatus = async () => {
-        try {
-          const result = await getPaymentStatus(pendingPaymentId).unwrap();
-
-          if (result.payment?.orders_id) {
-            // Order has been created - stop polling and navigate
-            setIsWaitingForOrder(false);
-            setPendingPaymentId(null);
-            dispatch(clearCart());
-            refetch();
-
-            // Navigate back to table after successful order
-            Toast.show({
-              type: 'success',
-              text1: 'Order placed successfully!',
-              visibilityTime: 3000,
-              position: 'bottom',
-            });
-            navigation.goBack();
-          }
-          // If no orders_id yet, the interval will poll again
-        } catch (error) {
-          console.error('Payment status poll error:', error);
-          // Continue polling on error, don't stop
-        }
-      };
-
-      // Initial poll
-      pollPaymentStatus();
-
-      // Set up interval for subsequent polls (every 2 seconds)
-      pollingInterval = setInterval(pollPaymentStatus, 2000);
-    }
-
-    // Cleanup: clear interval when component unmounts or polling stops
-    return () => {
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-      }
-    };
-  }, [isWaitingForOrder, pendingPaymentId, getPaymentStatus, dispatch, refetch, navigation, user]);
 
   const debouncedApplyPromo = useCallback(
     debounce((code: string) => {
@@ -255,60 +243,8 @@ const DineInCheckoutScreen = () => {
     []
   );
 
-  // Called when user submits the order (or after save card dialog)
-  const executeOrder = async (shouldSaveCard: boolean) => {
-    const formData = {
-      special_delivery_instructions: '',
-      payment_methods_id: selectedPaymentMethodId,
-      address_id: null,
-      is_scheduled: 0,
-      scheduled_date: null,
-      order_type: user?.orderType || 'dinein',
-      promo_code: debouncedPromoCode,
-      coupon_code: debouncedCouponCode,
-      ...(selectedSavedCardId
-        ? { users_payment_methods_id: selectedSavedCardId }
-        : (shouldSaveCard ? { save_card: true } : {})
-      ),
-    };
-
-    try {
-      const resp = await placeOrder(formData).unwrap();
-
-      // Check if this is a card payment (has payment_url)
-      if (resp.payment_url && resp.payment_id) {
-        // Card payment - open WebView for payment
-        setPaymentWebViewUrl(resp.payment_url);
-        setPaymentId(resp.payment_id);
-        return; // Don't navigate yet, wait for WebView callback
-      }
-
-      // COD/Cash payment - navigate directly back with success
-      if (resp.order_id) {
-        dispatch(clearCart());
-        refetch();
-
-        Toast.show({
-          type: 'success',
-          text1: 'Order placed successfully!',
-          visibilityTime: 3000,
-          position: 'bottom',
-        });
-        navigation.goBack();
-      }
-    } catch (err) {
-      const error = err as { data: { message: string } };
-      const errorMessage = error?.data?.message || 'Something went wrong!';
-      Toast.show({
-        type: 'error',
-        text1: errorMessage,
-        visibilityTime: 4000,
-        position: 'bottom',
-      });
-    }
-  };
-
-  const handlerOrder = async () => {
+  // Unified payment handler — used by all payment scenarios
+  const emitPayment = (amount: number, paymentMode: 'FULL' | 'CUSTOM' | 'SPLIT', saveCard?: boolean) => {
     // Validate payment method is selected
     if (!selectedPaymentMethodId) {
       Toast.show({
@@ -320,16 +256,41 @@ const DineInCheckoutScreen = () => {
       return;
     }
 
-    // Check if Areeba (new card) is selected and no saved card is used
     const selectedMethod = paymentMethodsData?.data?.find(m => m.id === selectedPaymentMethodId);
-    if (selectedMethod?.alias === 'areeba' && !selectedSavedCardId) {
-      // Show save card dialog
+
+    // If card payment (areeba) with no saved card & save card dialog not yet shown, show dialog first
+    if (selectedMethod?.alias === 'areeba' && !selectedSavedCardId && saveCard === undefined) {
+      setPendingPaymentArgs({ amount, paymentMode });
       setShowSaveCardDialog(true);
       return;
     }
 
-    // Proceed directly for non-Areeba or saved card selection
-    await executeOrder(false);
+    const socketInstance = SocketService.getInstance();
+    const payload = {
+      type: 'addPayment',
+      data: {
+        tableName: user.branchTable,
+        paymentMode,
+        amount,
+        paymentMethod: getSocketPaymentMethod(selectedMethod?.alias),
+        paymentMethodId: selectedPaymentMethodId,
+        ...(saveCard !== undefined ? { saveCard } : {}),
+        ...(selectedSavedCardId ? { usersPaymentMethodsId: selectedSavedCardId } : {}),
+      },
+    };
+    console.log('addPayment payload:', payload);
+    socketInstance.emit('message', payload, (response: any) => {
+      console.log('addPayment response:', response);
+      if (response && response.success === false) {
+        setPaymentErrorMessage(response.message || 'Payment failed');
+        return;
+      }
+
+      // If the server returns a paymentUrl, open the WebView
+      if (response?.paymentUrl) {
+        setPaymentWebViewUrl(response.paymentUrl);
+      }
+    });
   };
 
   useEffect(() => {
@@ -429,16 +390,12 @@ const DineInCheckoutScreen = () => {
   const paymentDisplay = getSelectedPaymentDisplay();
 
   // Payment WebView callbacks
-  const handlePaymentSuccess = (_orderId: number | null, successPaymentId: number) => {
+  const handlePaymentSuccess = () => {
     setPaymentWebViewUrl(null);
-    setPaymentId(null);
-    setIsWaitingForOrder(true);
-    setPendingPaymentId(successPaymentId);
   };
 
-  const handlePaymentFailure = (_paymentId: number) => {
+  const handlePaymentFailure = () => {
     setPaymentWebViewUrl(null);
-    setPaymentId(null);
     Toast.show({
       type: 'error',
       text1: 'Payment failed',
@@ -448,61 +405,16 @@ const DineInCheckoutScreen = () => {
     });
   };
 
-  // Mock ordered items grouped by user — will be replaced with real data later
   const currencySymbol = data?.currency?.symbol ?? '$';
 
-  const orderedItemsByUser = [
-    {
-      userName: 'Najib S.',
-      total: 14,
-      items: [
-        {
-          quantity: 1, name: 'Spiel burger', price: 12,
-          modifier_groups: [
-            {
-              id: 1,
-              name: 'Cooking',
-              modifier_items: [{ id: 1, name: 'Medium rare', price: null, quantity: 1, total_price: 0, plu: '' }],
-            },
-            {
-              id: 2,
-              name: 'Extra toppings',
-              modifier_items: [
-                { id: 2, name: 'Cheddar cheese', price: 1.50, quantity: 1, total_price: 1.50, plu: '' },
-                { id: 3, name: 'Jalapeños', price: 1.00, quantity: 1, total_price: 1.00, plu: '' },
-              ],
-            },
-          ],
-        },
-        { quantity: 1, name: 'Diet Pepsi', price: 2 },
-      ],
-    },
-    {
-      userName: 'Charles D.',
-      total: 23,
-      items: [
-        {
-          quantity: 1, name: 'Queens burger', price: 14.75,
-          modifier_groups: [
-            {
-              id: 3,
-              name: 'Sauce',
-              modifier_items: [{ id: 4, name: 'BBQ sauce', price: null, quantity: 1, total_price: 0, plu: '' }],
-            },
-          ],
-        },
-        { quantity: 1, name: 'Half quinoa strawberry and co', price: 8.25 },
-      ],
-    },
-    {
-      userName: 'Mark B.',
-      total: 16.50,
-      items: [
-        { quantity: 1, name: 'Steak sandwich', price: 16.50 },
-        { quantity: 1, name: 'Half quinoa strawberry and co', price: 8.25 },
-      ],
-    },
-  ];
+  const orderedItemsByUser = data?.ordered_items ?? [];
+
+  // Compute payment values locally from checkout data
+  const finalTotal = parseFloat(data?.summary?.final_total ?? '0');
+  const remainingAmount = tableBill?.remainingToPay ?? finalTotal;
+  const totalPersons = orderedItemsByUser.length;
+  const myOrderTotal = orderedItemsByUser.length > 0 ? orderedItemsByUser[0].total : 0;
+  const divideBillAmount = totalPersons > 0 ? (remainingAmount / totalPersons) : 0;
 
   // Build flat items array for PartialPaymentSheet
   // First user group is the current user (isMyItem = true)
@@ -519,6 +431,7 @@ const DineInCheckoutScreen = () => {
     return flatItems;
   }, [orderedItemsByUser]);
 
+
   return (
     <>
       <KeyboardAvoidingView
@@ -533,78 +446,86 @@ const DineInCheckoutScreen = () => {
             <View style={styles.boxContainer}>
               <View style={styles.orderedItemsHeader}>
                 <Text style={styles.boxContainerTitle}>Ordered items</Text>
-                <TouchableOpacity
-                  style={styles.viewAllButton}
-                  activeOpacity={0.7}
-                  onPress={() => {
-                    const toExpanded = !isOrderedItemsExpanded;
-                    setIsOrderedItemsExpanded(toExpanded);
-                    Animated.timing(orderedItemsHeight, {
-                      toValue: toExpanded ? orderedItemsContentHeight : COLLAPSED_HEIGHT,
-                      duration: 300,
-                      useNativeDriver: false,
-                    }).start();
-                  }}
-                >
-                  <Text style={styles.viewAllButtonText}>
-                    {isOrderedItemsExpanded ? 'Collapse' : 'View all'}
-                  </Text>
-                </TouchableOpacity>
+                {orderedItemsByUser.length > 0 && (
+                  <TouchableOpacity
+                    style={styles.viewAllButton}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      const toExpanded = !isOrderedItemsExpanded;
+                      setIsOrderedItemsExpanded(toExpanded);
+                      Animated.timing(orderedItemsHeight, {
+                        toValue: toExpanded ? orderedItemsContentHeight : COLLAPSED_HEIGHT,
+                        duration: 300,
+                        useNativeDriver: false,
+                      }).start();
+                    }}
+                  >
+                    <Text style={styles.viewAllButtonText}>
+                      {isOrderedItemsExpanded ? 'Collapse' : 'View all'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
 
-              <Animated.View style={{ maxHeight: orderedItemsHeight, overflow: 'hidden' }}>
-                <View onLayout={(e) => {
-                  const height = e.nativeEvent.layout.height;
-                  if (height > 0) setOrderedItemsContentHeight(height);
-                }}>
-                  {orderedItemsByUser.map((userGroup, groupIndex) => (
-                    <View
-                      key={groupIndex}
-                      style={styles.orderedUserCard}
-                    >
-                      <View style={styles.orderedUserHeader}>
-                        <Text style={styles.orderedUserName}>{userGroup.userName}</Text>
-                        <Text style={styles.orderedUserTotal}>{currencySymbol} {userGroup.total}</Text>
-                      </View>
-                      {userGroup.items.map((item, itemIndex) => (
-                        <View
-                          key={itemIndex}
-                          style={[
-                            styles.orderedItemContainer,
-                            itemIndex < userGroup.items.length - 1 && styles.orderedItemBorder,
-                          ]}
-                        >
-                          <View style={styles.orderedItemRow}>
-                            <View style={styles.orderedItemLeft}>
-                              <Text style={styles.orderedItemQuantity}>{item.quantity}</Text>
-                              <Text style={styles.orderedItemName}>{item.name}</Text>
-                            </View>
-                            <Text style={styles.orderedItemPrice}>{currencySymbol} {item.price}</Text>
-                          </View>
-                          {item.modifier_groups?.map((modGroup) => (
-                            <View key={modGroup.id} style={styles.modifierGroup}>
-                              <Text style={styles.modifierGroupName}>{modGroup.name}</Text>
-                              {modGroup.modifier_items.map((modItem) => (
-                                <View key={modItem.id} style={styles.modifierItemRow}>
-                                  <View style={styles.orderedItemLeft}>
-                                    {modItem.quantity > 1 ? (
-                                      <Text style={styles.modifierItemQuantity}>{modItem.quantity}</Text>
-                                    ) : null}
-                                    <Text style={styles.modifierItemName}>{modItem.name}</Text>
-                                  </View>
-                                  {modItem.price && modItem.price > 0 ? (
-                                    <Text style={styles.modifierItemPrice}>{currencySymbol} {modItem.price}</Text>
-                                  ) : null}
-                                </View>
-                              ))}
-                            </View>
-                          ))}
+              {orderedItemsByUser.length === 0 ? (
+                <Text style={styles.emptyOrderedItemsText}>
+                  No items have been ordered yet.
+                </Text>
+              ) : (
+                <Animated.View style={{ maxHeight: orderedItemsHeight, overflow: 'hidden' }}>
+                  <View onLayout={(e) => {
+                    const height = e.nativeEvent.layout.height;
+                    if (height > 0) setOrderedItemsContentHeight(height);
+                  }}>
+                    {orderedItemsByUser.map((userGroup, groupIndex) => (
+                      <View
+                        key={groupIndex}
+                        style={styles.orderedUserCard}
+                      >
+                        <View style={styles.orderedUserHeader}>
+                          <Text style={styles.orderedUserName}>{userGroup.user_name}</Text>
+                          <Text style={styles.orderedUserTotal}>{currencySymbol} {userGroup.total}</Text>
                         </View>
-                      ))}
-                    </View>
-                  ))}
-                </View>
-              </Animated.View>
+                        {userGroup.items.map((item, itemIndex) => (
+                          <View
+                            key={itemIndex}
+                            style={[
+                              styles.orderedItemContainer,
+                              itemIndex < userGroup.items.length - 1 && styles.orderedItemBorder,
+                            ]}
+                          >
+                            <View style={styles.orderedItemRow}>
+                              <View style={styles.orderedItemLeft}>
+                                <Text style={styles.orderedItemQuantity}>{item.quantity}</Text>
+                                <Text style={styles.orderedItemName}>{item.name}</Text>
+                              </View>
+                              <Text style={styles.orderedItemPrice}>{currencySymbol} {(item.quantity * item.price).toFixed(2)}</Text>
+                            </View>
+                            {item.modifier_groups?.map((modGroup) => (
+                              <View key={modGroup.id} style={styles.modifierGroup}>
+                                <Text style={styles.modifierGroupName}>{modGroup.name}</Text>
+                                {modGroup.modifier_items.map((modItem) => (
+                                  <View key={modItem.id} style={styles.modifierItemRow}>
+                                    <View style={styles.orderedItemLeft}>
+                                      {modItem.quantity > 1 ? (
+                                        <Text style={styles.modifierItemQuantity}>{modItem.quantity}</Text>
+                                      ) : null}
+                                      <Text style={styles.modifierItemName}>{modItem.name}</Text>
+                                    </View>
+                                    {modItem.price && modItem.price > 0 ? (
+                                      <Text style={styles.modifierItemPrice}>{currencySymbol} {modItem.price}</Text>
+                                    ) : null}
+                                  </View>
+                                ))}
+                              </View>
+                            ))}
+                          </View>
+                        ))}
+                      </View>
+                    ))}
+                  </View>
+                </Animated.View>
+              )}
             </View>
 
             {/* Promo Code - Compact Display */}
@@ -760,14 +681,19 @@ const DineInCheckoutScreen = () => {
                   : undefined
               }
               tips={
-                (selectedTip || (isCustomTipActive && customTip))
+                data?.summary?.tips_amount != null && parseFloat(String(data.summary.tips_amount)) > 0
                   ? {
-                    value: selectedTip ?? parseInt(customTip, 10) ?? 0,
+                    value: `${currencySymbol} ${parseFloat(String(data.summary.tips_amount)).toFixed(2)}`,
                     onPress: () => { },
                   }
                   : undefined
               }
-              isLoading={isLoading}
+              remainingAmount={
+                tableBill?.remainingToPay != null
+                  ? `${currencySymbol} ${tableBill.remainingToPay.toFixed(2)}`
+                  : undefined
+              }
+              isLoading={isFetching}
               canEdit={true}
             />
 
@@ -798,27 +724,47 @@ const DineInCheckoutScreen = () => {
               )}
             </View>
 
-            {data?.dinein_payment?.payment_handled_by ? (
-              <Text style={styles.cardNoteText}>
-                Currently being handled by{' '}
-                <Text style={{ fontFamily: 'Poppins-Bold' }}>
-                  {(() => {
-                    const parts = data.dinein_payment.payment_handled_by.trim().split(/\s+/);
-                    if (parts.length > 1) {
-                      return `${parts[0]} ${parts[1][0]}.`;
-                    }
-                    return parts[0];
-                  })()}
-                </Text>
-              </Text>
-            ) : (
+            {/* Bill Payments Card */}
+            {tableBill && tableBill.payments.length > 0 && (
+              <View style={styles.boxContainer}>
+                <Text style={styles.boxContainerTitle}>Payments</Text>
+                {tableBill.payments.map((payment, index) => {
+                  const statusColor =
+                    payment.status === 'SUCCEEDED' ? COLORS.secondaryColor
+                      : payment.status === 'FAILED' || payment.status === 'CANCELLED' ? COLORS.primaryColor
+                        : COLORS.foregroundColor;
+
+                  return (
+                    <View key={`${payment.uuid}_${index}`} style={styles.billPaymentRow}>
+                      <View style={styles.billPaymentInfo}>
+                        <Text style={styles.billPaymentName}>{payment.name}</Text>
+                        <Text style={styles.billPaymentDetail}>
+                          {payment.paymentMode ?? '—'} · {payment.paymentMethod}
+                        </Text>
+                      </View>
+                      <View style={styles.billPaymentRight}>
+                        <Text style={styles.billPaymentAmount}>
+                          {payment.amount != null ? `${currencySymbol}${payment.amount}` : '—'}
+                        </Text>
+                        <View style={[styles.billStatusBadge, { backgroundColor: statusColor + '18' }]}>
+                          <Text style={[styles.billStatusText, { color: statusColor }]}>
+                            {payment.status ?? 'PENDING'}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+
+            {orderedItemsByUser.length > 0 ? (
               <View style={{ gap: 10 }}>
                 <Button
-                  isLoading={isSubmitLoading || isWaitingForOrder}
-                  onPress={handlerOrder}
-                  disabled={!!(promoCode && promoError) || !!(couponCode && couponError)}
+                  onPress={() => emitPayment(remainingAmount, 'FULL')}
+                  disabled={!canPayBill}
                 >
-                  <Text style={{ fontFamily: 'Poppins-Regular' }}>Pay all bill  </Text><Text style={{ fontFamily: 'Poppins-Bold' }}>{currencySymbol}{data?.dinein_payment?.pay_all ?? ''}</Text>
+                  <Text style={{ fontFamily: 'Poppins-Regular' }}>{tableBill?.payments?.some(p => p.status === 'SUCCEEDED') ? 'Pay the rest of the bill' : 'Pay all bill'}  </Text><Text style={{ fontFamily: 'Poppins-Bold' }}>{currencySymbol}{remainingAmount.toFixed(2)}</Text>
                 </Button>
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <Button
@@ -827,10 +773,10 @@ const DineInCheckoutScreen = () => {
                       setPartialPaymentInitialMode('myOrder');
                       partialPaymentSheetRef.current?.expand();
                     }}
-                    disabled={!!(promoCode && promoError) || !!(couponCode && couponError)}
+                    disabled={!canPayBill}
                     style={{ flex: 1 }}
                   >
-                    <Text style={{ fontFamily: 'Poppins-Regular' }}>Pay my order  </Text><Text style={{ fontFamily: 'Poppins-Bold' }}>{currencySymbol}{data?.dinein_payment?.pay_my_order ?? ''}</Text>
+                    <Text style={{ fontFamily: 'Poppins-Regular' }}>Pay my order  </Text><Text style={{ fontFamily: 'Poppins-Bold' }}>{currencySymbol}{myOrderTotal.toFixed(2)}</Text>
                   </Button>
                   <Button
                     variant="outline"
@@ -838,23 +784,26 @@ const DineInCheckoutScreen = () => {
                       setPartialPaymentInitialMode('divideBill');
                       partialPaymentSheetRef.current?.expand();
                     }}
-                    disabled={!!(promoCode && promoError) || !!(couponCode && couponError)}
+                    disabled={!canPayBill}
                     style={{ flex: 1 }}
                   >
-                    <Text style={{ fontFamily: 'Poppins-Regular' }}>Divide bill by {data?.dinein_payment?.divide_bill?.persons ?? orderedItemsByUser.length}  </Text><Text style={{ fontFamily: 'Poppins-Bold' }}>{currencySymbol}{data?.dinein_payment?.divide_bill?.amount ?? ''}</Text>
+                    <Text style={{ fontFamily: 'Poppins-Regular' }}>Divide bill by {totalPersons}  </Text><Text style={{ fontFamily: 'Poppins-Bold' }}>{currencySymbol}{divideBillAmount.toFixed(2)}</Text>
                   </Button>
                 </View>
                 <TouchableOpacity
                   style={{ alignItems: 'center', paddingVertical: 8 }}
                   activeOpacity={0.7}
-                  onPress={() => partialPaymentSheetRef.current?.expand()}
+                  onPress={() => canPayBill && partialPaymentSheetRef.current?.expand()}
+                  disabled={!canPayBill}
                 >
-                  <Text style={{ fontFamily: 'Poppins-Medium', fontSize: 14, color: COLORS.primaryColor, textDecorationLine: 'underline' }}>
+                  <Text style={{ fontFamily: 'Poppins-Medium', fontSize: 14, color: canPayBill ? COLORS.primaryColor : COLORS.foregroundColor, textDecorationLine: 'underline' }}>
                     More payment options
                   </Text>
                 </TouchableOpacity>
               </View>
-            )}
+            ) : null}
+
+
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -1094,6 +1043,8 @@ const DineInCheckoutScreen = () => {
         </BottomSheetView>
       </DynamicSheet>
 
+
+
       {/* Save Card Confirmation Dialog */}
       <Modal
         visible={showSaveCardDialog}
@@ -1101,7 +1052,10 @@ const DineInCheckoutScreen = () => {
         animationType="fade"
         onRequestClose={() => {
           setShowSaveCardDialog(false);
-          executeOrder(false);
+          if (pendingPaymentArgs) {
+            emitPayment(pendingPaymentArgs.amount, pendingPaymentArgs.paymentMode, false);
+            setPendingPaymentArgs(null);
+          }
         }}
       >
         <View style={styles.dialogOverlay}>
@@ -1124,7 +1078,10 @@ const DineInCheckoutScreen = () => {
                 style={styles.dialogButtonOutline}
                 onPress={() => {
                   setShowSaveCardDialog(false);
-                  executeOrder(false);
+                  if (pendingPaymentArgs) {
+                    emitPayment(pendingPaymentArgs.amount, pendingPaymentArgs.paymentMode, false);
+                    setPendingPaymentArgs(null);
+                  }
                 }}
               >
                 <Text style={styles.dialogButtonOutlineText}>No, thanks</Text>
@@ -1133,7 +1090,10 @@ const DineInCheckoutScreen = () => {
                 style={styles.dialogButtonFilled}
                 onPress={() => {
                   setShowSaveCardDialog(false);
-                  executeOrder(true);
+                  if (pendingPaymentArgs) {
+                    emitPayment(pendingPaymentArgs.amount, pendingPaymentArgs.paymentMode, true);
+                    setPendingPaymentArgs(null);
+                  }
                 }}
               >
                 <Text style={styles.dialogButtonFilledText}>Yes, save</Text>
@@ -1155,19 +1115,28 @@ const DineInCheckoutScreen = () => {
       <PartialPaymentSheet
         ref={partialPaymentSheetRef}
         total={parseFloat(data?.summary?.final_total ?? '0')}
+        remainingAmount={remainingAmount}
         currency={currencySymbol}
         currencyCode={data?.currency?.name ?? 'USD'}
-        myOrderTotal={parseFloat(data?.dinein_payment?.pay_my_order ?? '0')}
+        myOrderTotal={myOrderTotal}
         items={partialPaymentItems}
-        totalPersons={data?.dinein_payment?.divide_bill?.persons ?? orderedItemsByUser.length}
+        totalPersons={totalPersons}
         initialMode={partialPaymentInitialMode}
         onPay={(amount, mode, selectedItems) => {
-          // TODO: handle partial payment with amount, mode, and selectedItems
+          emitPayment(amount, getSocketPaymentMode(mode));
           partialPaymentSheetRef.current?.close();
         }}
         onCancel={() => {
           partialPaymentSheetRef.current?.close();
         }}
+      />
+
+      {/* Payment Error Popup */}
+      <InfoPopup
+        visible={!!paymentErrorMessage}
+        title="Payment Error"
+        message={paymentErrorMessage ?? ''}
+        onClose={() => setPaymentErrorMessage(null)}
       />
     </>
   );
@@ -1294,6 +1263,8 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#1A1F71',
   },
+
+
   // Save card dialog
   dialogOverlay: {
     flex: 1,
@@ -1428,6 +1399,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.foregroundColor,
   },
+  emptyOrderedItemsText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: COLORS.foregroundColor,
+    paddingVertical: 16,
+  },
   // Ordered items styles
   orderedItemsHeader: {
     flexDirection: 'row',
@@ -1541,5 +1518,47 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
     color: COLORS.foregroundColor,
+  },
+  // Bill payments styles
+  billPaymentRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: `${COLORS.foregroundColor}15`,
+  },
+  billPaymentInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  billPaymentName: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: COLORS.darkColor,
+  },
+  billPaymentDetail: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: COLORS.foregroundColor,
+  },
+  billPaymentRight: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  billPaymentAmount: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 14,
+    color: COLORS.darkColor,
+  },
+  billStatusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  billStatusText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 10,
+    textTransform: 'capitalize',
   },
 });

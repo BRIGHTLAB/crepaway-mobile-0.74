@@ -11,7 +11,7 @@ import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { COLORS } from '../../theme';
 
 interface PaymentWebViewMessage {
-    action: 'track_order' | 'back_to_cart';
+    action: 'track_order' | 'back_to_cart' | 'success' | 'failed';
     order_id?: number | null;
     payment_id: number;
 }
@@ -36,11 +36,11 @@ const PaymentWebViewModal: React.FC<PaymentWebViewModalProps> = ({
             const data: PaymentWebViewMessage = JSON.parse(event.nativeEvent.data);
             console.log('PaymentWebView message received:', data);
 
-            if (data.action === 'track_order') {
-                // Payment succeeded - navigate to order tracking
+            if (data.action === 'track_order' || data.action === 'success') {
+                // Payment succeeded
                 onPaymentSuccess(data.order_id ?? null, data.payment_id);
-            } else if (data.action === 'back_to_cart') {
-                // Payment failed or cancelled - return to cart
+            } else if (data.action === 'back_to_cart' || data.action === 'failed') {
+                // Payment failed or cancelled
                 onPaymentFailure(data.payment_id);
             }
         } catch (error) {

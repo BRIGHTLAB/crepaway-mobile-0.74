@@ -25,23 +25,23 @@ import { useSelector } from 'react-redux';
 import Icon_Branch from '../../assets/SVG/Icon_Branch';
 import Icon_Checkout from '../../assets/SVG/Icon_Checkout';
 import Icon_Credit_Card from '../../assets/SVG/Icon_Credit_Card';
-import Icon_Location from '../../assets/SVG/Icon_Location';
 import Icon_Delete from '../../assets/SVG/Icon_Delete';
+import Icon_Location from '../../assets/SVG/Icon_Location';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
-import { useGetCheckoutQuery, usePlaceOrderMutation, useGetPaymentMethodsQuery, useLazyGetPaymentStatusQuery, useGetSavedCardsQuery, useDeleteSavedCardMutation } from '../api/checkoutApi';
+import { useDeleteSavedCardMutation, useGetCheckoutQuery, useGetPaymentMethodsQuery, useGetSavedCardsQuery, useLazyGetPaymentStatusQuery, usePlaceOrderMutation } from '../api/checkoutApi';
 import PaymentWebViewModal from '../components/Checkout/PaymentWebViewModal';
 import TotalSection from '../components/Menu/TotalSection';
 import DynamicSheet from '../components/Sheets/DynamicSheet';
+import BottomSheetInput from '../components/UI/BottomSheetInput';
 import Button from '../components/UI/Button';
 import DateInput from '../components/UI/DateInput';
 import Input from '../components/UI/Input';
 import RadioButton from '../components/UI/RadioButton';
-import BottomSheetInput from '../components/UI/BottomSheetInput';
 import { DeliveryTakeawayStackParamList } from '../navigation/DeliveryTakeawayStack';
 import {
   clearCart,
-  setPromoCode as setReduxPromoCode,
   setCouponCode as setReduxCouponCode,
+  setPromoCode as setReduxPromoCode,
 } from '../store/slices/cartSlice';
 import { RootState, useAppDispatch } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
@@ -544,6 +544,8 @@ const CheckoutScreen = () => {
     });
   };
 
+
+  console.log('checkoutdata', data);
   // Get the currently selected payment method object
   const selectedPaymentMethod = paymentMethodsData?.data?.find(m => m.id === selectedPaymentMethodId);
 

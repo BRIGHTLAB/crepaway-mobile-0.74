@@ -14,7 +14,7 @@ export type DineInStackParamList = {
   ScanTable: undefined;
   Pending: { socketUrl: string };
   Table: { socketUrl: string };
-  Checkout: undefined;
+  Checkout: { orderId: number };
   AddCard: undefined;
   OrderStack:
   | {
@@ -64,7 +64,7 @@ const DineInStack = () => {
         name="Checkout"
         component={DineInCheckoutScreen}
         options={{
-          headerTitle: '',
+          headerTitle: 'Checkout',
           headerBackVisible: false,
           headerLeft: () => <CustomHeader />,
           headerTitleAlign: 'center',

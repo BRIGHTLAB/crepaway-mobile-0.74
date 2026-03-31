@@ -41,6 +41,7 @@ export type OrderItem = {
 
 type PartialPaymentSheetProps = {
     total: number;
+    remainingAmount: number;
     currency: string;
     currencyCode: string;
     myOrderTotal: number;
@@ -52,7 +53,7 @@ type PartialPaymentSheetProps = {
 };
 
 const PartialPaymentSheet = forwardRef<BottomSheet, PartialPaymentSheetProps>(
-    ({ total, currency, currencyCode, myOrderTotal, items, totalPersons, initialMode, onPay, onCancel }, ref) => {
+    ({ total, remainingAmount, currency, currencyCode, myOrderTotal, items, totalPersons, initialMode, onPay, onCancel }, ref) => {
         const { bottom } = useSafeAreaInsets();
         const [selectedMode, setSelectedMode] = useState<PaymentMode>(initialMode ?? 'myOrder');
         const [customAmount, setCustomAmount] = useState('');
@@ -98,7 +99,7 @@ const PartialPaymentSheet = forwardRef<BottomSheet, PartialPaymentSheetProps>(
 
         // Calculate the total price of an item including its modifiers
         const getItemTotalPrice = useCallback((item: OrderItem): number => {
-            let itemTotal = item.price;
+            let itemTotal = item.price * item.quantity;
             if (item.modifier_groups) {
                 item.modifier_groups.forEach(group => {
                     group.modifier_items.forEach(mod => {
@@ -167,11 +168,13 @@ const PartialPaymentSheet = forwardRef<BottomSheet, PartialPaymentSheetProps>(
 
         const isPayDisabled =
             (selectedMode === 'myOrder' && selectedItemsCount === 0) ||
+            (selectedMode === 'myOrder' && selectedItemsTotal > remainingAmount) ||
             (selectedMode === 'custom' &&
                 (customAmount === '' ||
                     isNaN(parseFloat(customAmount)) ||
                     parseFloat(customAmount) <= 0 ||
-                    parseFloat(customAmount) > total));
+                    parseFloat(customAmount) > remainingAmount)) ||
+            (selectedMode === 'divideBill' && ((total / dividePersons) * personsPayingFor) > remainingAmount);
 
         const payAmount = useMemo(() => {
             switch (selectedMode) {
@@ -243,6 +246,16 @@ const PartialPaymentSheet = forwardRef<BottomSheet, PartialPaymentSheetProps>(
                             {currencyCode} {total.toFixed(2)}
                         </Text>
                     </View>
+
+                    {/* Remaining Row */}
+                    {remainingAmount < total && (
+                        <View style={[styles.totalRow, { marginTop: -8 }]}>
+                            <Text style={styles.totalLabel}>Remaining ({currencyCode})</Text>
+                            <Text style={[styles.totalValue, { color: COLORS.primaryColor }]}>
+                                {currencyCode} {remainingAmount.toFixed(2)}
+                            </Text>
+                        </View>
+                    )}
 
                     {/* Option: Pay my order */}
                     <View style={styles.optionRow}>

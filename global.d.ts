@@ -217,27 +217,6 @@ type Notification = {
   is_read: number;
 };
 
-type Checkout = {
-  branch: string;
-  order_type: string;
-  date_added: string;
-  branch_id: number;
-  sub_total: number;
-  delivery_charge: number;
-  points_rewarded: number;
-  summary: {
-    original_sub_total: number;
-    discounted_sub_total: number;
-    delivery_charge: number;
-    final_total: number;
-    points_rewarded: number;
-    promo_code_applied: string | null;
-    total_discount?: number;
-    discount_type?: string;
-    discount_value?: number;
-  };
-};
-
 type WaiterInstruction = {
   id: number;
   name: string;

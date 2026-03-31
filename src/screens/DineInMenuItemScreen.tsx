@@ -1,4 +1,3 @@
-
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
@@ -262,11 +261,20 @@ const DineInMenuItemScreen = ({ }: IProps) => {
     const toastMessage = itemUuid
       ? `${itemData.name} (x${quantity}) updated in order`
       : `${itemData.name} (x${quantity}) added to order`;
+
     Toast.show({
       type: 'success',
       text1: toastMessage,
-      visibilityTime: 3000,
+      visibilityTime: 4000,
       position: 'bottom',
+      props: isNewItem
+        ? {
+            onBackToTable: () => {
+              // Pop the entire OrderStack to go back to Table screen
+              navigation.getParent()?.goBack();
+            },
+          }
+        : undefined,
     });
 
     if (isNewItem) {
@@ -277,7 +285,7 @@ const DineInMenuItemScreen = ({ }: IProps) => {
     setSpecialInstruction('');
     setSelectedModifiers([]);
 
-    // Navigate back
+    // Navigate back to menu
     navigation.goBack();
   };
 

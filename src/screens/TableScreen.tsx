@@ -48,7 +48,7 @@ import KingActionsSheet, {
 import WaiterInstructionsSheet from '../components/Sheets/DineIn/WaiterInstructionsSheet';
 import Button from '../components/UI/Button';
 import { DineInStackParamList } from '../navigation/DineInStack';
-import { setIsTableLocked } from '../store/slices/dineInSlice';
+import { setCanPayBill, setDineInOrderId, setIsTableLocked, setTableBill, TableBill } from '../store/slices/dineInSlice';
 import {
   setBranchTable,
   setOrderType,
@@ -120,6 +120,9 @@ export type TableUser = {
   isOnline: boolean;
   isKing: boolean;
   isReady?: boolean;
+  canPayBill: boolean;
+  canOrderReady: boolean;
+  canQuickOrder: boolean;
 };
 
 export type TableUsers = Record<string, TableUser>;
@@ -140,13 +143,17 @@ export type TableWaiters = Record<string, TableWaiter>;
 
 export type TableBannedUsers = Record<string, Pick<TableUser, 'id' | 'name' | 'image_url'>>;
 
+export type { TableBill, TableBillPayment } from '../store/slices/dineInSlice';
+
 type TableUpdateMessage = {
+  orderId: number | null;
   users: TableUsers,
   waiters: TableWaiters,
   pendingJoinRequests: PendingJoinRequests,
   items: OrderedItems,
   isLocked: boolean,
   bannedUsers: TableBannedUsers;
+  bill?: TableBill | null;
 }
 
 type TableScreenNavigationProp = NativeStackNavigationProp<
@@ -186,6 +193,7 @@ const TableScreen = () => {
   const [bannedUsers, setBannedUsers] = useState<TableBannedUsers>({});
   const [showBannedPopup, setShowBannedPopup] = useState(false);
   const [showTableClosedPopup, setShowTableClosedPopup] = useState(false);
+  const [showQuickOrderConfirm, setShowQuickOrderConfirm] = useState(false);
   const [selectedPendingUser, setSelectedPendingUser] = useState<TableUser | null>(null);
 
   // Expanded state for table items groups (collapsed by default)
@@ -193,6 +201,7 @@ const TableScreen = () => {
   const [myItemsExpanded, setMyItemsExpanded] = useState(false);
 
   const isTableLocked = useSelector((state: RootState) => state.dineIn.isTableLocked);
+  const orderId = useSelector((state: RootState) => state.dineIn.orderId);
   const previousTableLockRef = useRef<boolean | null>(null);
   const previousOrderedItemsRef = useRef<OrderedItems | null>(null);
   const previousIsKingRef = useRef<boolean | null>(null);
@@ -204,6 +213,8 @@ const TableScreen = () => {
 
   const isCurrentUserKing = tableUsers?.[currentUser.id ?? '']?.isKing;
   const isReady = tableUsers?.[currentUser.id ?? '']?.isReady ?? false;
+  const canOrderReady = tableUsers?.[currentUser.id ?? '']?.canOrderReady ?? false;
+  const canQuickOrder = tableUsers?.[currentUser.id ?? '']?.canQuickOrder ?? false;
 
   // Empty state crown animations
   const outerRotation = useSharedValue(0);
@@ -282,7 +293,7 @@ const TableScreen = () => {
   };
 
   const handleOpenWaiterSheet = () => {
-    waiterSheetRef.current?.expand();
+    waiterSheetRef.current?.snapToIndex(0);
   };
 
   const handleViewMenu = () => {
@@ -379,6 +390,12 @@ const TableScreen = () => {
 
       if (message.users) {
         setTableUsers(message.users);
+
+        // Dispatch current user's canPayBill to Redux for checkout screen
+        if (currentUser?.id) {
+          const currentUserData = message.users[currentUser.id];
+          dispatch(setCanPayBill(currentUserData?.canPayBill ?? false));
+        }
       }
 
       if (message.items) {
@@ -402,6 +419,14 @@ const TableScreen = () => {
 
       if (message.bannedUsers) {
         setBannedUsers(message.bannedUsers);
+      }
+
+      if (message.bill !== undefined) {
+        dispatch(setTableBill(message.bill ?? null));
+      }
+
+      if (message.orderId !== undefined) {
+        dispatch(setDineInOrderId(message.orderId));
       }
     });
 
@@ -784,22 +809,27 @@ const TableScreen = () => {
         <Text style={styles.headerTitle}>Table</Text>
 
         <View style={styles.headerRightButtons}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Checkout')}
-            style={styles.headerIconButton}
-            activeOpacity={0.7}
-          >
-            <Icon_Checkout width={20} height={16} color={COLORS.primaryColor} />
-          </TouchableOpacity>
+          <View style={{ opacity: orderId == null ? 0.4 : 1 }}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Checkout', { orderId: orderId! })}
+              style={styles.headerIconButton}
+              activeOpacity={0.7}
+              disabled={orderId == null}
+            >
+              <Icon_Checkout width={20} height={16} color={orderId == null ? COLORS.foregroundColor : COLORS.primaryColor} />
+            </TouchableOpacity>
+          </View>
 
-          <TouchableOpacity
-            onPress={handleOpenWaiterSheet}
-            style={styles.headerIconButton}
-            disabled={Object.keys(tableWaiters).length === 0}
-            activeOpacity={0.7}
-          >
-            <Icon_Bell width={20} height={18} color={Object.keys(tableWaiters).length === 0 ? COLORS.foregroundColor : COLORS.primaryColor} />
-          </TouchableOpacity>
+          <View style={{ opacity: Object.keys(tableWaiters).length === 0 ? 0.4 : 1 }}>
+            <TouchableOpacity
+              onPress={handleOpenWaiterSheet}
+              style={styles.headerIconButton}
+              disabled={Object.keys(tableWaiters).length === 0}
+              activeOpacity={0.7}
+            >
+              <Icon_Bell width={20} height={18} color={Object.keys(tableWaiters).length === 0 ? COLORS.foregroundColor : COLORS.primaryColor} />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -1260,23 +1290,15 @@ const TableScreen = () => {
                   onPress={() => handleSetReady(true)}
                   variant="primary"
                   style={{ flex: 1 }}
+                  disabled={!canOrderReady}
                 >
                   I'm ready
                 </Button>
                 <Button
-                  onPress={() => {
-                    const itemUuids = myNewItems.map(item => item.uuid);
-                    socketInstance.emit('message', {
-                      type: 'setItemsQuickOrder',
-                      data: {
-                        tableName: userState.branchTable,
-                        itemUuids,
-                      },
-                    });
-                  }}
+                  onPress={() => setShowQuickOrderConfirm(true)}
                   variant="outline"
                   style={{ flex: 1 }}
-                  disabled={myNewItems.length === 0}
+                  disabled={!canQuickOrder}
                 >
                   Quick Order
                 </Button>
@@ -1317,6 +1339,32 @@ const TableScreen = () => {
           />
         );
       })()}
+
+      {/* TODO: REMOVE - Testing only: Submit to kitchen test button */}
+      <TouchableOpacity
+        onPress={() => {
+          socketInstance.emit('message', {
+            type: 'submitToKitchenTest',
+            data: {
+              tableName: userState.branchTable,
+            },
+          }, (response: any) => {
+            console.log('submitToKitchenTest response:', response);
+          });
+        }}
+        style={{
+          position: 'absolute',
+          bottom: 100,
+          right: 20,
+          backgroundColor: 'red',
+          paddingHorizontal: 12,
+          paddingVertical: 8,
+          borderRadius: 8,
+          zIndex: 999,
+        }}
+      >
+        <Text style={{ color: 'white', fontFamily: 'Poppins-Medium', fontSize: 12 }}>Submit Test</Text>
+      </TouchableOpacity>
 
       {/* King Actions Popup */}
       <KingActionsSheet
@@ -1372,6 +1420,28 @@ const TableScreen = () => {
         onConfirm={() => {
           if (selectedPendingUser) handleApproveUser(selectedPendingUser);
           setSelectedPendingUser(null);
+        }}
+      />
+
+      {/* Quick Order Confirmation Popup */}
+      <ConfirmationPopup
+        visible={showQuickOrderConfirm}
+        title="Quick Order"
+        message="Are you sure you want to quick order?"
+        confirmText="Yes"
+        cancelText="No"
+        cancelVariant="outline"
+        onClose={() => setShowQuickOrderConfirm(false)}
+        onConfirm={() => {
+          setShowQuickOrderConfirm(false);
+          const itemUuids = myNewItems.map(item => item.uuid);
+          socketInstance.emit('message', {
+            type: 'setItemsQuickOrder',
+            data: {
+              tableName: userState.branchTable,
+              itemUuids,
+            },
+          });
         }}
       />
     </View>

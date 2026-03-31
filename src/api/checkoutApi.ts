@@ -15,6 +15,8 @@ export interface Checkout {
     } | null;
     coupon_discount?: number;
     coupon_error?: string | null;
+    tips_amount?: number;
+    remaining_amount?: string;
   };
   delivery_charge: string;
   points_rewarded: number;
@@ -28,6 +30,38 @@ export interface Checkout {
     };
     payment_handled_by?: string | null;
   };
+}
+
+export interface DineInModifierItem {
+  id: number;
+  name: string;
+  price: number | null;
+  quantity: number;
+  total_price: number;
+  plu: string;
+}
+
+export interface DineInModifierGroup {
+  id: number;
+  name: string;
+  modifier_items: DineInModifierItem[];
+}
+
+export interface DineInOrderItem {
+  quantity: number;
+  name: string;
+  price: number;
+  modifier_groups?: DineInModifierGroup[];
+}
+
+export interface DineInUserOrder {
+  user_name: string;
+  total: number;
+  items: DineInOrderItem[];
+}
+
+export interface DineInCheckout extends Checkout {
+  ordered_items: DineInUserOrder[];
 }
 
 export interface OrderFormData {
@@ -133,6 +167,26 @@ export const checkoutApi = baseApi.injectEndpoints({
       keepUnusedDataFor: 1,
     }),
 
+    getDineInCheckout: builder.query<DineInCheckout, { orderId: number; promoCode: string | void; couponCode?: string | void; tips?: number | null }>({
+      query: ({ orderId, promoCode, couponCode, tips }) => {
+        const params = new URLSearchParams();
+
+        if (promoCode) {
+          params.append('code', promoCode);
+        }
+        if (couponCode) {
+          params.append('coupon_code', couponCode);
+        }
+        if (tips != null && tips > 0) {
+          params.append('tip_percentage', tips.toString());
+        }
+        const queryString = params.toString();
+
+        return `/dine-in/orders/${orderId}/checkout${queryString ? `?${queryString}` : ''}`;
+      },
+      keepUnusedDataFor: 1,
+    }),
+
     getPaymentMethods: builder.query<PaymentMethodsResponse, void>({
       query: () => `/payment_methods`,
       keepUnusedDataFor: 60, // Cache for 60 seconds
@@ -190,6 +244,7 @@ export const checkoutApi = baseApi.injectEndpoints({
 
 export const {
   useGetCheckoutQuery,
+  useGetDineInCheckoutQuery,
   usePlaceOrderMutation,
   useGetPaymentMethodsQuery,
   useLazyGetPaymentStatusQuery,

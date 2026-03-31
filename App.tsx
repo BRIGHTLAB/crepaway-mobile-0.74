@@ -5,10 +5,9 @@ import { PermissionsAndroid, Platform, StyleSheet, Text, TouchableOpacity, View 
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-get-random-values';
 // import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Provider } from 'react-redux';
-import Toast from 'react-native-toast-message';
 import type { ToastConfigParams } from 'react-native-toast-message';
-import Icon_Cart from './assets/SVG/Icon_Cart';
+import Toast from 'react-native-toast-message';
+import { Provider } from 'react-redux';
 import DeleteAnimation from './assets/lotties/Delete.json';
 import i18n from './src/i18n';
 import NavigationStack from './src/navigation/NavigationStack';
@@ -16,9 +15,9 @@ import store, { persistor } from './src/store/store';
 
 import * as Sentry from '@sentry/react-native';
 import { PersistGate } from 'redux-persist/integration/react';
+import Icon_Spine from './assets/SVG/Icon_Spine';
 import ConfirmationPopup from './src/components/Popups/ConfirmationPopup';
 import { COLORS } from './src/theme';
-import Icon_Spine from './assets/SVG/Icon_Spine';
 
 
 
@@ -51,15 +50,21 @@ Sentry.init({
 
 interface ToastProps {
   onViewCart?: () => void;
+  onBackToTable?: () => void;
 }
 
 const toastConfig = {
   success: ({ text1, props, hide }: ToastConfigParams<ToastProps>) => {
-    const { onViewCart } = props || {};
-    
+    const { onViewCart, onBackToTable } = props || {};
+
     const handleViewCart = () => {
       hide();
       onViewCart?.();
+    };
+
+    const handleBackToTable = () => {
+      hide();
+      onBackToTable?.();
     };
 
     return (
@@ -112,6 +117,25 @@ const toastConfig = {
                 fontFamily: 'Poppins-SemiBold',
               }}>
               View Cart
+            </Text>
+          </TouchableOpacity>
+        )}
+        {onBackToTable && (
+          <TouchableOpacity
+            onPress={handleBackToTable}
+            style={{
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              backgroundColor: COLORS.white,
+              borderRadius: 6,
+            }}>
+            <Text
+              style={{
+                color: COLORS.darkColor,
+                fontSize: 12,
+                fontFamily: 'Poppins-SemiBold',
+              }}>
+              View Table
             </Text>
           </TouchableOpacity>
         )}

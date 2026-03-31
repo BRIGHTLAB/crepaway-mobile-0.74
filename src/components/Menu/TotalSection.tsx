@@ -15,9 +15,10 @@ interface IProps {
   discount?: string;
   couponDiscount?: string;
   tips?: {
-    value: number;
+    value: string;
     onPress: () => void;
   };
+  remainingAmount?: string;
   isLoading?: boolean;
   disabled?: boolean;
   orderType?: string;
@@ -36,6 +37,7 @@ const TotalSection = ({
   discount,
   couponDiscount,
   tips,
+  remainingAmount,
   isLoading = false,
   orderType,
   canEdit = false,
@@ -70,6 +72,18 @@ const TotalSection = ({
         </View>
       )}
 
+      {/* Tips */}
+      {tips && (
+        <View style={styles.subTotalContainer}>
+          <Text style={styles.subTotalTitle}>Tips</Text>
+          {isLoading ? (
+            renderSkeleton()
+          ) : (
+            <Text style={styles.subTotalValue}>{tips.value}</Text>
+          )}
+        </View>
+      )}
+
       {/* Points rewarded  */}
       <View style={styles.subTotalContainer}>
         <Text style={styles.subTotalTitle}>Points Rewarded</Text>
@@ -82,21 +96,19 @@ const TotalSection = ({
         )}
       </View>
 
-      {/* Tips */}
-      {tips && (
-        <View style={styles.subTotalContainer}>
-          <Text style={styles.subTotalTitle}>Tips</Text>
-          <Text style={styles.subTotalValue}>{tips.value}%</Text>
-        </View>
-      )}
+
 
       {/* Discount */}
       {discount && (
         <View style={styles.subTotalContainer}>
           <Text style={styles.subTotalTitle}>Discount</Text>
-          <Text style={[styles.subTotalValue, { color: COLORS.secondaryColor }]}>
-            - {discount}
-          </Text>
+          {isLoading ? (
+            renderSkeleton()
+          ) : (
+            <Text style={[styles.subTotalValue, { color: COLORS.secondaryColor }]}>
+              - {discount}
+            </Text>
+          )}
         </View>
       )}
 
@@ -107,6 +119,21 @@ const TotalSection = ({
           <Text style={[styles.subTotalValue, { color: COLORS.secondaryColor }]}>
             - {couponDiscount}
           </Text>
+        </View>
+      )}
+
+
+      {/* Remaining Amount */}
+      {remainingAmount && (
+        <View style={styles.subTotalContainer}>
+          <Text style={styles.subTotalTitle}>Remaining Amount</Text>
+          {isLoading ? (
+            renderSkeleton()
+          ) : (
+            <Text style={[styles.subTotalValue, { color: COLORS.primaryColor }]}>
+              {remainingAmount}
+            </Text>
+          )}
         </View>
       )}
 
@@ -131,6 +158,8 @@ const TotalSection = ({
           )}
         </View>
       )}
+
+
     </View>
   );
 };

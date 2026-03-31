@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     color: COLORS.primaryColor,
   },
   disabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
 });
 
