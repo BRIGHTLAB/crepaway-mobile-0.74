@@ -194,6 +194,7 @@ const TableScreen = () => {
   const [showBannedPopup, setShowBannedPopup] = useState(false);
   const [showTableClosedPopup, setShowTableClosedPopup] = useState(false);
   const [showQuickOrderConfirm, setShowQuickOrderConfirm] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [selectedPendingUser, setSelectedPendingUser] = useState<TableUser | null>(null);
 
   // Expanded state for table items groups (collapsed by default)
@@ -310,17 +311,12 @@ const TableScreen = () => {
       const backHandler = BackHandler.addEventListener(
         'hardwareBackPress',
         () => {
-          dispatch(
-            setOrderType({
-              menuType: null,
-              orderTypeAlias: null,
-            }),
-          );
+          setShowLeaveConfirm(true);
           return true;
         },
       );
       return () => backHandler.remove();
-    }, [dispatch]),
+    }, []),
   );
 
   const handleLeaveTable = () => {
@@ -447,6 +443,12 @@ const TableScreen = () => {
 
     if (!previousTableLockRef.current && isTableLocked) {
       ReactNativeHapticFeedback.trigger('impactHeavy', hapticOptions);
+      Toast.show({
+        type: 'success',
+        text1: 'Table is now locked 🔒',
+        visibilityTime: 4000,
+        position: 'bottom',
+      });
     }
 
     previousTableLockRef.current = isTableLocked;
@@ -798,9 +800,7 @@ const TableScreen = () => {
       {/* Header */}
       <View style={styles.headerContainer}>
         <TouchableOpacity
-          onPress={() => {
-            dispatch(setOrderType({ menuType: null, orderTypeAlias: null }));
-          }}
+          onPress={() => setShowLeaveConfirm(true)}
           style={styles.headerBackButton}
         >
           <Icon_BackArrow width={18} height={18} color={COLORS.darkColor} />
@@ -1290,7 +1290,7 @@ const TableScreen = () => {
                   onPress={() => handleSetReady(true)}
                   variant="primary"
                   style={{ flex: 1 }}
-                  disabled={!canOrderReady}
+                  disabled={!canOrderReady || isTableLocked}
                 >
                   I'm ready
                 </Button>
@@ -1298,7 +1298,7 @@ const TableScreen = () => {
                   onPress={() => setShowQuickOrderConfirm(true)}
                   variant="outline"
                   style={{ flex: 1 }}
-                  disabled={!canQuickOrder}
+                  disabled={!canQuickOrder || isTableLocked}
                 >
                   Quick Order
                 </Button>
@@ -1311,6 +1311,7 @@ const TableScreen = () => {
               variant={myItems.length === 0 ? 'primary' : 'outline'}
               icon={myItems.length === 0 ? undefined : <Icon_Add width={14} height={14} color={COLORS.primaryColor} />}
               style={{ flex: myItems.length === 0 ? undefined : 1 }}
+              disabled={isTableLocked}
             >
               {myItems.length === 0 ? 'Add items' : 'Add more items'}
             </Button>
@@ -1442,6 +1443,21 @@ const TableScreen = () => {
               itemUuids,
             },
           });
+        }}
+      />
+
+      {/* Leave Table Confirmation Popup */}
+      <ConfirmationPopup
+        visible={showLeaveConfirm}
+        title="Leave Table"
+        message="Are you sure you want to leave the table?"
+        confirmText="Yes"
+        cancelText="No"
+        cancelVariant="outline"
+        onClose={() => setShowLeaveConfirm(false)}
+        onConfirm={() => {
+          setShowLeaveConfirm(false);
+          handleLeaveTable();
         }}
       />
     </View>

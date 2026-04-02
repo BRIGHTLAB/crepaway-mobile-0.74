@@ -153,7 +153,7 @@ const OrderedItemCmp = ({
                   fontSize: 16,
                   color: COLORS.darkColor,
                 }}>
-                {item?.quantity > 1 && <Text style={{ color: COLORS.primaryColor, fontFamily: 'Poppins-Bold', fontSize: 16 }}>{item.quantity} </Text>}
+                {item?.quantity > 1 && <Text style={{ color: COLORS.primaryColor, fontFamily: 'Poppins-Bold', fontSize: 15 }}>{item.quantity} </Text>}
                 {item.name}
                 {item.status === 'in-kitchen' && (
                   <Text style={{

@@ -18,6 +18,7 @@ import {
   View,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
+import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import Toast from 'react-native-toast-message';
@@ -191,7 +192,6 @@ const DineInCheckoutScreen = () => {
   });
 
 
-  console.log('checkout', data);
   const { data: paymentMethodsData, isLoading: isPaymentMethodsLoading } = useGetPaymentMethodsQuery();
 
 
@@ -407,24 +407,31 @@ const DineInCheckoutScreen = () => {
 
   const currencySymbol = data?.currency?.symbol ?? '$';
 
-  const orderedItemsByUser = data?.ordered_items ?? [];
+  const orderedItemsByUser = useMemo(() => {
+    const items = data?.ordered_items ?? [];
+    // Sort so current user's group appears first
+    return [...items].sort((a, b) => {
+      if (a.is_current_user && !b.is_current_user) return -1;
+      if (!a.is_current_user && b.is_current_user) return 1;
+      return 0;
+    });
+  }, [data?.ordered_items]);
 
   // Compute payment values locally from checkout data
   const finalTotal = parseFloat(data?.summary?.final_total ?? '0');
   const remainingAmount = tableBill?.remainingToPay ?? finalTotal;
   const totalPersons = orderedItemsByUser.length;
-  const myOrderTotal = orderedItemsByUser.length > 0 ? orderedItemsByUser[0].total : 0;
+  const myUserGroup = orderedItemsByUser.find(g => g.is_current_user);
+  const myOrderTotal = myUserGroup?.total ?? 0;
   const divideBillAmount = totalPersons > 0 ? (remainingAmount / totalPersons) : 0;
 
-  // Build flat items array for PartialPaymentSheet
-  // First user group is the current user (isMyItem = true)
   const partialPaymentItems: OrderItem[] = useMemo(() => {
     const flatItems: OrderItem[] = [];
-    orderedItemsByUser.forEach((userGroup, groupIndex) => {
+    orderedItemsByUser.forEach((userGroup) => {
       userGroup.items.forEach(item => {
         flatItems.push({
           ...item,
-          isMyItem: groupIndex === 0,
+          isMyItem: userGroup.is_current_user,
         });
       });
     });
@@ -472,59 +479,68 @@ const DineInCheckoutScreen = () => {
                   No items have been ordered yet.
                 </Text>
               ) : (
-                <Animated.View style={{ maxHeight: orderedItemsHeight, overflow: 'hidden' }}>
-                  <View onLayout={(e) => {
-                    const height = e.nativeEvent.layout.height;
-                    if (height > 0) setOrderedItemsContentHeight(height);
-                  }}>
-                    {orderedItemsByUser.map((userGroup, groupIndex) => (
-                      <View
-                        key={groupIndex}
-                        style={styles.orderedUserCard}
-                      >
-                        <View style={styles.orderedUserHeader}>
-                          <Text style={styles.orderedUserName}>{userGroup.user_name}</Text>
-                          <Text style={styles.orderedUserTotal}>{currencySymbol} {userGroup.total}</Text>
-                        </View>
-                        {userGroup.items.map((item, itemIndex) => (
-                          <View
-                            key={itemIndex}
-                            style={[
-                              styles.orderedItemContainer,
-                              itemIndex < userGroup.items.length - 1 && styles.orderedItemBorder,
-                            ]}
-                          >
-                            <View style={styles.orderedItemRow}>
-                              <View style={styles.orderedItemLeft}>
-                                <Text style={styles.orderedItemQuantity}>{item.quantity}</Text>
-                                <Text style={styles.orderedItemName}>{item.name}</Text>
-                              </View>
-                              <Text style={styles.orderedItemPrice}>{currencySymbol} {(item.quantity * item.price).toFixed(2)}</Text>
-                            </View>
-                            {item.modifier_groups?.map((modGroup) => (
-                              <View key={modGroup.id} style={styles.modifierGroup}>
-                                <Text style={styles.modifierGroupName}>{modGroup.name}</Text>
-                                {modGroup.modifier_items.map((modItem) => (
-                                  <View key={modItem.id} style={styles.modifierItemRow}>
-                                    <View style={styles.orderedItemLeft}>
-                                      {modItem.quantity > 1 ? (
-                                        <Text style={styles.modifierItemQuantity}>{modItem.quantity}</Text>
-                                      ) : null}
-                                      <Text style={styles.modifierItemName}>{modItem.name}</Text>
-                                    </View>
-                                    {modItem.price && modItem.price > 0 ? (
-                                      <Text style={styles.modifierItemPrice}>{currencySymbol} {modItem.price}</Text>
-                                    ) : null}
-                                  </View>
-                                ))}
-                              </View>
-                            ))}
+                <View style={{ position: 'relative' }}>
+                  <Animated.View style={{ maxHeight: orderedItemsHeight, overflow: 'hidden' }}>
+                    <View onLayout={(e) => {
+                      const height = e.nativeEvent.layout.height;
+                      if (height > 0) setOrderedItemsContentHeight(height);
+                    }}>
+                      {orderedItemsByUser.map((userGroup, groupIndex) => (
+                        <View
+                          key={groupIndex}
+                          style={styles.orderedUserCard}
+                        >
+                          <View style={styles.orderedUserHeader}>
+                            <Text style={styles.orderedUserName}>{userGroup.is_current_user ? 'You' : userGroup.user_name}</Text>
+                            <Text style={styles.orderedUserTotal}>{currencySymbol} {userGroup.total}</Text>
                           </View>
-                        ))}
-                      </View>
-                    ))}
-                  </View>
-                </Animated.View>
+                          {userGroup.items.map((item, itemIndex) => (
+                            <View
+                              key={itemIndex}
+                              style={[
+                                styles.orderedItemContainer,
+                                itemIndex < userGroup.items.length - 1 && styles.orderedItemBorder,
+                              ]}
+                            >
+                              <View style={styles.orderedItemRow}>
+                                <View style={styles.orderedItemLeft}>
+                                  <Text style={styles.orderedItemQuantity}>{item.quantity}</Text>
+                                  <Text style={styles.orderedItemName}>{item.name}</Text>
+                                </View>
+                                <Text style={styles.orderedItemPrice}>{currencySymbol} {(item.quantity * item.price).toFixed(2)}</Text>
+                              </View>
+                              {item.modifier_groups?.map((modGroup) => (
+                                <View key={modGroup.id} style={styles.modifierGroup}>
+                                  <Text style={styles.modifierGroupName}>{modGroup.name}</Text>
+                                  {modGroup.modifier_items.map((modItem) => (
+                                    <View key={modItem.id} style={styles.modifierItemRow}>
+                                      <View style={styles.orderedItemLeft}>
+                                        {modItem.quantity > 1 ? (
+                                          <Text style={styles.modifierItemQuantity}>{modItem.quantity}</Text>
+                                        ) : null}
+                                        <Text style={styles.modifierItemName}>{modItem.name}</Text>
+                                      </View>
+                                      {modItem.price && modItem.price > 0 ? (
+                                        <Text style={styles.modifierItemPrice}>{currencySymbol} {modItem.price}</Text>
+                                      ) : null}
+                                    </View>
+                                  ))}
+                                </View>
+                              ))}
+                            </View>
+                          ))}
+                        </View>
+                      ))}
+                    </View>
+                  </Animated.View>
+                  {!isOrderedItemsExpanded && orderedItemsContentHeight > COLLAPSED_HEIGHT && (
+                    <LinearGradient
+                      colors={['transparent', COLORS.card]}
+                      style={styles.orderedItemsGradient}
+                      pointerEvents="none"
+                    />
+                  )}
+                </View>
               )}
             </View>
 
@@ -1109,6 +1125,17 @@ const DineInCheckoutScreen = () => {
         paymentUrl={paymentWebViewUrl || ''}
         onPaymentSuccess={handlePaymentSuccess}
         onPaymentFailure={handlePaymentFailure}
+        timeoutSeconds={180}
+        onTimeout={() => {
+          setPaymentWebViewUrl(null);
+          Toast.show({
+            type: 'error',
+            text1: 'Payment session expired',
+            text2: 'Your 3-minute payment window has closed. Please try again.',
+            visibilityTime: 5000,
+            position: 'bottom',
+          });
+        }}
       />
 
       {/* Partial Payment Sheet */}
@@ -1411,6 +1438,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 4,
+  },
+  orderedItemsGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 60,
   },
   viewAllButton: {
     flexDirection: 'row',

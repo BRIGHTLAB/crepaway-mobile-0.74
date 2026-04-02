@@ -56,6 +56,7 @@ export interface DineInOrderItem {
 
 export interface DineInUserOrder {
   user_name: string;
+  is_current_user: boolean;
   total: number;
   items: DineInOrderItem[];
 }
