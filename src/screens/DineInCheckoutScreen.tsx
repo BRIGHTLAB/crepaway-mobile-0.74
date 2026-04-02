@@ -98,15 +98,35 @@ const DineInCheckoutScreen = () => {
   const [customTip, setCustomTip] = useState<string>('');
   const [isCustomTipActive, setIsCustomTipActive] = useState(false);
 
+  const emitBillTips = (tips: number | null) => {
+    const socketInstance = SocketService.getInstance();
+    socketInstance.emit('message', {
+      type: 'setBillTips',
+      data: {
+        tableName: user.branchTable,
+        tips: tips ?? 0,
+      },
+    });
+  };
+
+  const debouncedEmitBillTips = useCallback(
+    debounce((tips: number | null) => {
+      emitBillTips(tips);
+    }, 500),
+    []
+  );
+
   const handleTipSelect = (tip: number) => {
     if (selectedTip === tip) {
       // Deselect if already selected
       setSelectedTip(null);
+      emitBillTips(null);
       return;
     }
     setSelectedTip(tip);
     setCustomTip('');
     setIsCustomTipActive(false);
+    emitBillTips(tip);
   };
 
   const handleCustomTipChange = (text: string) => {
@@ -115,6 +135,8 @@ const DineInCheckoutScreen = () => {
     setCustomTip(numericText);
     setSelectedTip(null);
     setIsCustomTipActive(true);
+    const parsed = parseInt(numericText, 10) || null;
+    debouncedEmitBillTips(parsed);
   };
 
   // Promo code state
@@ -314,10 +336,20 @@ const DineInCheckoutScreen = () => {
     setPromoError(null);
   };
 
-  // Close promo sheet when promo is successfully applied
+  // Close promo sheet & emit setBillCode when promo is successfully applied
   useEffect(() => {
     if (data?.summary?.promo_code_applied && debouncedPromoCode) {
       promoCodeSheetRef.current?.close();
+      // Notify the socket that a promo code was validated
+      const socketInstance = SocketService.getInstance();
+      socketInstance.emit('message', {
+        type: 'setBillCode',
+        data: {
+          tableName: user.branchTable,
+          codeType: 'promo',
+          code: debouncedPromoCode,
+        },
+      });
     }
   }, [data?.summary?.promo_code_applied, debouncedPromoCode]);
 
@@ -343,12 +375,23 @@ const DineInCheckoutScreen = () => {
     setCouponError(null);
   };
 
-  // Close coupon sheet when coupon is successfully applied
+  // Close coupon sheet & emit setBillCode when coupon is successfully applied
   useEffect(() => {
     if (data?.summary?.coupon_applied && debouncedCouponCode) {
       couponCodeSheetRef.current?.close();
+      // Notify the socket that a voucher code was validated
+      const socketInstance = SocketService.getInstance();
+      socketInstance.emit('message', {
+        type: 'setBillCode',
+        data: {
+          tableName: user.branchTable,
+          codeType: 'voucher',
+          code: debouncedCouponCode,
+        },
+      });
     }
   }, [data?.summary?.coupon_applied, debouncedCouponCode]);
+
 
   // Get the currently selected payment method object
   const selectedPaymentMethod = paymentMethodsData?.data?.find(m => m.id === selectedPaymentMethodId);
@@ -556,6 +599,16 @@ const DineInCheckoutScreen = () => {
                       setDebouncedPromoCode('');
                       setSheetPromoCode('');
                       setPromoError(null);
+                      // Notify socket to clear promo code
+                      const socketInstance = SocketService.getInstance();
+                      socketInstance.emit('message', {
+                        type: 'setBillCode',
+                        data: {
+                          tableName: user.branchTable,
+                          codeType: 'promo',
+                          code: '',
+                        },
+                      });
                     }}
                   >
                     <Text style={[styles.changeButtonText, { color: COLORS.primaryColor }]}>Remove</Text>
@@ -597,6 +650,16 @@ const DineInCheckoutScreen = () => {
                       setDebouncedCouponCode('');
                       setSheetCouponCode('');
                       setCouponError(null);
+                      // Notify socket to clear voucher code
+                      const socketInstance = SocketService.getInstance();
+                      socketInstance.emit('message', {
+                        type: 'setBillCode',
+                        data: {
+                          tableName: user.branchTable,
+                          codeType: 'voucher',
+                          code: '',
+                        },
+                      });
                     }}
                   >
                     <Text style={[styles.changeButtonText, { color: COLORS.primaryColor }]}>Remove</Text>
@@ -856,6 +919,16 @@ const DineInCheckoutScreen = () => {
               setSheetPromoCode('');
               setPromoError(null);
               promoCodeSheetRef.current?.close();
+              // Notify socket to clear promo code
+              const socketInstance = SocketService.getInstance();
+              socketInstance.emit('message', {
+                type: 'setBillCode',
+                data: {
+                  tableName: user.branchTable,
+                  codeType: 'promo',
+                  code: '',
+                },
+              });
             }}
           >
             <Text style={styles.sheetRemoveButtonText}>Clear</Text>
@@ -895,6 +968,16 @@ const DineInCheckoutScreen = () => {
               setSheetCouponCode('');
               setCouponError(null);
               couponCodeSheetRef.current?.close();
+              // Notify socket to clear voucher code
+              const socketInstance = SocketService.getInstance();
+              socketInstance.emit('message', {
+                type: 'setBillCode',
+                data: {
+                  tableName: user.branchTable,
+                  codeType: 'voucher',
+                  code: '',
+                },
+              });
             }}
           >
             <Text style={styles.sheetRemoveButtonText}>Clear</Text>

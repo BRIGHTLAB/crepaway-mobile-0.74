@@ -16,6 +16,9 @@ export type TableBill = {
     remainingToPay: number;
     payments: TableBillPayment[];
     cashCollectedAmount: number | null;
+    promoCode: string | null;
+    voucherCode: string | null;
+    tips: number | null;
     activeFullPayer?: {
         userId: string;
         paymentId: string;
