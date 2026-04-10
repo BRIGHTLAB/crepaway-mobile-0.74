@@ -25,7 +25,7 @@ import Toast from 'react-native-toast-message';
 import { useSelector } from 'react-redux';
 import Icon_Credit_Card from '../../assets/SVG/Icon_Credit_Card';
 import Icon_Delete from '../../assets/SVG/Icon_Delete';
-import { useDeleteSavedCardMutation, useGetDineInCheckoutQuery, useGetPaymentMethodsQuery, useGetSavedCardsQuery } from '../api/checkoutApi';
+import { useDeleteSavedCardMutation, useGetDineInCheckoutQuery, useGetPaymentMethodsQuery, useGetSavedCardsQuery, useGetTipsQuery } from '../api/checkoutApi';
 import PaymentWebViewModal from '../components/Checkout/PaymentWebViewModal';
 import TotalSection from '../components/Menu/TotalSection';
 import InfoPopup from '../components/Popups/InfoPopup';
@@ -35,10 +35,7 @@ import BottomSheetInput from '../components/UI/BottomSheetInput';
 import Button from '../components/UI/Button';
 import RadioButton from '../components/UI/RadioButton';
 import { DineInStackParamList } from '../navigation/DineInStack';
-import {
-  setCouponCode as setReduxCouponCode,
-  setPromoCode as setReduxPromoCode,
-} from '../store/slices/cartSlice';
+
 import { RootState, useAppDispatch } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
 import SocketService from '../utils/SocketService';
@@ -79,7 +76,6 @@ const DineInCheckoutScreen = () => {
   const partialPaymentSheetRef = useRef<BottomSheetMethods | null>(null);
   const dispatch = useAppDispatch();
   const user = useSelector((state: RootState) => state.user);
-  const cart = useSelector((state: RootState) => state.cart);
   const tableBill = useSelector((state: RootState) => state.dineIn.tableBill);
   const canPayBill = useSelector((state: RootState) => state.dineIn.canPayBill);
 
@@ -93,7 +89,8 @@ const DineInCheckoutScreen = () => {
   const orderedItemsHeight = useRef(new Animated.Value(COLLAPSED_HEIGHT)).current;
 
   // Tips state
-  const tipOptions = [10, 15, 20];
+  const { data: tipOptionsData } = useGetTipsQuery();
+  const tipOptions = tipOptionsData ?? [];
   const [selectedTip, setSelectedTip] = useState<number | null>(null);
   const [customTip, setCustomTip] = useState<string>('');
   const [isCustomTipActive, setIsCustomTipActive] = useState(false);
@@ -139,31 +136,55 @@ const DineInCheckoutScreen = () => {
     debouncedEmitBillTips(parsed);
   };
 
-  // Promo code state
-  const promoCode = cart.promoCode;
+  // Promo code state (local, synced from tableBill)
+  const [promoCode, setPromoCode] = useState<string>('');
   const [promoError, setPromoError] = useState<string | null>(null);
-  const [debouncedPromoCode, setDebouncedPromoCode] = useState<string>(cart.promoCode);
+  const [debouncedPromoCode, setDebouncedPromoCode] = useState<string>('');
   const [sheetPromoCode, setSheetPromoCode] = useState<string>('');
 
-  // Coupon code state
-  const couponCode = cart.couponCode;
+  // Coupon code state (local, synced from tableBill)
+  const [couponCode, setCouponCode] = useState<string>('');
   const [couponError, setCouponError] = useState<string | null>(null);
-  const [debouncedCouponCode, setDebouncedCouponCode] = useState<string>(cart.couponCode);
+  const [debouncedCouponCode, setDebouncedCouponCode] = useState<string>('');
   const [sheetCouponCode, setSheetCouponCode] = useState<string>('');
   const couponCodeSheetRef = useRef<BottomSheetMethods | null>(null);
 
-  // Sync local state when Redux codes change (e.g. clearCart after order)
+  // Sync promo/voucher/tips from tableBill (socket tableUpdate) for display
   useEffect(() => {
-    setDebouncedPromoCode(promoCode);
-    setSheetPromoCode(promoCode);
-    if (!promoCode) setPromoError(null);
-  }, [promoCode]);
+    const billPromo = tableBill?.promoCode ?? '';
+    if (billPromo !== promoCode) {
+      setPromoCode(billPromo);
+      setDebouncedPromoCode(billPromo);
+      setSheetPromoCode(billPromo);
+      if (!billPromo) setPromoError(null);
+    }
 
-  useEffect(() => {
-    setDebouncedCouponCode(couponCode);
-    setSheetCouponCode(couponCode);
-    if (!couponCode) setCouponError(null);
-  }, [couponCode]);
+    const billVoucher = tableBill?.voucherCode ?? '';
+    if (billVoucher !== couponCode) {
+      setCouponCode(billVoucher);
+      setDebouncedCouponCode(billVoucher);
+      setSheetCouponCode(billVoucher);
+      if (!billVoucher) setCouponError(null);
+    }
+
+    const billTips = tableBill?.tips ?? null;
+    if (billTips !== null) {
+      const tipNum = Number(billTips);
+      if (tipOptions.includes(tipNum)) {
+        setSelectedTip(tipNum);
+        setCustomTip('');
+        setIsCustomTipActive(false);
+      } else if (tipNum > 0) {
+        setSelectedTip(null);
+        setCustomTip(String(tipNum));
+        setIsCustomTipActive(true);
+      }
+    } else {
+      setSelectedTip(null);
+      setCustomTip('');
+      setIsCustomTipActive(false);
+    }
+  }, [tableBill?.promoCode, tableBill?.voucherCode, tableBill?.tips]);
 
   // Payment WebView state (for card payments)
   const [paymentWebViewUrl, setPaymentWebViewUrl] = useState<string | null>(null);
@@ -213,7 +234,6 @@ const DineInCheckoutScreen = () => {
     tips: debouncedTips,
   });
 
-
   const { data: paymentMethodsData, isLoading: isPaymentMethodsLoading } = useGetPaymentMethodsQuery();
 
 
@@ -236,6 +256,11 @@ const DineInCheckoutScreen = () => {
         switch (getCheckoutError.status) {
           case 488:
             setPromoError('Invalid Promo Code');
+            // Emit empty to socket to clear invalid code
+            SocketService.getInstance().emit('message', {
+              type: 'setBillCode',
+              data: { tableName: user.branchTable, codeType: 'promo', code: '' },
+            });
             break;
           default:
             const errorMessage = (getCheckoutError?.data as any)?.message ||
@@ -251,19 +276,6 @@ const DineInCheckoutScreen = () => {
       }
     }
   }, [getCheckoutError, navigation]);
-
-
-
-  const debouncedApplyPromo = useCallback(
-    debounce((code: string) => {
-      const trimmedCode = code.trim();
-      setDebouncedPromoCode(trimmedCode);
-      if (!trimmedCode) {
-        setPromoError(null);
-      }
-    }, 500),
-    []
-  );
 
   // Unified payment handler — used by all payment scenarios
   const emitPayment = (amount: number, paymentMode: 'FULL' | 'CUSTOM' | 'SPLIT', saveCard?: boolean) => {
@@ -315,15 +327,41 @@ const DineInCheckoutScreen = () => {
     });
   };
 
+  // When API confirms promo code is valid, emit to socket
   useEffect(() => {
-    if (data) {
-      if (data?.summary?.promo_code_applied) {
-        setPromoError(null);
-      } else if (data?.summary?.promo_code_error) {
-        setPromoError(data.summary.promo_code_error);
-      }
+    if (data?.summary?.promo_code_applied && debouncedPromoCode) {
+      promoCodeSheetRef.current?.close();
+      setPromoError(null);
+      SocketService.getInstance().emit('message', {
+        type: 'setBillCode',
+        data: { tableName: user.branchTable, codeType: 'promo', code: debouncedPromoCode },
+      });
+    } else if (data?.summary?.promo_code_error) {
+      setPromoError(data.summary.promo_code_error);
+      SocketService.getInstance().emit('message', {
+        type: 'setBillCode',
+        data: { tableName: user.branchTable, codeType: 'promo', code: '' },
+      });
     }
-  }, [data, promoCode]);
+  }, [data?.summary?.promo_code_applied, data?.summary?.promo_code_error, debouncedPromoCode]);
+
+  // When API confirms coupon code is valid, emit to socket
+  useEffect(() => {
+    if (data?.summary?.coupon_applied && debouncedCouponCode) {
+      couponCodeSheetRef.current?.close();
+      setCouponError(null);
+      SocketService.getInstance().emit('message', {
+        type: 'setBillCode',
+        data: { tableName: user.branchTable, codeType: 'voucher', code: debouncedCouponCode },
+      });
+    } else if (data?.summary?.coupon_error) {
+      setCouponError(data.summary.coupon_error);
+      SocketService.getInstance().emit('message', {
+        type: 'setBillCode',
+        data: { tableName: user.branchTable, codeType: 'voucher', code: '' },
+      });
+    }
+  }, [data?.summary?.coupon_applied, data?.summary?.coupon_error, debouncedCouponCode]);
 
   const handleApplyPromoCode = () => {
     const trimmedCode = sheetPromoCode.trim();
@@ -331,38 +369,10 @@ const DineInCheckoutScreen = () => {
       setPromoError('Please enter a promo code');
       return;
     }
-    dispatch(setReduxPromoCode(trimmedCode));
+    setPromoCode(trimmedCode);
     setDebouncedPromoCode(trimmedCode);
     setPromoError(null);
   };
-
-  // Close promo sheet & emit setBillCode when promo is successfully applied
-  useEffect(() => {
-    if (data?.summary?.promo_code_applied && debouncedPromoCode) {
-      promoCodeSheetRef.current?.close();
-      // Notify the socket that a promo code was validated
-      const socketInstance = SocketService.getInstance();
-      socketInstance.emit('message', {
-        type: 'setBillCode',
-        data: {
-          tableName: user.branchTable,
-          codeType: 'promo',
-          code: debouncedPromoCode,
-        },
-      });
-    }
-  }, [data?.summary?.promo_code_applied, debouncedPromoCode]);
-
-  // Handle coupon code errors from API
-  useEffect(() => {
-    if (data) {
-      if (data?.summary?.coupon_applied) {
-        setCouponError(null);
-      } else if (data?.summary?.coupon_error) {
-        setCouponError(data.summary.coupon_error);
-      }
-    }
-  }, [data, couponCode]);
 
   const handleApplyCouponCode = () => {
     const trimmedCode = sheetCouponCode.trim();
@@ -370,27 +380,10 @@ const DineInCheckoutScreen = () => {
       setCouponError('Please enter a coupon code');
       return;
     }
-    dispatch(setReduxCouponCode(trimmedCode));
+    setCouponCode(trimmedCode);
     setDebouncedCouponCode(trimmedCode);
     setCouponError(null);
   };
-
-  // Close coupon sheet & emit setBillCode when coupon is successfully applied
-  useEffect(() => {
-    if (data?.summary?.coupon_applied && debouncedCouponCode) {
-      couponCodeSheetRef.current?.close();
-      // Notify the socket that a voucher code was validated
-      const socketInstance = SocketService.getInstance();
-      socketInstance.emit('message', {
-        type: 'setBillCode',
-        data: {
-          tableName: user.branchTable,
-          codeType: 'voucher',
-          code: debouncedCouponCode,
-        },
-      });
-    }
-  }, [data?.summary?.coupon_applied, debouncedCouponCode]);
 
 
   // Get the currently selected payment method object
@@ -595,7 +588,7 @@ const DineInCheckoutScreen = () => {
                   <TouchableOpacity
                     style={styles.changeButton}
                     onPress={() => {
-                      dispatch(setReduxPromoCode(''));
+                      setPromoCode('');
                       setDebouncedPromoCode('');
                       setSheetPromoCode('');
                       setPromoError(null);
@@ -642,11 +635,11 @@ const DineInCheckoutScreen = () => {
             <View style={styles.boxContainer}>
               <View style={styles.paymentHeaderRow}>
                 <Text style={styles.boxContainerTitle}>Coupon code</Text>
-                {data?.summary?.coupon_applied && couponCode ? (
+                {couponCode ? (
                   <TouchableOpacity
                     style={styles.changeButton}
                     onPress={() => {
-                      dispatch(setReduxCouponCode(''));
+                      setCouponCode('');
                       setDebouncedCouponCode('');
                       setSheetCouponCode('');
                       setCouponError(null);
@@ -677,7 +670,7 @@ const DineInCheckoutScreen = () => {
                   </TouchableOpacity>
                 )}
               </View>
-              {data?.summary?.coupon_applied && couponCode ? (
+              {couponCode ? (
                 <Text style={{
                   fontFamily: 'Poppins-Regular',
                   fontSize: 14,
@@ -914,7 +907,7 @@ const DineInCheckoutScreen = () => {
           <TouchableOpacity
             style={styles.sheetRemoveButton}
             onPress={() => {
-              dispatch(setReduxPromoCode(''));
+              setPromoCode('');
               setDebouncedPromoCode('');
               setSheetPromoCode('');
               setPromoError(null);
@@ -963,7 +956,7 @@ const DineInCheckoutScreen = () => {
           <TouchableOpacity
             style={styles.sheetRemoveButton}
             onPress={() => {
-              dispatch(setReduxCouponCode(''));
+              setCouponCode('');
               setDebouncedCouponCode('');
               setSheetCouponCode('');
               setCouponError(null);

@@ -179,11 +179,11 @@ export const checkoutApi = baseApi.injectEndpoints({
           params.append('coupon_code', couponCode);
         }
         if (tips != null && tips > 0) {
-          params.append('tip_percentage', tips.toString());
+          params.append('tips', tips.toString());
         }
         const queryString = params.toString();
-
-        return `/dine-in/orders/${orderId}/checkout${queryString ? `?${queryString}` : ''}`;
+        const url = `/dine-in/orders/${orderId}/checkout${queryString ? `?${queryString}` : ''}`;
+        return url;
       },
       keepUnusedDataFor: 1,
     }),
@@ -238,6 +238,11 @@ export const checkoutApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['SavedCards'],
     }),
+
+    getTips: builder.query<number[], void>({
+      query: () => `/tips`,
+      keepUnusedDataFor: 300,
+    }),
   }),
 
   overrideExisting: true,
@@ -251,4 +256,5 @@ export const {
   useLazyGetPaymentStatusQuery,
   useGetSavedCardsQuery,
   useDeleteSavedCardMutation,
+  useGetTipsQuery,
 } = checkoutApi;
