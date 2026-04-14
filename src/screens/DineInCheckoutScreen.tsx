@@ -25,7 +25,7 @@ import Toast from 'react-native-toast-message';
 import { useSelector } from 'react-redux';
 import Icon_Credit_Card from '../../assets/SVG/Icon_Credit_Card';
 import Icon_Delete from '../../assets/SVG/Icon_Delete';
-import { useDeleteSavedCardMutation, useGetDineInCheckoutQuery, useGetPaymentMethodsQuery, useGetSavedCardsQuery, useGetTipsQuery } from '../api/checkoutApi';
+import { useDeleteSavedCardMutation, useGetDineInCheckoutQuery, useGetPaymentMethodsQuery, useGetSavedCardsQuery, useGetTipsQuery, useApplyDineInPromoCodeMutation, useApplyDineInCouponCodeMutation, useApplyDineInTipsMutation } from '../api/checkoutApi';
 import PaymentWebViewModal from '../components/Checkout/PaymentWebViewModal';
 import TotalSection from '../components/Menu/TotalSection';
 import InfoPopup from '../components/Popups/InfoPopup';
@@ -95,96 +95,60 @@ const DineInCheckoutScreen = () => {
   const [customTip, setCustomTip] = useState<string>('');
   const [isCustomTipActive, setIsCustomTipActive] = useState(false);
 
-  const emitBillTips = (tips: number | null) => {
+  const postTips = async (tips: number) => {
+    try {
+      const result = await applyTips({ orderId, tips }).unwrap();
+      console.log('[postTips] result:', JSON.stringify(result));
+    } catch (err: any) {
+      console.log('[postTips] catch error:', JSON.stringify(err));
+      Toast.show({ type: 'error', text1: 'Failed to apply tips', visibilityTime: 3000, position: 'bottom' });
+      return;
+    }
     const socketInstance = SocketService.getInstance();
     socketInstance.emit('message', {
       type: 'setBillTips',
-      data: {
-        tableName: user.branchTable,
-        tips: tips ?? 0,
-      },
+      data: { tableName: user.branchTable, tips },
     });
   };
 
-  const debouncedEmitBillTips = useCallback(
-    debounce((tips: number | null) => {
-      emitBillTips(tips);
+  const debouncedPostTips = useCallback(
+    debounce((tips: number) => {
+      postTips(tips);
     }, 500),
-    []
+    [orderId]
   );
 
   const handleTipSelect = (tip: number) => {
     if (selectedTip === tip) {
-      // Deselect if already selected
       setSelectedTip(null);
-      emitBillTips(null);
+      postTips(0);
       return;
     }
     setSelectedTip(tip);
     setCustomTip('');
     setIsCustomTipActive(false);
-    emitBillTips(tip);
+    postTips(tip);
   };
 
   const handleCustomTipChange = (text: string) => {
-    // Only allow numbers
     const numericText = text.replace(/[^0-9]/g, '');
     setCustomTip(numericText);
     setSelectedTip(null);
     setIsCustomTipActive(true);
-    const parsed = parseInt(numericText, 10) || null;
-    debouncedEmitBillTips(parsed);
+    const parsed = parseInt(numericText, 10) || 0;
+    debouncedPostTips(parsed);
   };
 
   // Promo code state (local, synced from tableBill)
   const [promoCode, setPromoCode] = useState<string>('');
   const [promoError, setPromoError] = useState<string | null>(null);
-  const [debouncedPromoCode, setDebouncedPromoCode] = useState<string>('');
   const [sheetPromoCode, setSheetPromoCode] = useState<string>('');
 
   // Coupon code state (local, synced from tableBill)
   const [couponCode, setCouponCode] = useState<string>('');
   const [couponError, setCouponError] = useState<string | null>(null);
-  const [debouncedCouponCode, setDebouncedCouponCode] = useState<string>('');
   const [sheetCouponCode, setSheetCouponCode] = useState<string>('');
   const couponCodeSheetRef = useRef<BottomSheetMethods | null>(null);
-
-  // Sync promo/voucher/tips from tableBill (socket tableUpdate) for display
-  useEffect(() => {
-    const billPromo = tableBill?.promoCode ?? '';
-    if (billPromo !== promoCode) {
-      setPromoCode(billPromo);
-      setDebouncedPromoCode(billPromo);
-      setSheetPromoCode(billPromo);
-      if (!billPromo) setPromoError(null);
-    }
-
-    const billVoucher = tableBill?.voucherCode ?? '';
-    if (billVoucher !== couponCode) {
-      setCouponCode(billVoucher);
-      setDebouncedCouponCode(billVoucher);
-      setSheetCouponCode(billVoucher);
-      if (!billVoucher) setCouponError(null);
-    }
-
-    const billTips = tableBill?.tips ?? null;
-    if (billTips !== null) {
-      const tipNum = Number(billTips);
-      if (tipOptions.includes(tipNum)) {
-        setSelectedTip(tipNum);
-        setCustomTip('');
-        setIsCustomTipActive(false);
-      } else if (tipNum > 0) {
-        setSelectedTip(null);
-        setCustomTip(String(tipNum));
-        setIsCustomTipActive(true);
-      }
-    } else {
-      setSelectedTip(null);
-      setCustomTip('');
-      setIsCustomTipActive(false);
-    }
-  }, [tableBill?.promoCode, tableBill?.voucherCode, tableBill?.tips]);
 
   // Payment WebView state (for card payments)
   const [paymentWebViewUrl, setPaymentWebViewUrl] = useState<string | null>(null);
@@ -201,38 +165,77 @@ const DineInCheckoutScreen = () => {
 
   const { bottom } = useSafeAreaInsets();
 
-  // Compute tips amount for the query
-  const tipsAmount = useMemo(() => {
-    if (selectedTip) {
-      return selectedTip;
-    }
-    if (isCustomTipActive && customTip) {
-      return parseInt(customTip, 10) || null;
-    }
-    return null;
-  }, [selectedTip, isCustomTipActive, customTip]);
-
-  // Debounce tips to avoid rapid API calls
-  const [debouncedTips, setDebouncedTips] = useState<number | null>(null);
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedTips(tipsAmount);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [tipsAmount]);
-
   const {
     data,
     isLoading,
     isFetching,
+    isUninitialized,
     refetch,
     error: getCheckoutError,
-  } = useGetDineInCheckoutQuery({
-    orderId,
-    promoCode: debouncedPromoCode,
-    couponCode: debouncedCouponCode,
-    tips: debouncedTips,
-  });
+  } = useGetDineInCheckoutQuery(
+    { orderId },
+    { skip: !Number.isFinite(orderId as number) || (orderId as number) <= 0 }
+  );
+
+  console.log('[DineInCheckoutScreen] dataQAAAA:', JSON.stringify(data));
+
+  const [applyPromoCode, { isLoading: isApplyingPromo }] = useApplyDineInPromoCodeMutation();
+  const [applyCouponCode, { isLoading: isApplyingCoupon }] = useApplyDineInCouponCodeMutation();
+  const [applyTips, { isLoading: isApplyingTips }] = useApplyDineInTipsMutation();
+
+  // Sync promo/voucher/tips from tableBill (socket tableUpdate) for display + refetch checkout
+  const isInitialBillSync = useRef(true);
+  useEffect(() => {
+    const billPromo = tableBill?.promoCode ?? '';
+    const billVoucher = tableBill?.voucherCode ?? '';
+    const billTips = tableBill?.tips ?? null;
+
+    if (billPromo !== promoCode) {
+      setPromoCode(billPromo);
+      setSheetPromoCode(billPromo);
+      if (!billPromo) setPromoError(null);
+    }
+
+    if (billVoucher !== couponCode) {
+      setCouponCode(billVoucher);
+      setSheetCouponCode(billVoucher);
+      if (!billVoucher) setCouponError(null);
+    }
+
+    if (billTips !== null) {
+      const tipNum = Number(billTips);
+      if (tipOptions.includes(tipNum)) {
+        setSelectedTip(tipNum);
+        setCustomTip('');
+        setIsCustomTipActive(false);
+      } else if (tipNum > 0) {
+        setSelectedTip(null);
+        setCustomTip(String(tipNum));
+        setIsCustomTipActive(true);
+      }
+    } else {
+      setSelectedTip(null);
+      setCustomTip('');
+      setIsCustomTipActive(false);
+    }
+
+    if (isInitialBillSync.current) {
+      isInitialBillSync.current = false;
+      return;
+    }
+
+    if (isUninitialized) return;
+    refetch();
+  }, [
+    tableBill?.promoCode,
+    tableBill?.voucherCode,
+    tableBill?.tips,
+    promoCode,
+    couponCode,
+    tipOptions,
+    isUninitialized,
+    refetch,
+  ]);
 
   const { data: paymentMethodsData, isLoading: isPaymentMethodsLoading } = useGetPaymentMethodsQuery();
 
@@ -249,33 +252,17 @@ const DineInCheckoutScreen = () => {
     }
   }, [paymentMethodsData, selectedPaymentMethodId]);
 
-  // Handle API errors from useGetCheckoutQuery
   useEffect(() => {
-    if (getCheckoutError) {
-      if ('status' in getCheckoutError) {
-        switch (getCheckoutError.status) {
-          case 488:
-            setPromoError('Invalid Promo Code');
-            // Emit empty to socket to clear invalid code
-            SocketService.getInstance().emit('message', {
-              type: 'setBillCode',
-              data: { tableName: user.branchTable, codeType: 'promo', code: '' },
-            });
-            break;
-          default:
-            const errorMessage = (getCheckoutError?.data as any)?.message ||
-              'Failed to load checkout data';
-            Toast.show({
-              type: 'error',
-              text1: errorMessage,
-              visibilityTime: 4000,
-              position: 'bottom',
-            });
-            break;
-        }
-      }
+    if (getCheckoutError && 'status' in getCheckoutError) {
+      const errorMessage = (getCheckoutError?.data as any)?.message || 'Failed to load checkout data';
+      Toast.show({
+        type: 'error',
+        text1: errorMessage,
+        visibilityTime: 4000,
+        position: 'bottom',
+      });
     }
-  }, [getCheckoutError, navigation]);
+  }, [getCheckoutError]);
 
   // Unified payment handler — used by all payment scenarios
   const emitPayment = (amount: number, paymentMode: 'FULL' | 'CUSTOM' | 'SPLIT', saveCard?: boolean) => {
@@ -283,7 +270,7 @@ const DineInCheckoutScreen = () => {
     if (!selectedPaymentMethodId) {
       Toast.show({
         type: 'error',
-        text1: 'Please select a payment method',
+        text1: 'Please select a payment method', 
         visibilityTime: 3000,
         position: 'bottom',
       });
@@ -327,62 +314,61 @@ const DineInCheckoutScreen = () => {
     });
   };
 
-  // When API confirms promo code is valid, emit to socket
-  useEffect(() => {
-    if (data?.summary?.promo_code_applied && debouncedPromoCode) {
-      promoCodeSheetRef.current?.close();
-      setPromoError(null);
-      SocketService.getInstance().emit('message', {
-        type: 'setBillCode',
-        data: { tableName: user.branchTable, codeType: 'promo', code: debouncedPromoCode },
-      });
-    } else if (data?.summary?.promo_code_error) {
-      setPromoError(data.summary.promo_code_error);
-      SocketService.getInstance().emit('message', {
-        type: 'setBillCode',
-        data: { tableName: user.branchTable, codeType: 'promo', code: '' },
-      });
-    }
-  }, [data?.summary?.promo_code_applied, data?.summary?.promo_code_error, debouncedPromoCode]);
 
-  // When API confirms coupon code is valid, emit to socket
-  useEffect(() => {
-    if (data?.summary?.coupon_applied && debouncedCouponCode) {
-      couponCodeSheetRef.current?.close();
-      setCouponError(null);
-      SocketService.getInstance().emit('message', {
-        type: 'setBillCode',
-        data: { tableName: user.branchTable, codeType: 'voucher', code: debouncedCouponCode },
-      });
-    } else if (data?.summary?.coupon_error) {
-      setCouponError(data.summary.coupon_error);
-      SocketService.getInstance().emit('message', {
-        type: 'setBillCode',
-        data: { tableName: user.branchTable, codeType: 'voucher', code: '' },
-      });
-    }
-  }, [data?.summary?.coupon_applied, data?.summary?.coupon_error, debouncedCouponCode]);
-
-  const handleApplyPromoCode = () => {
+  const handleApplyPromoCode = async () => {
     const trimmedCode = sheetPromoCode.trim();
     if (!trimmedCode) {
       setPromoError('Please enter a promo code');
       return;
     }
-    setPromoCode(trimmedCode);
-    setDebouncedPromoCode(trimmedCode);
     setPromoError(null);
+    try {
+      const result = await applyPromoCode({ orderId, code: trimmedCode }).unwrap();
+      console.log('[handleApplyPromoCode] result:', JSON.stringify(result));
+      if (result?.error || result?.success === false) {
+        const msg = result?.message || result?.error || 'Invalid promo code';
+        setPromoError(msg);
+        return;
+      }
+      setPromoCode(trimmedCode);
+      promoCodeSheetRef.current?.close();
+      SocketService.getInstance().emit('message', {
+        type: 'setBillCode',
+        data: { tableName: user.branchTable, codeType: 'promo', code: trimmedCode },
+      });
+    } catch (err: any) {
+      console.log('[handleApplyPromoCode] catch error:', JSON.stringify(err));
+      const msg = err?.data?.message || err?.message || 'Invalid promo code';
+      setPromoError(msg);
+    }
   };
 
-  const handleApplyCouponCode = () => {
+  const handleApplyCouponCode = async () => {
     const trimmedCode = sheetCouponCode.trim();
     if (!trimmedCode) {
       setCouponError('Please enter a coupon code');
       return;
     }
-    setCouponCode(trimmedCode);
-    setDebouncedCouponCode(trimmedCode);
     setCouponError(null);
+    try {
+      const result = await applyCouponCode({ orderId, coupon_code: trimmedCode }).unwrap();
+      console.log('[handleApplyCouponCode] result:', JSON.stringify(result));
+      if (result?.error || result?.success === false) {
+        const msg = result?.message || result?.error || 'Invalid coupon code';
+        setCouponError(msg);
+        return;
+      }
+      setCouponCode(trimmedCode);
+      couponCodeSheetRef.current?.close();
+      SocketService.getInstance().emit('message', {
+        type: 'setBillCode',
+        data: { tableName: user.branchTable, codeType: 'voucher', code: trimmedCode },
+      });
+    } catch (err: any) {
+      console.log('[handleApplyCouponCode] catch error:', JSON.stringify(err));
+      const msg = err?.data?.message || err?.message || 'Invalid coupon code';
+      setCouponError(msg);
+    }
   };
 
 
@@ -587,20 +573,16 @@ const DineInCheckoutScreen = () => {
                 {promoCode ? (
                   <TouchableOpacity
                     style={styles.changeButton}
-                    onPress={() => {
+                    onPress={async () => {
                       setPromoCode('');
-                      setDebouncedPromoCode('');
                       setSheetPromoCode('');
                       setPromoError(null);
-                      // Notify socket to clear promo code
-                      const socketInstance = SocketService.getInstance();
-                      socketInstance.emit('message', {
+                      try {
+                        await applyPromoCode({ orderId, code: '' }).unwrap();
+                      } catch {}
+                      SocketService.getInstance().emit('message', {
                         type: 'setBillCode',
-                        data: {
-                          tableName: user.branchTable,
-                          codeType: 'promo',
-                          code: '',
-                        },
+                        data: { tableName: user.branchTable, codeType: 'promo', code: '' },
                       });
                     }}
                   >
@@ -638,20 +620,16 @@ const DineInCheckoutScreen = () => {
                 {couponCode ? (
                   <TouchableOpacity
                     style={styles.changeButton}
-                    onPress={() => {
+                    onPress={async () => {
                       setCouponCode('');
-                      setDebouncedCouponCode('');
                       setSheetCouponCode('');
                       setCouponError(null);
-                      // Notify socket to clear voucher code
-                      const socketInstance = SocketService.getInstance();
-                      socketInstance.emit('message', {
+                      try {
+                        await applyCouponCode({ orderId, coupon_code: '' }).unwrap();
+                      } catch {}
+                      SocketService.getInstance().emit('message', {
                         type: 'setBillCode',
-                        data: {
-                          tableName: user.branchTable,
-                          codeType: 'voucher',
-                          code: '',
-                        },
+                        data: { tableName: user.branchTable, codeType: 'voucher', code: '' },
                       });
                     }}
                   >
@@ -696,6 +674,7 @@ const DineInCheckoutScreen = () => {
                       ]}
                       onPress={() => handleTipSelect(tip)}
                       activeOpacity={0.7}
+                      disabled={isApplyingTips}
                     >
                       <Text
                         style={[
@@ -901,26 +880,22 @@ const DineInCheckoutScreen = () => {
           {promoError && (
             <Text style={styles.promoErrorText}>{promoError}</Text>
           )}
-          <Button onPress={handleApplyPromoCode} isLoading={isFetching}>
+          <Button onPress={handleApplyPromoCode} isLoading={isApplyingPromo}>
             Apply
           </Button>
           <TouchableOpacity
             style={styles.sheetRemoveButton}
-            onPress={() => {
+            onPress={async () => {
               setPromoCode('');
-              setDebouncedPromoCode('');
               setSheetPromoCode('');
               setPromoError(null);
               promoCodeSheetRef.current?.close();
-              // Notify socket to clear promo code
-              const socketInstance = SocketService.getInstance();
-              socketInstance.emit('message', {
+              try {
+                await applyPromoCode({ orderId, code: '' }).unwrap();
+              } catch {}
+              SocketService.getInstance().emit('message', {
                 type: 'setBillCode',
-                data: {
-                  tableName: user.branchTable,
-                  codeType: 'promo',
-                  code: '',
-                },
+                data: { tableName: user.branchTable, codeType: 'promo', code: '' },
               });
             }}
           >
@@ -950,26 +925,22 @@ const DineInCheckoutScreen = () => {
           {couponError && (
             <Text style={styles.promoErrorText}>{couponError}</Text>
           )}
-          <Button onPress={handleApplyCouponCode} isLoading={isFetching}>
+          <Button onPress={handleApplyCouponCode} isLoading={isApplyingCoupon}>
             Apply
           </Button>
           <TouchableOpacity
             style={styles.sheetRemoveButton}
-            onPress={() => {
+            onPress={async () => {
               setCouponCode('');
-              setDebouncedCouponCode('');
               setSheetCouponCode('');
               setCouponError(null);
               couponCodeSheetRef.current?.close();
-              // Notify socket to clear voucher code
-              const socketInstance = SocketService.getInstance();
-              socketInstance.emit('message', {
+              try {
+                await applyCouponCode({ orderId, coupon_code: '' }).unwrap();
+              } catch {}
+              SocketService.getInstance().emit('message', {
                 type: 'setBillCode',
-                data: {
-                  tableName: user.branchTable,
-                  codeType: 'voucher',
-                  code: '',
-                },
+                data: { tableName: user.branchTable, codeType: 'voucher', code: '' },
               });
             }}
           >

@@ -168,24 +168,58 @@ export const checkoutApi = baseApi.injectEndpoints({
       keepUnusedDataFor: 1,
     }),
 
-    getDineInCheckout: builder.query<DineInCheckout, { orderId: number; promoCode: string | void; couponCode?: string | void; tips?: number | null }>({
-      query: ({ orderId, promoCode, couponCode, tips }) => {
-        const params = new URLSearchParams();
-
-        if (promoCode) {
-          params.append('code', promoCode);
-        }
-        if (couponCode) {
-          params.append('coupon_code', couponCode);
-        }
-        if (tips != null && tips > 0) {
-          params.append('tips', tips.toString());
-        }
-        const queryString = params.toString();
-        const url = `/dine-in/orders/${orderId}/checkout${queryString ? `?${queryString}` : ''}`;
-        return url;
-      },
+    getDineInCheckout: builder.query<DineInCheckout, { orderId: number }>({
+      query: ({ orderId }) => `/dine-in/orders/${orderId}/checkout`,
+      providesTags: ['DineInCheckout'],
       keepUnusedDataFor: 1,
+    }),
+
+    applyDineInPromoCode: builder.mutation<any, { orderId: number; code: string }>({
+      query: ({ orderId, code }) => ({
+        url: `/dine-in/orders/${orderId}/promo-code`,
+        method: 'POST',
+        body: { code },
+      }),
+      // async onQueryStarted(arg, { queryFulfilled }) {
+      //   try {
+      //     const { data, meta } = await queryFulfilled;
+      //     console.log('[applyDineInPromoCode] SUCCESS', 'status:', (meta as any)?.response?.status, 'data:', JSON.stringify(data));
+      //   } catch (err: any) {
+      //     console.log('[applyDineInPromoCode] ERROR', 'status:', err?.error?.status, 'data:', JSON.stringify(err?.error?.data));
+      //   }
+      // },
+    }),
+
+    applyDineInCouponCode: builder.mutation<any, { orderId: number; coupon_code: string }>({
+      query: ({ orderId, coupon_code }) => ({
+        url: `/dine-in/orders/${orderId}/coupon-code`,
+        method: 'POST',
+        body: { coupon_code },
+      }),
+      // async onQueryStarted(arg, { queryFulfilled }) {
+      //   try {
+      //     const { data, meta } = await queryFulfilled;
+      //     console.log('[applyDineInCouponCode] SUCCESS', 'status:', (meta as any)?.response?.status, 'data:', JSON.stringify(data));
+      //   } catch (err: any) {
+      //     console.log('[applyDineInCouponCode] ERROR', 'status:', err?.error?.status, 'data:', JSON.stringify(err?.error?.data));
+      //   }
+      // },
+    }),
+
+    applyDineInTips: builder.mutation<any, { orderId: number; tips: number }>({
+      query: ({ orderId, tips }) => ({
+        url: `/dine-in/orders/${orderId}/tips`,
+        method: 'POST',
+        body: { tips },
+      }),
+      async onQueryStarted(arg, { queryFulfilled }) {
+        // try {
+        //   const { data, meta } = await queryFulfilled;
+        //   console.log('[applyDineInTips] SUCCESS', 'status:', (meta as any)?.response?.status, 'data:', JSON.stringify(data));
+        // } catch (err: any) {
+        //   console.log('[applyDineInTips] ERROR', 'status:', err?.error?.status, 'data:', JSON.stringify(err?.error?.data));
+        // }
+      },
     }),
 
     getPaymentMethods: builder.query<PaymentMethodsResponse, void>({
@@ -257,4 +291,7 @@ export const {
   useGetSavedCardsQuery,
   useDeleteSavedCardMutation,
   useGetTipsQuery,
+  useApplyDineInPromoCodeMutation,
+  useApplyDineInCouponCodeMutation,
+  useApplyDineInTipsMutation,
 } = checkoutApi;
