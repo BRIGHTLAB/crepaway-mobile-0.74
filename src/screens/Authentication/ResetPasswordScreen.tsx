@@ -88,7 +88,11 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
     >
       <ScrollView
         style={styles.scrollView}
+        keyboardShouldPersistTaps="handled"
+        // keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollViewContent}>
+          
         <View style={styles.content}>
           <Text style={styles.title}>Reset Password</Text>
           <Text style={styles.subtitle}>

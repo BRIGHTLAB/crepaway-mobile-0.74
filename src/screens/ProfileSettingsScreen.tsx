@@ -197,7 +197,10 @@ const ProfileSettingsScreen = () => {
   }
 
   return (
-    <ScrollView style={styles.scrollView}>
+    <ScrollView style={styles.scrollView}
+    keyboardShouldPersistTaps="handled"
+    // keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+    >
       <View style={styles.container}>
         {/* name & date of birth */}
         <View style={[styles.card, { gap: 16 }]}>
