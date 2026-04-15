@@ -5,6 +5,7 @@ import {
     SafeAreaView,
     StyleSheet,
     Text,
+    TouchableOpacity,
     View,
 } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
@@ -21,6 +22,8 @@ interface PaymentWebViewModalProps {
     paymentUrl: string;
     onPaymentSuccess: (orderId: number | null, paymentId: number) => void;
     onPaymentFailure: (paymentId: number) => void;
+    /** Called when the user taps the close (X) button to forcefully exit the payment flow. */
+    onClose?: () => void;
     /** Timeout in seconds. When reached, the modal auto-closes and onTimeout is called. */
     timeoutSeconds?: number;
     onTimeout?: () => void;
@@ -37,6 +40,7 @@ const PaymentWebViewModal: React.FC<PaymentWebViewModalProps> = ({
     paymentUrl,
     onPaymentSuccess,
     onPaymentFailure,
+    onClose,
     timeoutSeconds,
     onTimeout,
 }) => {
@@ -137,7 +141,20 @@ const PaymentWebViewModal: React.FC<PaymentWebViewModalProps> = ({
             <SafeAreaView style={styles.container}>
                 {/* Header */}
                 <View style={styles.header}>
+                    {/* Spacer to keep title centered when close button is present */}
+                    <View style={styles.headerSide}>
+                        {onClose && (
+                            <TouchableOpacity
+                                onPress={onClose}
+                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                style={styles.closeButton}
+                            >
+                                <Text style={styles.closeButtonText}>✕</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
                     <Text style={styles.headerTitle}>Complete Payment</Text>
+                    <View style={styles.headerSide} />
                 </View>
 
                 {/* Countdown Banner — only when timeoutSeconds is provided */}
@@ -209,11 +226,29 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
         paddingHorizontal: 16,
         paddingVertical: 12,
         borderBottomWidth: 1,
         borderBottomColor: `${COLORS.foregroundColor}20`,
+    },
+    headerSide: {
+        width: 32,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    closeButton: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: `${COLORS.foregroundColor}10`,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    closeButtonText: {
+        fontSize: 14,
+        color: COLORS.darkColor,
+        fontFamily: 'Poppins-Medium',
     },
     headerTitle: {
         fontFamily: 'Poppins-Medium',

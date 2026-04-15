@@ -1227,6 +1227,25 @@ const CheckoutScreen = () => {
         paymentUrl={paymentWebViewUrl || ''}
         onPaymentSuccess={handlePaymentSuccess}
         onPaymentFailure={handlePaymentFailure}
+        onClose={() => {
+          // Close the WebView modal
+          setPaymentWebViewUrl(null);
+          setPaymentId(null);
+
+          // Navigate to homepage instead of staying on checkout
+          navigation.reset({
+            index: 0,
+            routes: [
+              {
+                name: 'HomeStack',
+                state: {
+                  routes: [{ name: 'Home' }],
+                  index: 0,
+                },
+              },
+            ],
+          });
+        }}
       />
     </>
   );
