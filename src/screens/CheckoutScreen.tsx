@@ -29,6 +29,7 @@ import Icon_Delete from '../../assets/SVG/Icon_Delete';
 import Icon_Location from '../../assets/SVG/Icon_Location';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
 import { useDeleteSavedCardMutation, useGetCheckoutQuery, useGetPaymentMethodsQuery, useGetSavedCardsQuery, useLazyGetPaymentStatusQuery, usePlaceOrderMutation } from '../api/checkoutApi';
+import { useGetPointsPreviewQuery } from '../api/loyaltyApi';
 import PaymentWebViewModal from '../components/Checkout/PaymentWebViewModal';
 import TotalSection from '../components/Menu/TotalSection';
 import DynamicSheet from '../components/Sheets/DynamicSheet';
@@ -116,6 +117,13 @@ const CheckoutScreen = () => {
   });
 
   console.log('getCheckoutError', getCheckoutError);
+
+  // Fetch points preview from loyalty server
+  const totalWithoutDelivery = data?.summary?.total_without_delivery;
+  const { data: pointsPreviewData, isLoading: isPointsLoading, isFetching: isPointsFetching } = useGetPointsPreviewQuery(
+    { totalAmount: totalWithoutDelivery! },
+    { skip: totalWithoutDelivery == null || totalWithoutDelivery <= 0 },
+  );
 
   const { data: paymentMethodsData, isLoading: isPaymentMethodsLoading } = useGetPaymentMethodsQuery();
 
@@ -860,7 +868,7 @@ const CheckoutScreen = () => {
                 }`}
               deliveryCharge={`${data?.currency?.symbol ?? ''} ${data?.delivery_charge ?? ''
                 }`}
-              pointsRewarded={`+ ${data?.points_rewarded ?? ''} pts`}
+              pointsRewarded={`+ ${pointsPreviewData?.gain ?? '0'} pts`}
               total={`${data?.currency?.symbol ?? ''} ${data?.summary?.final_total ?? ''
                 }`}
               discount={
@@ -875,6 +883,7 @@ const CheckoutScreen = () => {
                   : undefined
               }
               isLoading={isLoading}
+              isLoadingPoints={isLoading || isFetching || isPointsLoading || isPointsFetching}
               canEdit={true}
             />
 

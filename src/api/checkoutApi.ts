@@ -5,6 +5,7 @@ export interface Checkout {
     original_sub_total: string;
     total_discount: string;
     final_total: string;
+    total_without_delivery: number;
     promo_code_applied: boolean;
     promo_code_error?: string | null;
     coupon_applied?: {

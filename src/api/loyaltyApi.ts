@@ -54,10 +54,21 @@ export const loyaltyApi = loyaltyBaseApi.injectEndpoints({
             providesTags: ['loyalty'],
             keepUnusedDataFor: 0,
         }),
+        getPointsPreview: builder.query<{ gain: number }, { totalAmount: number }>({
+            query: ({ totalAmount }) => ({
+                url: `/me/points-preview`,
+                method: 'GET',
+                params: {
+                    total_amount: totalAmount,
+                    unit_key: 'points',
+                },
+            }),
+            keepUnusedDataFor: 0,
+        }),
     }),
     overrideExisting: true,
 });
 
-export const { useGetTiersQuery, useGetTierProgressQuery, useGetPointsHistoryQuery } = loyaltyApi;
+export const { useGetTiersQuery, useGetTierProgressQuery, useGetPointsHistoryQuery, useGetPointsPreviewQuery } = loyaltyApi;
 
 

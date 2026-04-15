@@ -20,6 +20,7 @@ interface IProps {
   };
   remainingAmount?: string;
   isLoading?: boolean;
+  isLoadingPoints?: boolean;
   disabled?: boolean;
   orderType?: string;
   canEdit?: boolean;
@@ -39,6 +40,7 @@ const TotalSection = ({
   tips,
   remainingAmount,
   isLoading = false,
+  isLoadingPoints,
   orderType,
   canEdit = false,
 }: IProps) => {
@@ -87,7 +89,7 @@ const TotalSection = ({
       {/* Points rewarded  */}
       <View style={styles.subTotalContainer}>
         <Text style={styles.subTotalTitle}>Points Rewarded</Text>
-        {isLoading ? (
+        {(isLoadingPoints ?? isLoading) ? (
           renderSkeleton()
         ) : (
           <Text style={[styles.subTotalValue, { color: COLORS.secondaryColor }]}>
