@@ -166,7 +166,7 @@ const HomeStack = () => {
         name="Offers"
         component={OffersScreen}
         options={{
-          headerTitle: () => null,
+          headerTitle: '',
           headerBackVisible: false,
           headerLeft: () => <CustomHeader title='Exclusive Offers' />,
           headerRight: () => (
@@ -197,7 +197,7 @@ const HomeStack = () => {
         name="OfferDetails"
         component={OfferDetailsScreen}
         options={{
-          headerTitle: () => null,
+          headerTitle: '',
           headerBackVisible: false,
           headerLeft: () => <CustomHeader title='Exclusive Offer' />,
         }}
@@ -206,7 +206,7 @@ const HomeStack = () => {
         name="FavoriteItems"
         component={FavoritesScreen}
         options={{
-          headerTitle: () => null,
+          headerTitle: '',
           headerLeft: () => <CustomHeader title='My Favorite Items' />,
           headerRight: () => (
             <View
@@ -236,7 +236,7 @@ const HomeStack = () => {
         name="NewItems"
         component={NewItemsScreen}
         options={{
-          headerTitle: () => null,
+          headerTitle: '',
           headerBackVisible: false,
           headerLeft: () => <CustomHeader title='New Items' />,
           headerRight: () => (
@@ -267,7 +267,7 @@ const HomeStack = () => {
         name="featuredItems"
         component={FeaturedItemsScreen}
         options={{
-          headerTitle: () => null,
+          headerTitle: '',
           headerBackVisible: false,
           headerLeft: () => <CustomHeader title='Featured Items' />,
           headerTitleAlign: 'center',
@@ -299,7 +299,7 @@ const HomeStack = () => {
         name="MenuItems"
         component={MenuItemsScreen}
         options={{
-          headerTitle: () => null,
+          headerTitle: '',
           headerBackVisible: false,
           headerLeft: () => <CustomHeader title='Our Loved Menu' />,
           headerRight: () => (
@@ -329,7 +329,7 @@ const HomeStack = () => {
         name="Cart"
         component={CartScreen}
         options={{
-          headerTitle: () => null,
+          headerTitle: '',
           headerBackVisible: false,
           headerLeft: () => <CustomHeader title='My Cart' />,
           // headerTitleAlign: 'center',
@@ -346,7 +346,7 @@ const HomeStack = () => {
         name="Checkout"
         component={CheckoutScreen}
         options={{
-          headerTitle: () => null,
+          headerTitle: '',
           headerBackVisible: false,
           headerLeft: () => <CustomHeader title='Checkout' />,
         }}
@@ -355,7 +355,7 @@ const HomeStack = () => {
         name="AddressMap"
         component={AddressMapScreen}
         options={{
-          headerTitle: () => null,
+          headerTitle: '',
           headerBackVisible: false,
           headerLeft: () => <CustomHeader title='Checkout' />,
         }}
@@ -364,7 +364,7 @@ const HomeStack = () => {
         name="TrackOrder"
         component={TrackOrderScreen}
         options={{
-          headerTitle: () => null,
+          headerTitle: '',
           headerBackVisible: false,
           headerLeft: () => <CustomHeader title='Track Order' />,
         }}
@@ -387,6 +387,7 @@ const MenuStack = () => {
         component={MenuItemsScreen}
         options={{
           headerBackVisible: false,
+          headerTitleAlign: 'center',
           headerLeft: () => null,
           headerTitle: () => (
             <Text
@@ -434,7 +435,7 @@ const FavoritesStack = () => {
         name="Favorites"
         component={FavoritesScreen}
         options={{
-          headerTitle: 'My Favorite Items',
+          headerTitle: '',
           headerBackVisible: false,
         }}
       />
@@ -472,6 +473,7 @@ const ProfileStack = () => {
         component={ProfileScreen}
         options={{
           headerBackVisible: false,
+          headerTitleAlign: 'center',
         }}
       />
       <Stack.Screen
@@ -480,7 +482,7 @@ const ProfileStack = () => {
         options={{
           headerBackVisible: false,
           headerLeft: () => <CustomHeader title='Profile Settings' />,
-          headerTitle: () => null,
+          headerTitle: '',
         }}
       />
       <Stack.Screen
@@ -489,7 +491,7 @@ const ProfileStack = () => {
         options={{
           headerBackVisible: false,
           headerLeft: () => <CustomHeader title='Confirm Deletion' />,
-          headerTitle: () => null,
+          headerTitle: '',
         }}
       />
       <Stack.Screen
@@ -498,14 +500,14 @@ const ProfileStack = () => {
         options={{
           headerBackVisible: false,
           headerLeft: () => <CustomHeader title='My Addresses'   />,
-          headerTitle: () => null,
+          headerTitle: '',
         }}
       />
       <Stack.Screen
         name="AddressMap"
         component={AddressMapScreen}
         options={{
-          headerTitle: () => null,
+          headerTitle: '',
           headerBackVisible: false,
           headerLeft: () => <CustomHeader title='Map' />,
         }}
@@ -516,7 +518,7 @@ const ProfileStack = () => {
         options={{
           headerBackVisible: false,
           headerLeft: () => <CustomHeader title='Legal' />,
-          headerTitle: () => null,
+          headerTitle: '',
         }}
       />
       <Stack.Screen
@@ -525,7 +527,7 @@ const ProfileStack = () => {
         options={{
           headerBackVisible: false,
           headerLeft: () => <CustomHeader title='FAQ' />,
-          headerTitle: () => null,
+          headerTitle: '',
         }}
       />
       <Stack.Screen
@@ -534,7 +536,7 @@ const ProfileStack = () => {
         options={{
           headerBackVisible: false,
           headerLeft: () => <CustomHeader title='Payment Methods' />,
-          headerTitle: () => null,
+          headerTitle: '',
         }}
       />
       <Stack.Screen
@@ -543,7 +545,7 @@ const ProfileStack = () => {
         options={{
           headerBackVisible: false,
           headerLeft: () => <CustomHeader title='My Allergies' />,
-          headerTitle: () => null,
+          headerTitle: '',
         }}
       />
       <Stack.Screen
@@ -552,14 +554,14 @@ const ProfileStack = () => {
         options={{
           headerBackVisible: false,
           headerLeft: () => <CustomHeader title='My Wallet' />,
-          headerTitle: () => null,
+          headerTitle: '',
         }}
       />
       <Stack.Screen
         name="FavoriteItems"
         component={FavoritesScreen}
         options={{
-          headerTitle: () => null,
+          headerTitle: '',
           headerBackVisible: false,
           headerLeft: () => <CustomHeader title='My Favorite Items' />,
         }}
@@ -594,6 +596,7 @@ const OrderStack = () => {
         options={{
           headerTitle: 'Orders',
           headerBackVisible: false,
+          headerTitleAlign: 'center',
           headerShadowVisible: false,
         }}
       />
@@ -601,7 +604,7 @@ const OrderStack = () => {
         name="OrderDetails"
         component={OrderDetailsScreen}
         options={{
-          headerTitle: () => null,
+          headerTitle: '',
           headerBackVisible: false,
           headerLeft: () => <CustomHeader title='Order Details' />,
           headerShadowVisible: false,
@@ -611,7 +614,7 @@ const OrderStack = () => {
         name="TrackOrder"
         component={TrackOrderScreen}
         options={{
-          headerTitle: () => null,
+          headerTitle: '',
           headerBackVisible: false,
           headerLeft: () => <CustomHeader />,
           // headerTitleAlign: 'center',

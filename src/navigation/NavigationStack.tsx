@@ -173,7 +173,7 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
               name="MenuItem"
               component={MenuItemScreen}
               options={{
-                headerTitle: () => null,
+                headerTitle: '',
                 headerTransparent: true,
                 headerBackVisible: false,
                 headerLeft: () => <CustomHeader color="white" />,
@@ -183,7 +183,7 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
               name="MenuSearch"
               component={SearchScreen}
               options={{
-                headerTitle: () => null,
+                headerTitle: '',
                 headerBackVisible: false,
                 headerLeft: () => <CustomHeader title="Search" />,
                 animation: 'fade',
@@ -206,7 +206,7 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
               name="MenuItem"
               component={MenuItemScreen}
               options={{
-                headerTitle: () => null,
+                headerTitle: '',
                 headerTransparent: true,
                 headerBackVisible: false,
                 headerLeft: () => <CustomHeader color="white" />,

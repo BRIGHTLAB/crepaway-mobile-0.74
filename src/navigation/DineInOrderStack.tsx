@@ -50,7 +50,7 @@ const DineInOrderStack = () => {
         options={{
           headerBackVisible: false,
           headerLeft: () => <CustomHeader />,
-          headerTitle: 'Menu',
+          headerTitle: '',
           headerTitleAlign: 'center',
         }}
       />
@@ -60,6 +60,7 @@ const DineInOrderStack = () => {
         options={{
           headerBackVisible: false,
           headerLeft: () => <CustomHeader />,
+          headerTitle: '',
           headerTitleAlign: 'center',
         }}
       />
@@ -69,6 +70,7 @@ const DineInOrderStack = () => {
         options={{
           headerBackVisible: false,
           headerLeft: () => <CustomHeader />,
+          headerTitle: '',
           headerTitleAlign: 'center',
         }}
       />
@@ -76,7 +78,7 @@ const DineInOrderStack = () => {
         name="MenuItem"
         component={DineInMenuItemScreen}
         options={{
-          headerTitle: () => null,
+          headerTitle: '',
           headerTransparent: true,
           headerBackVisible: false,
           headerLeft: () => <CustomHeader color="white" />,
@@ -88,6 +90,7 @@ const DineInOrderStack = () => {
         options={{
           headerBackVisible: false,
           headerLeft: () => <CustomHeader />,
+          headerTitle: '',
           headerTitleAlign: 'center',
         }}
       />

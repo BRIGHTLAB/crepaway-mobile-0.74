@@ -48,7 +48,7 @@ const ServiceSelectionStack = () => {
         name="Addresses"
         component={AddressesScreen}
         options={{
-          title: 'Addresses',
+          headerTitle: '',
           headerBackVisible: false,
           headerLeft: () => <CustomHeader />,
           headerTitleAlign: 'center',
@@ -59,7 +59,7 @@ const ServiceSelectionStack = () => {
         name="AddressMap"
         component={AddressMapScreen}
         options={{
-          title: 'Enter Location',
+          headerTitle: '',
           headerBackVisible: false,
           headerLeft: () => <CustomHeader />,
           headerTitleAlign: 'center',
@@ -83,7 +83,7 @@ const ServiceSelectionStack = () => {
           headerBackVisible: false,
           headerLeft: () => <CustomHeader />,
           headerTitleAlign: 'center',
-          headerTitle: 'Profile Settings',
+          headerTitle: '',
         }}
       />
       <Stack.Screen
@@ -99,6 +99,7 @@ const ServiceSelectionStack = () => {
         name="Legal"
         component={LegalScreen}
         options={{
+          headerTitle: '',
           headerBackVisible: false,
           headerLeft: () => <CustomHeader />,
           headerTitleAlign: 'center',
@@ -108,6 +109,7 @@ const ServiceSelectionStack = () => {
         name="FAQ"
         component={FAQScreen}
         options={{
+          headerTitle: '',
           headerBackVisible: false,
           headerLeft: () => <CustomHeader />,
           headerTitleAlign: 'center',
@@ -130,7 +132,7 @@ const ServiceSelectionStack = () => {
           headerBackVisible: false,
           headerLeft: () => <CustomHeader />,
           headerTitleAlign: 'center',
-          headerTitle: 'Allergies',
+          headerTitle: '',
         }}
       />
       <Stack.Screen
@@ -147,7 +149,7 @@ const ServiceSelectionStack = () => {
         name="FavoriteItems"
         component={FavoritesScreen}
         options={{
-          headerTitle: 'Favorite Items',
+          headerTitle: '',
           headerBackVisible: false,
           headerLeft: () => <CustomHeader />,
           headerTitleAlign: 'center',
