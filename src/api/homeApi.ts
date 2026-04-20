@@ -9,6 +9,7 @@ export interface UserPromo {
     max_amount: number | null;
     end_date: string | null;
     auto_apply: boolean;
+    item_ids?: number[];
 }
 
 export interface HomepageResponse {

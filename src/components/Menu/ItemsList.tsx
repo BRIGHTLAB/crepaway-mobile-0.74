@@ -89,6 +89,7 @@ const ItemsList = ({
           return (
             <ItemCard
               id={item.id}
+              itemsId={item.items_id}
               name={item.name}
               description={item.description}
               image_url={item.image_url || ''}
