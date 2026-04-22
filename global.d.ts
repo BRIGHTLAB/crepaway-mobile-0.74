@@ -41,6 +41,7 @@ type Item = {
   menu_item_order: number;
   name: string;
   description: string | null;
+  subtitle?: string | null;
   order: number;
   branches_id: number;
   symbol: string;

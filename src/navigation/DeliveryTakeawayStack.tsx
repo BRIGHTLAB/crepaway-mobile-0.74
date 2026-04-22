@@ -387,18 +387,18 @@ const MenuStack = () => {
         component={MenuItemsScreen}
         options={{
           headerBackVisible: false,
-          headerTitleAlign: 'center',
-          headerLeft: () => null,
-          headerTitle: () => (
-            <Text
-              style={{
-                fontFamily: 'Poppins-Medium',
-                fontSize: normalizeFont(18),
-                color: COLORS.darkColor,
-              }}>
-              Our Loved Menu
-            </Text>
+          headerTitleAlign: 'left',
+          headerLeft: () => (
+            <CustomHeader
+              onPress={() => navigation.navigate('HomeStack', { screen: 'Home' })}
+            />
           ),
+          headerTitle: 'Our Loved Menu',
+          headerTitleStyle: {
+            fontFamily: 'Poppins-Medium',
+            fontSize: normalizeFont(18),
+            color: COLORS.darkColor,
+          },
           headerRight: () => (
             <View style={{ flexDirection: 'row', gap: 5 }}>
               <TouchableOpacity
@@ -435,7 +435,8 @@ const FavoritesStack = () => {
         name="Favorites"
         component={FavoritesScreen}
         options={{
-          headerTitle: '',
+          headerTitle: 'My Favorites',
+          headerTitleAlign: 'left',
           headerBackVisible: false,
         }}
       />
@@ -473,7 +474,7 @@ const ProfileStack = () => {
         component={ProfileScreen}
         options={{
           headerBackVisible: false,
-          headerTitleAlign: 'center',
+          headerTitleAlign: 'left',
         }}
       />
       <Stack.Screen
@@ -594,9 +595,9 @@ const OrderStack = () => {
         name="Orders"
         component={OrdersScreen}
         options={{
-          headerTitle: 'Orders',
+          headerTitle: 'My Orders',
           headerBackVisible: false,
-          headerTitleAlign: 'center',
+          headerTitleAlign: 'left',
           headerShadowVisible: false,
         }}
       />

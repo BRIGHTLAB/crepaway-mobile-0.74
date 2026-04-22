@@ -376,10 +376,16 @@ const DineInMenuItemScreen = ({ }: IProps) => {
                 </View>
 
                 <View style={{ paddingHorizontal: 16, marginBottom: 8, marginTop: 10, gap: 6 }}>
-                  {/* Price  */}
-                  <Text style={styles.price}>
-                    {itemData?.symbol} {itemData?.price}
-                  </Text>
+                  <View style={styles.priceRow}>
+                    <Text style={styles.price}>
+                      {itemData?.symbol} {itemData?.price}
+                    </Text>
+                    {!!itemData?.subtitle && (
+                      <Text style={styles.subtitle} numberOfLines={1}>
+                        {itemData.subtitle}
+                      </Text>
+                    )}
+                  </View>
 
                   {/* Rating  */}
                   {/* <View style={styles.ratingContainer}>
@@ -493,11 +499,12 @@ const DineInMenuItemScreen = ({ }: IProps) => {
                 width: '50%',
                 marginHorizontal: 'auto',
                 marginTop: 15,
+                opacity: itemData?.is_paused === 1 ? 0.4 : 1,
               }}>
               <TouchableOpacity
                 onPress={handleDecreaseQuantity}
                 style={[styles.quantityButton]}
-                disabled={quantity < 2}>
+                disabled={itemData?.is_paused === 1 || quantity < 2}>
                 <Icon_Decrease_Quantity
                   width={14}
                   height={2}
@@ -507,7 +514,8 @@ const DineInMenuItemScreen = ({ }: IProps) => {
               <Text style={styles.quantityText}>{quantity}</Text>
               <TouchableOpacity
                 onPress={handleIncreaseQuantity}
-                style={styles.quantityButton}>
+                style={styles.quantityButton}
+                disabled={itemData?.is_paused === 1}>
                 <Icon_Increase_Quantity width={15} height={15} />
               </TouchableOpacity>
             </View>
@@ -517,7 +525,7 @@ const DineInMenuItemScreen = ({ }: IProps) => {
             <View
               style={styles.addToCartButton}>
               <Button
-                disabled={isTableLocked}
+                disabled={isTableLocked || itemData?.is_paused === 1}
                 icon={<Icon_Cart />}
                 iconPosition="right"
                 textSize="large"
@@ -526,12 +534,14 @@ const DineInMenuItemScreen = ({ }: IProps) => {
                 backgroundColor={isTableLocked ? '#FF6D00' : undefined}>
                 {isTableLocked
                   ? 'Table is locked'
-                  : `${!!itemUuid ? 'Update Order' : 'Add to Order'} - ${itemData?.symbol} ${itemData
-                    ? (
-                      itemData.price * quantity +
-                      calculateModifiersTotal()
-                    ).toFixed(2)
-                    : '0.00'}`
+                  : itemData?.is_paused === 1
+                    ? 'Not available'
+                    : `${!!itemUuid ? 'Update Order' : 'Add to Order'} - ${itemData?.symbol} ${itemData
+                      ? (
+                        itemData.price * quantity +
+                        calculateModifiersTotal()
+                      ).toFixed(2)
+                      : '0.00'}`
                 }
               </Button>
 
@@ -595,7 +605,19 @@ const styles = StyleSheet.create({
     color: COLORS.secondaryColor,
     lineHeight: 32,
   },
-
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  subtitle: {
+    flexShrink: 1,
+    textAlign: 'right',
+    fontFamily: 'Poppins-Regular',
+    fontSize: normalizeFont(14),
+    color: COLORS.foregroundColor,
+    opacity: 0.9,
+  },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',

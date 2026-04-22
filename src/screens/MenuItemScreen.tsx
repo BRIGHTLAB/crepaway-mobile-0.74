@@ -361,6 +361,7 @@ const MenuItemScreen = ({ }: IProps) => {
   };
 
   const headerHeight = useHeaderHeight();
+  const isPaused = item?.is_paused === 1
   return (
     <>
       {isLoading ? (
@@ -423,16 +424,23 @@ const MenuItemScreen = ({ }: IProps) => {
                       )}
                     </TouchableOpacity>
                   </View>
+
                   {!!item?.description && (
                     <Text style={styles.description}>{item?.description}</Text>
                   )}
                 </View>
 
                 <View style={{ paddingHorizontal: 16, marginBottom: 8, marginTop: 10, gap: 6 }}>
-                  {/* Price  */}
-                  <Text style={styles.price}>
-                    {item?.symbol} {item?.price}
-                  </Text>
+                  <View style={styles.priceRow}>
+                    <Text style={styles.price}>
+                      {item?.symbol} {item?.price}
+                    </Text>
+                    {!!item?.subtitle && (
+                      <Text style={styles.subtitle} numberOfLines={1}>
+                        {item?.subtitle}
+                      </Text>
+                    )}
+                  </View>
 
                   {/* Rating  */}
                   {/* <View style={styles.ratingContainer}>
@@ -565,11 +573,12 @@ const MenuItemScreen = ({ }: IProps) => {
                 width: '50%',
                 marginHorizontal: 'auto',
                 marginTop: 15,
+                opacity: isPaused ? 0.4 : 1,
               }}>
               <TouchableOpacity
                 onPress={handleDecreaseQuantity}
                 style={[styles.quantityButton]}
-                disabled={quantity < 2}>
+                disabled={isPaused || quantity < 2}>
                 <Icon_Decrease_Quantity
                   width={14}
                   height={2}
@@ -579,7 +588,8 @@ const MenuItemScreen = ({ }: IProps) => {
               <Text style={styles.quantityText}>{quantity}</Text>
               <TouchableOpacity
                 onPress={handleIncreaseQuantity}
-                style={styles.quantityButton}>
+                style={styles.quantityButton}
+                disabled={isPaused}>
                 <Icon_Increase_Quantity width={15} height={15} />
               </TouchableOpacity>
             </View>
@@ -590,13 +600,16 @@ const MenuItemScreen = ({ }: IProps) => {
                 icon={<Icon_Cart />}
                 iconPosition="right"
                 textSize="large"
-                disabled={!validateModifierGroups().isValid}
+                disabled={isPaused || !validateModifierGroups().isValid}
                 onPress={handleAddToCart}>
 
-                {!!itemUuid ? 'Update Cart' : 'Add to Cart'} - {item?.symbol}{' '}
-                {item
-                  ? (item.price * quantity + calculateModifiersTotal()).toFixed(2)
-                  : '0.00'}
+                {isPaused
+                  ? 'Not available'
+                  : `${!!itemUuid ? 'Update Cart' : 'Add to Cart'} - ${item?.symbol} ${item
+                    ? (item.price * quantity + calculateModifiersTotal()).toFixed(2)
+                    : '0.00'
+                  }`
+                }
               </Button>
             </View>
           </View>
@@ -660,7 +673,19 @@ const styles = StyleSheet.create({
     color: COLORS.secondaryColor,
     lineHeight: 32,
   },
-
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  subtitle: {
+    flexShrink: 1,
+    textAlign: 'right',
+    fontFamily: 'Poppins-Regular',
+    fontSize: normalizeFont(14),
+    color: COLORS.foregroundColor,
+    opacity: 0.9,
+  },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',

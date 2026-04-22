@@ -40,6 +40,7 @@ interface MenuItemProps {
 const MenuItem: React.FC<MenuItemProps> = React.memo(
   ({ item, onPress, isFavorite }) => {
     const [favorite, setFavorite] = useState(isFavorite);
+    const isPaused = item.is_paused === 1
 
     useEffect(() => {
       setFavorite(isFavorite);
@@ -60,7 +61,11 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
     };
 
     return (
-      <TouchableOpacity onPress={onPress} style={styles.menuContainer}>
+      <TouchableOpacity
+        onPress={onPress}
+        disabled={isPaused}
+        activeOpacity={0.85}
+        style={[styles.menuContainer, isPaused && styles.menuContainerDisabled]}>
         <View
           style={{
             flexDirection: 'row',
@@ -69,6 +74,11 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
           }}>
           <View style={{ position: 'relative' }}>
             <CartBadge itemId={item.id} style={{ top: -4, right: -4 }} />
+            {/* {isPaused && (
+              <View style={styles.notAvailableBadge}>
+                <Text style={styles.notAvailableText}>N/A</Text>
+              </View>
+            )} */}
             <FastImage
               source={{
                 uri: item?.image_url ?? '',
@@ -79,6 +89,7 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
                 width: 80,
                 height: 80,
                 borderRadius: 10,
+                opacity: isPaused ? 0.55 : 1,
               }}
             />
           </View>
@@ -87,15 +98,23 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
             <Text style={styles.itemDescription} numberOfLines={2}>
               {item.description}
             </Text>
-            <Text style={styles.itemPrice}>
-              {item.symbol} {item.price}
-            </Text>
+            <View style={styles.priceRow}>
+              <Text style={styles.itemPrice}>
+                {item.symbol} {item.price}
+              </Text>
+              {!!item.subtitle && (
+                <Text style={styles.itemSubtitle} numberOfLines={1}>
+                  {item.subtitle}
+                </Text>
+              )}
+            </View>
           </View>
         </View>
 
         {/* right  */}
         <Pressable
-          style={{ alignSelf: 'flex-start' }}
+          style={{ alignSelf: 'flex-start', opacity: isPaused ? 0.5 : 1 }}
+          disabled={isPaused}
           onPress={e => {
             e.stopPropagation();
             handleWishList();
@@ -742,6 +761,24 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#d2d2d2ff',
   },
+  menuContainerDisabled: {
+    opacity: 0.65,
+  },
+  notAvailableBadge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    zIndex: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  notAvailableText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: normalizeFont(10),
+    color: '#fff',
+  },
   menuItem: {
     flex: 1,
     paddingTop: 0,
@@ -762,6 +799,21 @@ const styles = StyleSheet.create({
     color: COLORS.secondaryColor,
     lineHeight: 20,
     marginTop: 6,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  itemSubtitle: {
+    marginTop: 6,
+    marginLeft: 10,
+    flexShrink: 1,
+    textAlign: 'right',
+    fontSize: normalizeFont(12),
+    fontFamily: 'Poppins-Regular',
+    color: COLORS.foregroundColor,
+    opacity: 0.9,
   },
   itemDescription: {
     fontSize: normalizeFont(12),

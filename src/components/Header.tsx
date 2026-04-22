@@ -13,6 +13,7 @@ interface IProps {
   title?: string;
   color?: string;
   clearOrderType?: boolean;
+  onPress?: () => void;
 }
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -21,11 +22,17 @@ const CustomHeader: React.FC<IProps> = ({
   title = '',
   color = COLORS.darkColor,
   clearOrderType = false,
+  onPress,
 }) => {
   const navigation = useNavigation<NavigationProp>();
   const dispatch = useAppDispatch();
 
   const handleBackPress = () => {
+    if (onPress) {
+      onPress();
+      return;
+    }
+
     if (clearOrderType) {
       console.log('clear order type');
       dispatch(
