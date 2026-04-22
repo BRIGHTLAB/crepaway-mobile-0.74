@@ -25,6 +25,8 @@ import { COLORS, SCREEN_PADDING } from '../theme';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { normalizeFont } from '../utils/normalizeFonts';
 import CartBadge from '../components/Menu/CartBadge';
+import Icon_Promo from '../../assets/SVG/Icon_Promo';
+import { usePromoApplicable } from '../hooks/usePromoApplicable';
 
 // Fixed heights for more accurate calculations
 const ITEM_HEIGHT = 120; // Height of each menu item
@@ -41,6 +43,7 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
   ({ item, onPress, isFavorite }) => {
     const [favorite, setFavorite] = useState(isFavorite);
     const isPaused = item.is_paused === 1
+    const hasPromo = usePromoApplicable(item.items_id);
 
     useEffect(() => {
       setFavorite(isFavorite);
@@ -73,6 +76,11 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
             flex: 1,
           }}>
           <View style={{ position: 'relative' }}>
+            {hasPromo && (
+              <View style={{ position: 'absolute', top: 0, left: 0, zIndex: 10, padding: 4, backgroundColor: 'white', borderRadius: 100, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 3 }}>
+                <Icon_Promo width={16} height={16} />
+              </View>
+            )}
             <CartBadge itemId={item.id} style={{ top: -4, right: -4 }} />
             {/* {isPaused && (
               <View style={styles.notAvailableBadge}>

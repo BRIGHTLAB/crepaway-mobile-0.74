@@ -95,6 +95,7 @@ const SearchScreen = () => {
       <View style={styles.cardContainer}>
         <ItemCard
           id={item.id}
+          itemsId={item.items_id}
           name={item.name}
           description={item.description || ''}
           image_url={item.image_url || ''}

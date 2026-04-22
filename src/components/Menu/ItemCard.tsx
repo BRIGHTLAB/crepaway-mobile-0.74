@@ -19,9 +19,12 @@ import { COLORS } from '../../theme';
 import { FadeInFastImage } from '../FadeInFastImage';
 import { normalizeFont } from '../../utils/normalizeFonts';
 import CartBadge from './CartBadge';
+import Icon_Promo from '../../../assets/SVG/Icon_Promo';
+import { usePromoApplicable } from '../../hooks/usePromoApplicable';
 
 interface IProps {
   id: number;
+  itemsId?: number;
   name: string;
   description: string | null;
   image_url: string;
@@ -40,6 +43,7 @@ type ItemListNavigationProp = NativeStackNavigationProp<
 
 const ItemCard = ({
   id,
+  itemsId,
   name,
   description,
   image_url,
@@ -53,6 +57,7 @@ const ItemCard = ({
 }: IProps) => {
   const navigation = useNavigation<ItemListNavigationProp>();
   const [favorite, setFavorite] = useState(false);
+  const hasPromo = usePromoApplicable(itemsId);
 
   const userState = useSelector((state: RootState) => state.user)
 
@@ -97,6 +102,11 @@ const ItemCard = ({
       <View style={[styles.container, style]}>
 
         <View style={{ position: 'relative' }}>
+          {hasPromo && (
+            <View style={{ position: 'absolute', top: 5, left: 5, zIndex: 10, padding: 4, backgroundColor: 'white', borderRadius: 100, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 3 }}>
+              <Icon_Promo width={20} height={20} />
+            </View>
+          )}
           <CartBadge itemId={id} />
           <FadeInFastImage
             source={{
