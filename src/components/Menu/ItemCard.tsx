@@ -33,6 +33,7 @@ interface IProps {
   tags: Tags[];
   showNoDetails?: boolean;
   isFavorite: number;
+  isPaused?: boolean;
   style?: object;
   onItemPress: (id: number) => void;
 }
@@ -52,6 +53,7 @@ const ItemCard = ({
   tags,
   showNoDetails,
   isFavorite,
+  isPaused,
   style,
   onItemPress,
 }: IProps) => {
@@ -99,7 +101,7 @@ const ItemCard = ({
 
   return (
     <Pressable onPress={() => onItemPress(id)}>
-      <View style={[styles.container, style]}>
+      <View style={[styles.container, style, isPaused && { opacity: 0.4 }]}>
 
         <View style={{ position: 'relative' }}>
           {hasPromo && (
@@ -121,6 +123,11 @@ const ItemCard = ({
             resizeMode={FastImage.resizeMode.cover}
             placeholderColor="#f2f2f2"
           />
+          {isPaused && (
+            <View style={styles.unavailableOverlay}>
+              <Text style={styles.unavailableText}>Not Available</Text>
+            </View>
+          )}
         </View>
         <View style={styles.content}>
           <View style={styles.leftContent}>
@@ -231,5 +238,22 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Medium',
     color: COLORS.secondaryColor,
     marginTop: 4,
+  },
+  unavailableOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  unavailableText: {
+    color: '#fff',
+    fontSize: normalizeFont(13),
+    fontFamily: 'Poppins-SemiBold',
+    letterSpacing: 0.5,
   },
 });

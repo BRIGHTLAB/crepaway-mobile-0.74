@@ -131,11 +131,11 @@ const HomeScreen = () => {
   });
 
   const categories = data?.categories;
-  const newItems = data?.new_items?.filter(item => item.is_paused !== 1) ?? [];
-  const featuredItems = data?.featured_items?.filter(item => item.is_paused !== 1) ?? [];
+  const newItems = data?.new_items ?? [];
+  const featuredItems = data?.featured_items ?? [];
   const exclusiveOffers = data?.exclusive_offers;
-  const favoriteItems = data?.favorite_items?.filter(item => item.is_paused !== 1) ?? [];
-  const bestSellers = data?.best_sellers?.filter(item => item.is_paused !== 1) ?? [];
+  const favoriteItems = data?.favorite_items ?? [];
+  const bestSellers = data?.best_sellers ?? [];
 
   // Auto-apply promo code logic
   const hasAutoApplied = useRef(false);

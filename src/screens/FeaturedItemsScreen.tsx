@@ -35,6 +35,7 @@ const FeaturedItemsScreen = () => {
         symbol={item.symbol}
         tags={item.tags}
         isFavorite={item.is_favorite}
+        isPaused={item.is_paused === 1}
         style={{ width: '100%' }}
         onItemPress={id => {
           navigation.navigate('MenuItem', { itemId: id });

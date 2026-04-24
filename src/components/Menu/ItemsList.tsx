@@ -97,6 +97,7 @@ const ItemsList = ({
               symbol={item.symbol}
               tags={item.tags}
               isFavorite={item.is_favorite}
+              isPaused={item.is_paused === 1}
               showNoDetails={showNoDetails}
               style={{ width: cardWidth }}
               onItemPress={onItemPress || (() => { })}

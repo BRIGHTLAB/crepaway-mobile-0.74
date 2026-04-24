@@ -6,7 +6,7 @@ import { COLORS } from '../../theme';
 interface IProps {
   subtotal: string;
   deliveryCharge?: string | null;
-  pointsRewarded: string;
+  pointsRewarded?: string;
   promoApplied?: boolean;
   promoCode?: string;
   onAddPromoCode?: () => void;
@@ -87,16 +87,18 @@ const TotalSection = ({
       )}
 
       {/* Points rewarded  */}
-      <View style={styles.subTotalContainer}>
-        <Text style={styles.subTotalTitle}>Points Rewarded</Text>
-        {(isLoadingPoints ?? isLoading) ? (
-          renderSkeleton()
-        ) : (
-          <Text style={[styles.subTotalValue, { color: COLORS.secondaryColor }]}>
-            {pointsRewarded}
-          </Text>
-        )}
-      </View>
+      {pointsRewarded ? (
+        <View style={styles.subTotalContainer}>
+          <Text style={styles.subTotalTitle}>Points Rewarded</Text>
+          {(isLoadingPoints ?? isLoading) ? (
+            renderSkeleton()
+          ) : (
+            <Text style={[styles.subTotalValue, { color: COLORS.secondaryColor }]}>
+              {pointsRewarded}
+            </Text>
+          )}
+        </View>
+      ) : null}
 
 
 

@@ -45,6 +45,7 @@ const CategoryList = ({data, isLoading, onCategoryPress}: IProps) => {
       <CategoryCard
         name={item.name}
         image_url={item.image_url}
+        isPaused={item.is_paused === 1}
         style={{width: cardWidth, marginRight: gap, marginBottom: gap}}
         onPress={() => onCategoryPress(item)}
       />

@@ -508,7 +508,7 @@ const MenuItemScreen = ({ }: IProps) => {
 
                 {/* Modifiers  */}
                 <View style={{ marginTop: 16, gap: 16 }}>
-                  {item?.modifier_groups.map((group, idx) => {
+                  {item?.modifier_groups.filter(g => !g.is_paused).map((group, idx) => {
                     return (
                       <React.Fragment key={idx}>
                         <ModifierGroup

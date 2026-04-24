@@ -251,6 +251,7 @@ const ModifierGroup: React.FC<ModifierGroupProps> = ({
 
 
 if (!group.enabled) return null;
+  if (group.is_paused) return null;
 
   return (
     <View style={{ gap: 8, opacity: isGroupDisabled ? 0.5 : 1 }}>
@@ -291,7 +292,7 @@ if (!group.enabled) return null;
       At least {group?.min_quantity} quantity are required to be added.
         </Text>
       )}
-          {group.modifier_items.map(item => {
+          {group.modifier_items.filter(item => !item.is_paused).map(item => {
           // Check if item is disabled (max_quantity is 0)
           const isItemDisabled = item.max_quantity === 0;
 

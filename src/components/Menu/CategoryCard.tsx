@@ -9,13 +9,14 @@ import { normalizeFont } from '../../utils/normalizeFonts';
 interface IProps {
   name: string;
   image_url?: string;
+  isPaused?: boolean;
   style?: object;
   onPress: () => void;
 }
 
-const CategoryCard = ({ name, image_url, style, onPress }: IProps) => {
+const CategoryCard = ({ name, image_url, isPaused, style, onPress }: IProps) => {
   return (
-    <TouchableOpacity onPress={onPress} style={[styles.container, style]}>
+    <TouchableOpacity onPress={onPress} style={[styles.container, style, isPaused && { opacity: 0.4 }]}>
 
       <FadeInFastImage
         source={{
@@ -28,20 +29,15 @@ const CategoryCard = ({ name, image_url, style, onPress }: IProps) => {
         placeholderColor="#fff"
       />
 
-      {/* <FastImage
-        source={{
-          uri:
-            image_url ||
-            'https://d3vfh4cqgoixck.cloudfront.net/images/locations_placeholder1.webp',
-          priority: FastImage.priority.normal,
-        }}
-        resizeMode={FastImage.resizeMode.cover}
-        style={styles.image}
-      /> */}
-
       <LinearGradient colors={['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.7)']} style={styles.titleContainer}>
         <Text style={styles.title}>{name}</Text>
       </LinearGradient>
+
+      {isPaused && (
+        <View style={styles.unavailableOverlay}>
+          <Text style={styles.unavailableText}>Not Available</Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 };
@@ -85,5 +81,22 @@ const styles = StyleSheet.create({
     paddingBottom: 2,
     textAlign: 'center',
     paddingHorizontal: 4,
+  },
+  unavailableOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 110,
+    borderRadius: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  unavailableText: {
+    color: '#fff',
+    fontSize: normalizeFont(11),
+    fontFamily: 'Poppins-SemiBold',
+    letterSpacing: 0.3,
   },
 });

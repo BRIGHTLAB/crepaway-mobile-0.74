@@ -36,6 +36,7 @@ import Button from '../components/UI/Button';
 import RadioButton from '../components/UI/RadioButton';
 import { DineInStackParamList } from '../navigation/DineInStack';
 
+import { useGetLoyaltyTierThresholdQuery } from '../api/dataApi';
 import { RootState, useAppDispatch } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
 import SocketService from '../utils/SocketService';
@@ -178,6 +179,16 @@ const DineInCheckoutScreen = () => {
   );
 
   console.log('[DineInCheckoutScreen] dataQAAAA:', JSON.stringify(data));
+
+  // Fetch loyalty tier threshold to determine if points should be shown
+  const { data: thresholdData } = useGetLoyaltyTierThresholdQuery();
+  const loyaltyThreshold = thresholdData?.loyalty_tier_threshold
+    ? parseFloat(thresholdData.loyalty_tier_threshold)
+    : 0;
+  const dineInTotalWithoutDelivery = data?.summary?.total_without_delivery ?? 0;
+  const shouldShowPoints = loyaltyThreshold > 0
+    ? dineInTotalWithoutDelivery >= loyaltyThreshold
+    : true;
 
   const [applyPromoCode, { isLoading: isApplyingPromo }] = useApplyDineInPromoCodeMutation();
   const [applyCouponCode, { isLoading: isApplyingCoupon }] = useApplyDineInCouponCodeMutation();
@@ -719,7 +730,7 @@ const DineInCheckoutScreen = () => {
             <TotalSection
               orderType={'dinein'}
               subtotal={`${data?.currency?.symbol ?? ''} ${data?.summary?.original_sub_total ?? ''}`}
-              pointsRewarded={`+ ${data?.points_rewarded ?? ''} pts`}
+              pointsRewarded={shouldShowPoints ? `+ ${data?.points_rewarded ?? ''} pts` : undefined}
               total={`${data?.currency?.symbol ?? ''} ${data?.summary?.final_total ?? ''}`}
               discount={
                 data?.summary?.total_discount

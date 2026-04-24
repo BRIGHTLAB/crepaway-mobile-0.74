@@ -30,6 +30,7 @@ import Icon_Location from '../../assets/SVG/Icon_Location';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
 import { useDeleteSavedCardMutation, useGetCheckoutQuery, useGetPaymentMethodsQuery, useGetSavedCardsQuery, useLazyGetPaymentStatusQuery, usePlaceOrderMutation } from '../api/checkoutApi';
 import { useGetPointsPreviewQuery } from '../api/loyaltyApi';
+import { useGetLoyaltyTierThresholdQuery } from '../api/dataApi';
 import PaymentWebViewModal from '../components/Checkout/PaymentWebViewModal';
 import TotalSection from '../components/Menu/TotalSection';
 import DynamicSheet from '../components/Sheets/DynamicSheet';
@@ -124,6 +125,15 @@ const CheckoutScreen = () => {
     { totalAmount: totalWithoutDelivery! },
     { skip: totalWithoutDelivery == null || totalWithoutDelivery <= 0 },
   );
+
+  // Fetch loyalty tier threshold to determine if points should be shown
+  const { data: thresholdData } = useGetLoyaltyTierThresholdQuery();
+  const loyaltyThreshold = thresholdData?.loyalty_tier_threshold
+    ? parseFloat(thresholdData.loyalty_tier_threshold)
+    : 0;
+  const shouldShowPoints = loyaltyThreshold > 0
+    ? (totalWithoutDelivery ?? 0) >= loyaltyThreshold
+    : true;
 
   const { data: paymentMethodsData, isLoading: isPaymentMethodsLoading } = useGetPaymentMethodsQuery();
 
@@ -868,7 +878,7 @@ const CheckoutScreen = () => {
                 }`}
               deliveryCharge={`${data?.currency?.symbol ?? ''} ${data?.delivery_charge ?? ''
                 }`}
-              pointsRewarded={`+ ${pointsPreviewData?.gain ?? '0'} pts`}
+              pointsRewarded={shouldShowPoints ? `+ ${pointsPreviewData?.gain ?? '0'} pts` : undefined}
               total={`${data?.currency?.symbol ?? ''} ${data?.summary?.final_total ?? ''
                 }`}
               discount={
