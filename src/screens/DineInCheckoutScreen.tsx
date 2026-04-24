@@ -153,6 +153,7 @@ const DineInCheckoutScreen = () => {
 
   // Payment WebView state (for card payments)
   const [paymentWebViewUrl, setPaymentWebViewUrl] = useState<string | null>(null);
+  const [paymentId, setPaymentId] = useState<string | null>(null);
 
   // Save card dialog state
   const [showSaveCardDialog, setShowSaveCardDialog] = useState(false);
@@ -315,7 +316,12 @@ const DineInCheckoutScreen = () => {
       console.log('addPayment response:', response);
       if (response && response.success === false) {
         setPaymentErrorMessage(response.message || 'Payment failed');
+        setPaymentId(null);
         return;
+      }
+
+      if (response?.paymentId) {
+        setPaymentId(String(response.paymentId));
       }
 
       // If the server returns a paymentUrl, open the WebView
@@ -423,12 +429,14 @@ const DineInCheckoutScreen = () => {
   const paymentDisplay = getSelectedPaymentDisplay();
 
   // Payment WebView callbacks
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = (_orderId: number | null, _paymentId: number) => {
     setPaymentWebViewUrl(null);
+    setPaymentId(null);
   };
 
-  const handlePaymentFailure = () => {
+  const handlePaymentFailure = (_paymentId: number) => {
     setPaymentWebViewUrl(null);
+    setPaymentId(null);
     Toast.show({
       type: 'error',
       text1: 'Payment failed',
@@ -436,6 +444,25 @@ const DineInCheckoutScreen = () => {
       visibilityTime: 4000,
       position: 'bottom',
     });
+  };
+
+  const handlePaymentClose = () => {
+    const currentPaymentId = paymentId?.trim();
+    if (currentPaymentId) {
+      SocketService.getInstance().emit(
+        'message',
+        {
+          type: 'cancelPayment',
+          data: { tableName: user.branchTable, paymentId: currentPaymentId },
+        },
+        (response: any) => {
+          console.log('cancelPayment response:', response);
+        }
+      );
+    }
+
+    setPaymentWebViewUrl(null);
+    setPaymentId(null);
   };
 
   const currencySymbol = data?.currency?.symbol ?? '$';
@@ -1183,9 +1210,11 @@ const DineInCheckoutScreen = () => {
         paymentUrl={paymentWebViewUrl || ''}
         onPaymentSuccess={handlePaymentSuccess}
         onPaymentFailure={handlePaymentFailure}
+        onClose={handlePaymentClose}
         timeoutSeconds={180}
         onTimeout={() => {
           setPaymentWebViewUrl(null);
+          setPaymentId(null);
           Toast.show({
             type: 'error',
             text1: 'Payment session expired',
