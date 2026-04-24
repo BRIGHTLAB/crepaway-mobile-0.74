@@ -63,6 +63,9 @@ const FeaturedItemsScreen = () => {
           ListFooterComponent={() => (
             <View style={{ height: SCREEN_PADDING.vertical }} />
           )}
+          columnWrapperStyle={{
+            gap: 16,
+          }}
         />
       )}
     </View>
