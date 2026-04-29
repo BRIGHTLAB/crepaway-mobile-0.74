@@ -23,6 +23,8 @@ import Icon_Take_Away from '../../assets/SVG/Icon_Take_Away';
 import { useGetMenuBranchesQuery } from '../api/branchesApi';
 import { useGetContentQuery } from '../api/dataApi';
 import { useGetOrderTypesQuery } from '../api/ordersApi';
+import { useGetProfileQuery } from '../api/profileApi';
+import ProfileAvatar from '../components/Profile/ProfileAvatar';
 import SelectSheet from '../components/Sheets/SelectSheet';
 import DeliverySheet from '../components/Sheets/ServiceSelection/DeliverySheet';
 import Button from '../components/UI/Button';
@@ -40,8 +42,6 @@ import {
 } from '../store/slices/userSlice';
 import store, { RootState } from '../store/store';
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../theme';
-import { useGetProfileQuery } from '../api/profileApi';
-import ProfileAvatar from '../components/Profile/ProfileAvatar';
 
 const { width, height } = Dimensions.get('window');
 
@@ -453,7 +453,7 @@ const ServiceSelectionScreen = () => {
           <View style={[styles.backgroundImageContainer, styles.fallbackBackground]} />
         )}
 
-        <TouchableOpacity style={{ position: 'absolute', top: 16, right: SCREEN_PADDING.horizontal, zIndex: 100 }} onPress={() => navigation.navigate('Profile')}>
+        <TouchableOpacity style={{ position: 'absolute', top: top + 10, right: SCREEN_PADDING.horizontal, zIndex: 100 }} onPress={() => navigation.navigate('Profile')}>
           <ProfileAvatar
             imageUrl={profileData?.image_url}
             name={profileData?.name}

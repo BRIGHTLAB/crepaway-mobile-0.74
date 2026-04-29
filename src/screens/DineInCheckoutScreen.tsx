@@ -36,6 +36,7 @@ import Button from '../components/UI/Button';
 import RadioButton from '../components/UI/RadioButton';
 import { DineInStackParamList } from '../navigation/DineInStack';
 
+import { useGetLoyaltyTierThresholdQuery } from '../api/dataApi';
 import { RootState, useAppDispatch } from '../store/store';
 import { COLORS, SCREEN_PADDING } from '../theme';
 import SocketService from '../utils/SocketService';
@@ -152,6 +153,7 @@ const DineInCheckoutScreen = () => {
 
   // Payment WebView state (for card payments)
   const [paymentWebViewUrl, setPaymentWebViewUrl] = useState<string | null>(null);
+  const [paymentId, setPaymentId] = useState<string | null>(null);
 
   // Save card dialog state
   const [showSaveCardDialog, setShowSaveCardDialog] = useState(false);
@@ -178,6 +180,16 @@ const DineInCheckoutScreen = () => {
   );
 
   console.log('[DineInCheckoutScreen] dataQAAAA:', JSON.stringify(data));
+
+  // Fetch loyalty tier threshold to determine if points should be shown
+  const { data: thresholdData } = useGetLoyaltyTierThresholdQuery();
+  const loyaltyThreshold = thresholdData?.loyalty_tier_threshold
+    ? parseFloat(thresholdData.loyalty_tier_threshold)
+    : 0;
+  const dineInTotalWithoutDelivery = data?.summary?.total_without_delivery ?? 0;
+  const shouldShowPoints = loyaltyThreshold > 0
+    ? dineInTotalWithoutDelivery >= loyaltyThreshold
+    : true;
 
   const [applyPromoCode, { isLoading: isApplyingPromo }] = useApplyDineInPromoCodeMutation();
   const [applyCouponCode, { isLoading: isApplyingCoupon }] = useApplyDineInCouponCodeMutation();
@@ -304,7 +316,12 @@ const DineInCheckoutScreen = () => {
       console.log('addPayment response:', response);
       if (response && response.success === false) {
         setPaymentErrorMessage(response.message || 'Payment failed');
+        setPaymentId(null);
         return;
+      }
+
+      if (response?.paymentId) {
+        setPaymentId(String(response.paymentId));
       }
 
       // If the server returns a paymentUrl, open the WebView
@@ -412,12 +429,14 @@ const DineInCheckoutScreen = () => {
   const paymentDisplay = getSelectedPaymentDisplay();
 
   // Payment WebView callbacks
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = (_orderId: number | null, _paymentId: number) => {
     setPaymentWebViewUrl(null);
+    setPaymentId(null);
   };
 
-  const handlePaymentFailure = () => {
+  const handlePaymentFailure = (_paymentId: number) => {
     setPaymentWebViewUrl(null);
+    setPaymentId(null);
     Toast.show({
       type: 'error',
       text1: 'Payment failed',
@@ -425,6 +444,25 @@ const DineInCheckoutScreen = () => {
       visibilityTime: 4000,
       position: 'bottom',
     });
+  };
+
+  const handlePaymentClose = () => {
+    const currentPaymentId = paymentId?.trim();
+    if (currentPaymentId) {
+      SocketService.getInstance().emit(
+        'message',
+        {
+          type: 'cancelPayment',
+          data: { tableName: user.branchTable, paymentId: currentPaymentId },
+        },
+        (response: any) => {
+          console.log('cancelPayment response:', response);
+        }
+      );
+    }
+
+    setPaymentWebViewUrl(null);
+    setPaymentId(null);
   };
 
   const currencySymbol = data?.currency?.symbol ?? '$';
@@ -719,7 +757,7 @@ const DineInCheckoutScreen = () => {
             <TotalSection
               orderType={'dinein'}
               subtotal={`${data?.currency?.symbol ?? ''} ${data?.summary?.original_sub_total ?? ''}`}
-              pointsRewarded={`+ ${data?.points_rewarded ?? ''} pts`}
+              pointsRewarded={shouldShowPoints ? `+ ${data?.points_rewarded ?? ''} pts` : undefined}
               total={`${data?.currency?.symbol ?? ''} ${data?.summary?.final_total ?? ''}`}
               discount={
                 data?.summary?.total_discount
@@ -1172,9 +1210,11 @@ const DineInCheckoutScreen = () => {
         paymentUrl={paymentWebViewUrl || ''}
         onPaymentSuccess={handlePaymentSuccess}
         onPaymentFailure={handlePaymentFailure}
+        onClose={handlePaymentClose}
         timeoutSeconds={180}
         onTimeout={() => {
           setPaymentWebViewUrl(null);
+          setPaymentId(null);
           Toast.show({
             type: 'error',
             text1: 'Payment session expired',
