@@ -12,6 +12,7 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TouchableOpacity,
   View,
@@ -29,7 +30,7 @@ import Icon_Delete from '../../assets/SVG/Icon_Delete';
 import Icon_Location from '../../assets/SVG/Icon_Location';
 import Icon_Motorcycle from '../../assets/SVG/Icon_Motorcycle';
 import { useDeleteSavedCardMutation, useGetCheckoutQuery, useGetPaymentMethodsQuery, useGetSavedCardsQuery, useLazyGetPaymentStatusQuery, usePlaceOrderMutation } from '../api/checkoutApi';
-import { useGetPointsPreviewQuery } from '../api/loyaltyApi';
+import { useGetPointsPreviewQuery, useGetBalanceQuery } from '../api/loyaltyApi';
 import PaymentWebViewModal from '../components/Checkout/PaymentWebViewModal';
 import TotalSection from '../components/Menu/TotalSection';
 import DynamicSheet from '../components/Sheets/DynamicSheet';
@@ -103,6 +104,9 @@ const CheckoutScreen = () => {
   // Save card dialog state
   const [showSaveCardDialog, setShowSaveCardDialog] = useState(false);
 
+  // Points redemption state
+  const [redeemPoints, setRedeemPoints] = useState(false);
+
   const { bottom } = useSafeAreaInsets();
 
   const {
@@ -124,6 +128,23 @@ const CheckoutScreen = () => {
     { totalAmount: totalWithoutDelivery! },
     { skip: totalWithoutDelivery == null || totalWithoutDelivery <= 0 },
   );
+
+  // Fetch user's loyalty points balance for redemption
+  const { data: balanceData, isLoading: isBalanceLoading, error: balanceError } = useGetBalanceQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+  const userPointsBalance = balanceData?.balance ?? 0;
+
+  console.log('[Checkout] Balance query result:', { balanceData, isBalanceLoading, balanceError, userPointsBalance });
+
+  // Calculate points discount when toggle is on
+  const subtotalAfterDiscounts = totalWithoutDelivery != null
+    ? totalWithoutDelivery - (data?.summary?.coupon_discount ?? 0)
+    : 0;
+  const pointsToDeduct = redeemPoints ? Math.min(userPointsBalance, Math.floor(Math.max(subtotalAfterDiscounts, 0))) : 0;
+  const pointsDiscountAmount = pointsToDeduct; // 1:1 ratio
+
+  console.log('[Checkout] Points calculation:', { redeemPoints, subtotalAfterDiscounts, pointsToDeduct, pointsDiscountAmount });
 
   const { data: paymentMethodsData, isLoading: isPaymentMethodsLoading } = useGetPaymentMethodsQuery();
 
@@ -316,6 +337,7 @@ const CheckoutScreen = () => {
         : null,
       order_type: user?.orderType,
       cutleries: sendCutlery === 'yes' ? 1 : 0,
+      ...(redeemPoints ? { redeem_points: true } : {}),
       ...(selectedSavedCardId
         ? { users_payment_methods_id: selectedSavedCardId }
         : (shouldSaveCard ? { save_card: true } : {})
@@ -862,6 +884,41 @@ const CheckoutScreen = () => {
               ) : null}
             </View>
 
+            {/* Redeem Points Toggle */}
+            {userPointsBalance > 0 && (
+              <View style={styles.boxContainer}>
+                <View style={styles.paymentHeaderRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.boxContainerTitle}>Redeem Points</Text>
+                    <Text style={{
+                      fontFamily: 'Poppins-Regular',
+                      fontSize: 12,
+                      color: COLORS.foregroundColor,
+                      marginTop: 2,
+                    }}>
+                      {isBalanceLoading ? 'Loading...' : `${userPointsBalance} pts available`}
+                    </Text>
+                  </View>
+                  <Switch
+                    value={redeemPoints}
+                    onValueChange={setRedeemPoints}
+                    trackColor={{ false: COLORS.borderColor, true: COLORS.secondaryColor + '60' }}
+                    thumbColor={redeemPoints ? COLORS.secondaryColor : COLORS.foregroundColor}
+                  />
+                </View>
+                {redeemPoints && pointsToDeduct > 0 && (
+                  <Text style={{
+                    fontFamily: 'Poppins-Medium',
+                    fontSize: 13,
+                    color: COLORS.secondaryColor,
+                    marginTop: 8,
+                  }}>
+                    Using {pointsToDeduct} pts (-{data?.currency?.symbol ?? '$'}{pointsDiscountAmount.toFixed(2)})
+                  </Text>
+                )}
+              </View>
+            )}
+
             <TotalSection
               orderType={user?.orderType ?? 'delivery'}
               subtotal={`${data?.currency?.symbol ?? ''} ${data?.summary?.original_sub_total ?? ''
@@ -869,8 +926,11 @@ const CheckoutScreen = () => {
               deliveryCharge={`${data?.currency?.symbol ?? ''} ${data?.delivery_charge ?? ''
                 }`}
               pointsRewarded={`+ ${pointsPreviewData?.gain ?? '0'} pts`}
-              total={`${data?.currency?.symbol ?? ''} ${data?.summary?.final_total ?? ''
-                }`}
+              total={(() => {
+                const baseTotal = parseFloat(data?.summary?.final_total ?? '0');
+                const adjustedTotal = baseTotal - pointsDiscountAmount;
+                return `${data?.currency?.symbol ?? ''} ${Math.max(adjustedTotal, 0).toFixed(2)}`;
+              })()}
               discount={
                 data?.summary?.total_discount
                   ? `${data?.currency?.symbol ?? ''} ${data?.summary?.total_discount
@@ -880,6 +940,11 @@ const CheckoutScreen = () => {
               couponDiscount={
                 data?.summary?.coupon_discount && data.summary.coupon_discount > 0
                   ? `${data?.currency?.symbol ?? ''} ${data?.summary?.coupon_discount}`
+                  : undefined
+              }
+              pointsDiscount={
+                redeemPoints && pointsDiscountAmount > 0
+                  ? `${data?.currency?.symbol ?? ''}${pointsDiscountAmount.toFixed(2)}`
                   : undefined
               }
               isLoading={isLoading}

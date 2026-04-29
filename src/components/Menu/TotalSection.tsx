@@ -14,6 +14,7 @@ interface IProps {
   totalUSD?: string;
   discount?: string;
   couponDiscount?: string;
+  pointsDiscount?: string;
   tips?: {
     value: string;
     onPress: () => void;
@@ -37,6 +38,7 @@ const TotalSection = ({
   totalUSD,
   discount,
   couponDiscount,
+  pointsDiscount,
   tips,
   remainingAmount,
   isLoading = false,
@@ -120,6 +122,16 @@ const TotalSection = ({
           <Text style={styles.subTotalTitle}>Coupon Discount</Text>
           <Text style={[styles.subTotalValue, { color: COLORS.secondaryColor }]}>
             - {couponDiscount}
+          </Text>
+        </View>
+      )}
+
+      {/* Points Discount */}
+      {pointsDiscount && (
+        <View style={styles.subTotalContainer}>
+          <Text style={styles.subTotalTitle}>Points Discount</Text>
+          <Text style={[styles.subTotalValue, { color: COLORS.secondaryColor }]}>
+            - {pointsDiscount}
           </Text>
         </View>
       )}
