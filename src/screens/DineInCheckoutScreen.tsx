@@ -65,6 +65,27 @@ const getSocketPaymentMode = (mode: PaymentMode): 'FULL' | 'CUSTOM' | 'SPLIT' =>
   }
 };
 
+type ServerTimestamp = number | string | null | undefined;
+
+const parseServerTimestampMs = (value: ServerTimestamp): number | null => {
+  if (value == null) return null;
+  if (typeof value === 'number') return value;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const nowMonotonicMs = (): number => {
+  const perfNow = (globalThis as any)?.performance?.now?.();
+  return typeof perfNow === 'number' ? perfNow : Date.now();
+};
+
+const formatMMSS = (totalSeconds: number): string => {
+  const clamped = Math.max(0, Math.floor(totalSeconds));
+  const mm = Math.floor(clamped / 60);
+  const ss = clamped % 60;
+  return `${mm}:${String(ss).padStart(2, '0')}`;
+};
+
 const DineInCheckoutScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<DineInStackParamList>>();
@@ -82,6 +103,9 @@ const DineInCheckoutScreen = () => {
   const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<number | null>(null);
   const [selectedSavedCardId, setSelectedSavedCardId] = useState<number | null>(null);
 
+  const paymentExpirySyncRef = useRef<Record<string, { remainingMsAtSync: number; syncedAtMonoMs: number }>>({});
+  const [countdownTick, setCountdownTick] = useState(0);
+
   // Ordered items expand/collapse
   const COLLAPSED_HEIGHT = 200;
   const [isOrderedItemsExpanded, setIsOrderedItemsExpanded] = useState(false);
@@ -94,13 +118,62 @@ const DineInCheckoutScreen = () => {
   const [selectedTip, setSelectedTip] = useState<number | null>(null);
   const [customTip, setCustomTip] = useState<string>('');
   const [isCustomTipActive, setIsCustomTipActive] = useState(false);
+  // read
+  const [applyTips, { isLoading: isApplyingTips }] = useApplyDineInTipsMutation();
+
+  type TipsSelection = {
+    presetPercent: number | null;
+    customPercentText: string;
+    isCustom: boolean;
+  };
+
+  const arePaymentsStarted = useMemo(() => {
+    const payments = tableBill?.payments ?? [];
+    return payments.some(p => {
+      const status = p.status ?? 'PENDING';
+      return status === 'PENDING' || status === 'SUCCEEDED';
+    });
+  }, [tableBill?.payments]);
+
+  const areTipsLocked = useMemo(() => {
+    const isBillPaid = typeof tableBill?.remainingToPay === 'number' && tableBill.remainingToPay <= 0;
+    return arePaymentsStarted || isBillPaid;
+  }, [arePaymentsStarted, tableBill?.remainingToPay]);
+
+  const arePromoVoucherLocked = arePaymentsStarted;
+
+  // Last tips selection confirmed by the backend (used for rollback on error)
+  const committedTipsSelectionRef = useRef<TipsSelection>({
+    presetPercent: null,
+    customPercentText: '',
+    isCustom: false,
+  });
+
+  const setTipsSelection = (selection: TipsSelection) => {
+    setSelectedTip(selection.presetPercent);
+    setCustomTip(selection.customPercentText);
+    setIsCustomTipActive(selection.isCustom);
+  };
+
+  const selectionFromPercent = (percent: number | null): TipsSelection => {
+    if (percent == null || percent <= 0) {
+      return { presetPercent: null, customPercentText: '', isCustom: false };
+    }
+    if (tipOptions.includes(percent)) {
+      return { presetPercent: percent, customPercentText: '', isCustom: false };
+    }
+    return { presetPercent: null, customPercentText: String(percent), isCustom: true };
+  };
+  // finish read
 
   const postTips = async (tips: number) => {
     try {
       const result = await applyTips({ orderId, tips }).unwrap();
       console.log('[postTips] result:', JSON.stringify(result));
+      committedTipsSelectionRef.current = selectionFromPercent(tips);
     } catch (err: any) {
       console.log('[postTips] catch error:', JSON.stringify(err));
+      setTipsSelection(committedTipsSelectionRef.current);
       Toast.show({ type: 'error', text1: 'Failed to apply tips', visibilityTime: 3000, position: 'bottom' });
       return;
     }
@@ -114,23 +187,23 @@ const DineInCheckoutScreen = () => {
   const debouncedPostTips = useCallback(
     debounce((tips: number) => {
       postTips(tips);
-    }, 500),
+    }, 150),
     [orderId]
   );
 
   const handleTipSelect = (tip: number) => {
+    if (areTipsLocked || isApplyingTips) return;
     if (selectedTip === tip) {
-      setSelectedTip(null);
+      setTipsSelection(selectionFromPercent(null));
       postTips(0);
       return;
     }
-    setSelectedTip(tip);
-    setCustomTip('');
-    setIsCustomTipActive(false);
+    setTipsSelection(selectionFromPercent(tip));
     postTips(tip);
   };
 
   const handleCustomTipChange = (text: string) => {
+    if (areTipsLocked || isApplyingTips) return;
     const numericText = text.replace(/[^0-9]/g, '');
     setCustomTip(numericText);
     setSelectedTip(null);
@@ -182,7 +255,6 @@ const DineInCheckoutScreen = () => {
 
   const [applyPromoCode, { isLoading: isApplyingPromo }] = useApplyDineInPromoCodeMutation();
   const [applyCouponCode, { isLoading: isApplyingCoupon }] = useApplyDineInCouponCodeMutation();
-  const [applyTips, { isLoading: isApplyingTips }] = useApplyDineInTipsMutation();
 
   // Sync promo/voucher/tips from tableBill (socket tableUpdate) for display + refetch checkout
   const isInitialBillSync = useRef(true);
@@ -203,23 +275,14 @@ const DineInCheckoutScreen = () => {
       if (!billVoucher) setCouponError(null);
     }
 
-    if (billTips !== null) {
-      const tipNum = Number(billTips);
-      if (tipOptions.includes(tipNum)) {
-        setSelectedTip(tipNum);
-        setCustomTip('');
-        setIsCustomTipActive(false);
-      } else if (tipNum > 0) {
-        setSelectedTip(null);
-        setCustomTip(String(tipNum));
-        setIsCustomTipActive(true);
-      }
-    } else {
-      setSelectedTip(null);
-      setCustomTip('');
-      setIsCustomTipActive(false);
-    }
-
+// read
+    const tipsPercent = billTips != null ? Number(billTips) : null;
+    const committedSelection = selectionFromPercent(
+      Number.isFinite(tipsPercent as number) ? (tipsPercent as number) : null
+    );
+    committedTipsSelectionRef.current = committedSelection;
+    setTipsSelection(committedSelection);
+// finish read
     if (isInitialBillSync.current) {
       isInitialBillSync.current = false;
       return;
@@ -231,8 +294,6 @@ const DineInCheckoutScreen = () => {
     tableBill?.promoCode,
     tableBill?.voucherCode,
     tableBill?.tips,
-    promoCode,
-    couponCode,
     tipOptions,
     isUninitialized,
     refetch,
@@ -322,6 +383,7 @@ const DineInCheckoutScreen = () => {
 
 
   const handleApplyPromoCode = async () => {
+    if (arePromoVoucherLocked) return;
     const trimmedCode = sheetPromoCode.trim();
     if (!trimmedCode) {
       setPromoError('Please enter a promo code');
@@ -350,6 +412,7 @@ const DineInCheckoutScreen = () => {
   };
 
   const handleApplyCouponCode = async () => {
+    if (arePromoVoucherLocked) return;
     const trimmedCode = sheetCouponCode.trim();
     if (!trimmedCode) {
       setCouponError('Please enter a coupon code');
@@ -456,6 +519,52 @@ const DineInCheckoutScreen = () => {
 
   const currencySymbol = data?.currency?.symbol ?? '$';
 
+  const hasPendingExpiringPayment = useMemo(() => {
+    const payments = tableBill?.payments ?? [];
+    return payments.some(p => {
+      if ((p.status ?? 'PENDING') !== 'PENDING') return false;
+      const anyP = p as any;
+      const endDateMs = parseServerTimestampMs(anyP.endDate);
+      const serverNowMs = parseServerTimestampMs(anyP.serverNow);
+      const expiresInMs = typeof anyP.expiresInMs === 'number' ? anyP.expiresInMs : null;
+      return expiresInMs != null || (endDateMs != null && serverNowMs != null);
+    });
+  }, [tableBill?.payments]);
+
+  useEffect(() => {
+    const payments = tableBill?.payments ?? [];
+    const next: Record<string, { remainingMsAtSync: number; syncedAtMonoMs: number }> = {};
+    const monoNow = nowMonotonicMs();
+
+    for (const p of payments) {
+      const status = p.status ?? 'PENDING';
+      if (status !== 'PENDING') continue;
+
+      const anyP = p as any;
+      const expiresInMs = typeof anyP.expiresInMs === 'number' ? anyP.expiresInMs : null;
+      const endDateMs = parseServerTimestampMs(anyP.endDate);
+      const serverNowMs = parseServerTimestampMs(anyP.serverNow);
+
+      let remainingMsAtSync: number | null = null;
+      if (expiresInMs != null) {
+        remainingMsAtSync = expiresInMs;
+      } else if (endDateMs != null && serverNowMs != null) {
+        remainingMsAtSync = endDateMs - serverNowMs;
+      }
+
+      if (remainingMsAtSync == null) continue;
+      next[p.uuid] = { remainingMsAtSync, syncedAtMonoMs: monoNow };
+    }
+
+    paymentExpirySyncRef.current = next;
+  }, [tableBill?.payments]);
+
+  useEffect(() => {
+    if (!hasPendingExpiringPayment) return;
+    const id = setInterval(() => setCountdownTick(t => t + 1), 1000);
+    return () => clearInterval(id);
+  }, [hasPendingExpiringPayment]);
+
   const orderedItemsByUser = useMemo(() => {
     const items = data?.ordered_items ?? [];
     // Sort so current user's group appears first
@@ -473,6 +582,9 @@ const DineInCheckoutScreen = () => {
   const myUserGroup = orderedItemsByUser.find(g => g.is_current_user);
   const myOrderTotal = myUserGroup?.total ?? 0;
   const divideBillAmount = totalPersons > 0 ? (remainingAmount / totalPersons) : 0;
+
+  const hasPromoOrVoucher = !!(promoCode || couponCode);
+  const tipsPercent = tableBill?.tips ?? 0;
 
   const partialPaymentItems: OrderItem[] = useMemo(() => {
     const flatItems: OrderItem[] = [];
@@ -596,11 +708,23 @@ const DineInCheckoutScreen = () => {
             {/* Promo Code - Compact Display */}
             <View style={styles.boxContainer}>
               <View style={styles.paymentHeaderRow}>
-                <Text style={styles.boxContainerTitle}>Promo code</Text>
+                <Text
+                  style={[
+                    styles.boxContainerTitle,
+                    arePromoVoucherLocked && { opacity: 0.5, color: COLORS.foregroundColor },
+                  ]}
+                >
+                  Promo code
+                </Text>
                 {promoCode ? (
                   <TouchableOpacity
-                    style={styles.changeButton}
+                    style={[
+                      styles.changeButton,
+                      (arePromoVoucherLocked || isApplyingPromo) && { opacity: 0.5 },
+                    ]}
+                    disabled={arePromoVoucherLocked || isApplyingPromo}
                     onPress={async () => {
+                      if (arePromoVoucherLocked || isApplyingPromo) return;
                       setPromoCode('');
                       setSheetPromoCode('');
                       setPromoError(null);
@@ -613,18 +737,37 @@ const DineInCheckoutScreen = () => {
                       });
                     }}
                   >
-                    <Text style={[styles.changeButtonText, { color: COLORS.primaryColor }]}>Remove</Text>
+                    <Text
+                      style={[
+                        styles.changeButtonText,
+                        { color: (arePromoVoucherLocked || isApplyingPromo) ? COLORS.foregroundColor : COLORS.primaryColor },
+                      ]}
+                    >
+                      Remove
+                    </Text>
                   </TouchableOpacity>
                 ) : (
                   <TouchableOpacity
-                    style={styles.addButton}
+                    style={[
+                      styles.addButton,
+                      arePromoVoucherLocked && { opacity: 0.5 },
+                    ]}
+                    disabled={arePromoVoucherLocked}
                     onPress={() => {
+                      if (arePromoVoucherLocked) return;
                       setSheetPromoCode(promoCode);
                       setPromoError(null);
                       promoCodeSheetRef.current?.expand();
                     }}
                   >
-                    <Text style={styles.addButtonText}>+ Add</Text>
+                    <Text
+                      style={[
+                        styles.addButtonText,
+                        arePromoVoucherLocked && { color: COLORS.foregroundColor },
+                      ]}
+                    >
+                      + Add
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -643,11 +786,23 @@ const DineInCheckoutScreen = () => {
             {/* Coupon Code - Compact Display */}
             <View style={styles.boxContainer}>
               <View style={styles.paymentHeaderRow}>
-                <Text style={styles.boxContainerTitle}>Coupon code</Text>
+                <Text
+                  style={[
+                    styles.boxContainerTitle,
+                    arePromoVoucherLocked && { opacity: 0.5, color: COLORS.foregroundColor },
+                  ]}
+                >
+                  Coupon code
+                </Text>
                 {couponCode ? (
                   <TouchableOpacity
-                    style={styles.changeButton}
+                    style={[
+                      styles.changeButton,
+                      (arePromoVoucherLocked || isApplyingCoupon) && { opacity: 0.5 },
+                    ]}
+                    disabled={arePromoVoucherLocked || isApplyingCoupon}
                     onPress={async () => {
+                      if (arePromoVoucherLocked || isApplyingCoupon) return;
                       setCouponCode('');
                       setSheetCouponCode('');
                       setCouponError(null);
@@ -660,18 +815,37 @@ const DineInCheckoutScreen = () => {
                       });
                     }}
                   >
-                    <Text style={[styles.changeButtonText, { color: COLORS.primaryColor }]}>Remove</Text>
+                    <Text
+                      style={[
+                        styles.changeButtonText,
+                        { color: (arePromoVoucherLocked || isApplyingCoupon) ? COLORS.foregroundColor : COLORS.primaryColor },
+                      ]}
+                    >
+                      Remove
+                    </Text>
                   </TouchableOpacity>
                 ) : (
                   <TouchableOpacity
-                    style={styles.addButton}
+                    style={[
+                      styles.addButton,
+                      arePromoVoucherLocked && { opacity: 0.5 },
+                    ]}
+                    disabled={arePromoVoucherLocked}
                     onPress={() => {
+                      if (arePromoVoucherLocked) return;
                       setSheetCouponCode('');
                       setCouponError(null);
                       couponCodeSheetRef.current?.expand();
                     }}
                   >
-                    <Text style={styles.addButtonText}>+ Add</Text>
+                    <Text
+                      style={[
+                        styles.addButtonText,
+                        arePromoVoucherLocked && { color: COLORS.foregroundColor },
+                      ]}
+                    >
+                      + Add
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -690,7 +864,14 @@ const DineInCheckoutScreen = () => {
             {/* Tips Section */}
             <View style={styles.boxContainer}>
               <View style={styles.tipsRow}>
-                <Text style={styles.boxContainerTitle}>Tips</Text>
+                <Text
+                  style={[
+                    styles.boxContainerTitle,
+                    areTipsLocked && { opacity: 0.5, color: COLORS.foregroundColor },
+                  ]}
+                >
+                  Tips
+                </Text>
                 <View style={styles.tipsOptions}>
                   {tipOptions.map((tip) => (
                     <TouchableOpacity
@@ -698,10 +879,11 @@ const DineInCheckoutScreen = () => {
                       style={[
                         styles.tipOption,
                         selectedTip === tip && styles.tipOptionSelected,
+                        (areTipsLocked || isApplyingTips) && { opacity: 0.5 },
                       ]}
                       onPress={() => handleTipSelect(tip)}
                       activeOpacity={0.7}
-                      disabled={isApplyingTips}
+                      disabled={areTipsLocked || isApplyingTips}
                     >
                       <Text
                         style={[
@@ -717,6 +899,7 @@ const DineInCheckoutScreen = () => {
                     style={[
                       styles.tipCustomContainer,
                       isCustomTipActive && styles.tipOptionSelected,
+                      (areTipsLocked || isApplyingTips) && { opacity: 0.5 },
                     ]}
                   >
                     <TextInput
@@ -730,7 +913,9 @@ const DineInCheckoutScreen = () => {
                       placeholderTextColor={COLORS.foregroundColor}
                       keyboardType="number-pad"
                       maxLength={3}
+                      editable={!areTipsLocked && !isApplyingTips}
                       onFocus={() => {
+                        if (areTipsLocked || isApplyingTips) return;
                         setIsCustomTipActive(true);
                         setSelectedTip(null);
                       }}
@@ -812,6 +997,18 @@ const DineInCheckoutScreen = () => {
                       : payment.status === 'FAILED' || payment.status === 'CANCELLED' ? COLORS.primaryColor
                         : COLORS.foregroundColor;
 
+                  const expirySync = paymentExpirySyncRef.current[payment.uuid];
+                  const expiresInText = (() => {
+                    if (!expirySync) return null;
+                    // reference tick so we re-render every second
+                    void countdownTick;
+                    const elapsedMs = nowMonotonicMs() - expirySync.syncedAtMonoMs;
+                    const remainingMs = expirySync.remainingMsAtSync - elapsedMs;
+                    const remainingSeconds = Math.ceil(remainingMs / 1000);
+                    if (remainingSeconds <= 0) return 'Expired';
+                    return `Expires in ${formatMMSS(remainingSeconds)}`;
+                  })();
+
                   return (
                     <View key={`${payment.uuid}_${index}`} style={styles.billPaymentRow}>
                       <View style={styles.billPaymentInfo}>
@@ -819,6 +1016,9 @@ const DineInCheckoutScreen = () => {
                         <Text style={styles.billPaymentDetail}>
                           {payment.paymentMode ?? '—'} · {payment.paymentMethod}
                         </Text>
+                        {(payment.status ?? 'PENDING') === 'PENDING' && expiresInText && (
+                          <Text style={styles.billPaymentExpiryText}>{expiresInText}</Text>
+                        )}
                       </View>
                       <View style={styles.billPaymentRight}>
                         <Text style={styles.billPaymentAmount}>
@@ -845,17 +1045,19 @@ const DineInCheckoutScreen = () => {
                   <Text style={{ fontFamily: 'Poppins-Regular' }}>{tableBill?.payments?.some(p => p.status === 'SUCCEEDED') ? 'Pay the rest of the bill' : 'Pay all bill'}  </Text><Text style={{ fontFamily: 'Poppins-Bold' }}>{currencySymbol}{remainingAmount.toFixed(2)}</Text>
                 </Button>
                 <View style={{ flexDirection: 'row', gap: 10 }}>
-                  <Button
-                    variant="outline"
-                    onPress={() => {
-                      setPartialPaymentInitialMode('myOrder');
-                      partialPaymentSheetRef.current?.expand();
-                    }}
-                    disabled={!canPayBill}
-                    style={{ flex: 1 }}
-                  >
-                    <Text style={{ fontFamily: 'Poppins-Regular' }}>Pay my order  </Text><Text style={{ fontFamily: 'Poppins-Bold' }}>{currencySymbol}{myOrderTotal.toFixed(2)}</Text>
-                  </Button>
+                  {!hasPromoOrVoucher && (
+                    <Button
+                      variant="outline"
+                      onPress={() => {
+                        setPartialPaymentInitialMode('myOrder');
+                        partialPaymentSheetRef.current?.expand();
+                      }}
+                      disabled={!canPayBill}
+                      style={{ flex: 1 }}
+                    >
+                      Pay my order
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     onPress={() => {
@@ -900,6 +1102,7 @@ const DineInCheckoutScreen = () => {
             placeholder="Enter promo code"
             value={sheetPromoCode}
             onChangeText={(text: string) => {
+              if (arePromoVoucherLocked) return;
               setSheetPromoCode(text);
               if (promoError) setPromoError(null);
             }}
@@ -907,12 +1110,14 @@ const DineInCheckoutScreen = () => {
           {promoError && (
             <Text style={styles.promoErrorText}>{promoError}</Text>
           )}
-          <Button onPress={handleApplyPromoCode} isLoading={isApplyingPromo}>
+          <Button onPress={handleApplyPromoCode} isLoading={isApplyingPromo} disabled={arePromoVoucherLocked}>
             Apply
           </Button>
           <TouchableOpacity
             style={styles.sheetRemoveButton}
+            disabled={arePromoVoucherLocked || isApplyingPromo}
             onPress={async () => {
+              if (arePromoVoucherLocked || isApplyingPromo) return;
               setPromoCode('');
               setSheetPromoCode('');
               setPromoError(null);
@@ -945,6 +1150,7 @@ const DineInCheckoutScreen = () => {
             placeholder="Enter coupon code"
             value={sheetCouponCode}
             onChangeText={(text: string) => {
+              if (arePromoVoucherLocked) return;
               setSheetCouponCode(text);
               if (couponError) setCouponError(null);
             }}
@@ -952,12 +1158,14 @@ const DineInCheckoutScreen = () => {
           {couponError && (
             <Text style={styles.promoErrorText}>{couponError}</Text>
           )}
-          <Button onPress={handleApplyCouponCode} isLoading={isApplyingCoupon}>
+          <Button onPress={handleApplyCouponCode} isLoading={isApplyingCoupon} disabled={arePromoVoucherLocked}>
             Apply
           </Button>
           <TouchableOpacity
             style={styles.sheetRemoveButton}
+            disabled={arePromoVoucherLocked || isApplyingCoupon}
             onPress={async () => {
+              if (arePromoVoucherLocked || isApplyingCoupon) return;
               setCouponCode('');
               setSheetCouponCode('');
               setCouponError(null);
@@ -1225,6 +1433,8 @@ const DineInCheckoutScreen = () => {
         items={partialPaymentItems}
         totalPersons={totalPersons}
         initialMode={partialPaymentInitialMode}
+        hideMyOrder={hasPromoOrVoucher}
+        tipsPercent={tipsPercent}
         onPay={(amount, mode, selectedItems) => {
           emitPayment(amount, getSocketPaymentMode(mode));
           partialPaymentSheetRef.current?.close();
@@ -1651,6 +1861,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
     color: COLORS.foregroundColor,
+  },
+  billPaymentExpiryText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: COLORS.foregroundColor,
+    marginTop: 2,
   },
   billPaymentRight: {
     alignItems: 'flex-end',

@@ -8,6 +8,10 @@ export type TableBillPayment = {
     status: 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'CANCELLED' | null;
     paymentMode: 'FULL' | 'CUSTOM' | 'SPLIT' | null;
     paymentMethod: 'Card' | 'Cash' | 'Whish';
+    createdAt?: number | string | null;
+    endDate?: number | string | null;
+    serverNow?: number | string | null;
+    expiresInMs?: number | null;
 };
 
 export type TableBill = {

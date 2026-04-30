@@ -433,6 +433,47 @@ const TableScreen = () => {
       setShowBannedPopup(false);
       setShowTableClosedPopup(true);
     });
+
+
+    const handleReconnect = () => {
+      setOrderedItems({});
+      setTableUsers({});
+      setTableWaiters({});
+      setBannedUsers({});
+      setPendingJoinRequests({});
+      dispatch(setIsTableLocked(false));
+      dispatch(setTableBill(null));
+      dispatch(setDineInOrderId(null));
+      dispatch(setSessionTableId(null));
+
+      const latestUserState = store.getState().user;
+      socketInstance.emit(
+        'message',
+        {
+          type: 'UserJoinTable',
+          data: {
+            tableName: latestUserState.branchTable,
+            user: {
+              id: latestUserState.id,
+              name: latestUserState.name,
+              image_url: latestUserState.image_url,
+            },
+          },
+        },
+        (response: any) => {
+          if (response?.success) {
+            dispatch(setSessionTableId(response.session_table));
+          }
+        },
+      );
+    };
+
+    const rawSocket = socketInstance.getSocket();
+    rawSocket?.io.on('reconnect', handleReconnect);
+
+    return () => {
+      rawSocket?.io.off('reconnect', handleReconnect);
+    };
   }, []);
 
   useEffect(() => {

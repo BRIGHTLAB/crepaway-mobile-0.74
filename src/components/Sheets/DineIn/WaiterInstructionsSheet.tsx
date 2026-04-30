@@ -126,7 +126,7 @@ const WaiterInstructionsSheet = forwardRef<BottomSheet, Props>(({
             </ScrollView>
 
             {/* Special instruction input */}
-            <View style={{ marginHorizontal: 16, marginBottom: 16 }}>
+            {/* <View style={{ marginHorizontal: 16, marginBottom: 16 }}>
               <BottomSheetInput
                 placeholder="Special Instruction"
                 placeholderTextColor={COLORS.foregroundColor}
@@ -134,7 +134,7 @@ const WaiterInstructionsSheet = forwardRef<BottomSheet, Props>(({
                 onChangeText={setSpecialInstruction}
                 multiline={false}
               />
-            </View>
+            </View> */}
           </>
         )}
       </BottomSheetView>

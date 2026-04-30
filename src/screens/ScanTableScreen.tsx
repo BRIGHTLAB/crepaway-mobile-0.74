@@ -30,7 +30,8 @@ const ScanTableScreen = () => {
   // TEST: auto-set branchTable to bypass QR scanning
   useEffect(() => {
     dispatch(setBranchTable('ashrafieh.table4'));
-    dispatch(setSocketUrl('wss://crepaway-dinein-websocket-ts-hgga.onrender.com'));
+    // dispatch(setSocketUrl('wss://crepaway-dinein-websocket-ts-hgga.onrender.com'));
+    dispatch(setSocketUrl('http://192.168.1.8:5003'));
   }, []);
 
   useFocusEffect(
