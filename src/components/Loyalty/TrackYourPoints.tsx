@@ -1,30 +1,43 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import Icon_Spine from '../../../assets/SVG/Icon_Spine';
+import { useGetPointsHistoryQuery } from '../../api/loyaltyApi';
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../../theme';
 import SegmentedControl, { TabType } from '../UI/SegmentedControl';
 
-interface PointsData {
-  id: number;
-  date: string;
-  points: number;
-}
+const ListSkeleton = () => (
+  <SkeletonPlaceholder
+    backgroundColor="#5A1A9E"
+    highlightColor="#7B2BC7">
+    <SkeletonPlaceholder.Item flexDirection="row" gap={8}>
+      <SkeletonPlaceholder.Item flex={1} height={180} borderRadius={5} />
+      <SkeletonPlaceholder.Item flex={1} height={180} borderRadius={5} />
+    </SkeletonPlaceholder.Item>
+  </SkeletonPlaceholder>
+);
 
-interface TrackYourPointsProps {
-  pointsData: PointsData[];
-  overallPoints: string;
-}
-
-const TrackYourPoints: React.FC<TrackYourPointsProps> = ({
-  pointsData,
-  overallPoints,
-}) => {
+const TrackYourPoints: React.FC = () => {
   const tabs: TabType[] = [
     { label: 'Earned', value: 'earned' },
-    { label: 'Redeemed', value: 'redeemed', disabled: true },
+    { label: 'Redeemed', value: 'redeemed' },
   ];
 
   const [selectedTab, setSelectedTab] = useState<TabType>(tabs[0]);
+
+  const type = selectedTab.value === 'earned' ? 'add' : 'redeem';
+
+  const { data, isLoading, isFetching } = useGetPointsHistoryQuery(
+    { unitKey: 'points', type },
+  );
+
+  const activeData = data?.transactions ?? [];
+  const overallBalance = data?.overall_balance ?? 0;
+  const overallPoints = overallBalance >= 1000
+    ? `${(overallBalance / 1000).toFixed(1)}k`
+    : `${overallBalance}`;
+
+  const showSkeleton = isLoading || isFetching;
 
   return (
     <View style={styles.container}>
@@ -40,35 +53,47 @@ const TrackYourPoints: React.FC<TrackYourPointsProps> = ({
       />
 
       {/* Two Lists Container */}
-      <View style={styles.listsContainer}>
-        {/* Date List */}
-        <View style={styles.listCard}>
-          <View style={styles.listHeader}>
-            <Text style={styles.listHeaderText}>Date</Text>
+      {showSkeleton ? (
+        <ListSkeleton />
+      ) : (
+        <View style={styles.listsContainer}>
+          {/* Date List */}
+          <View style={styles.listCard}>
+            <View style={styles.listHeader}>
+              <Text style={styles.listHeaderText}>Date</Text>
+            </View>
+            <View style={styles.listContent}>
+              {activeData.length > 0 ? (
+                activeData.map((item) => (
+                  <Text key={item.id} style={styles.listItemText}>
+                    {item.date}
+                  </Text>
+                ))
+              ) : (
+                <Text style={styles.emptyText}>No data</Text>
+              )}
+            </View>
           </View>
-          <View style={styles.listContent}>
-            {pointsData.map((item) => (
-              <Text key={item.id} style={styles.listItemText}>
-                {item.date}
-              </Text>
-            ))}
-          </View>
-        </View>
 
-        {/* Points List */}
-        <View style={styles.listCard}>
-          <View style={styles.listHeader}>
-            <Text style={styles.listHeaderText}>Points</Text>
-          </View>
-          <View style={styles.listContent}>
-            {pointsData.map((item) => (
-              <Text key={item.id} style={styles.listItemText}>
-                {parseFloat(String(item.points))}
-              </Text>
-            ))}
+          {/* Points List */}
+          <View style={styles.listCard}>
+            <View style={styles.listHeader}>
+              <Text style={styles.listHeaderText}>Points</Text>
+            </View>
+            <View style={styles.listContent}>
+              {activeData.length > 0 ? (
+                activeData.map((item) => (
+                  <Text key={item.id} style={styles.listItemText}>
+                    {parseFloat(String(item.points))}
+                  </Text>
+                ))
+              ) : (
+                <Text style={styles.emptyText}>—</Text>
+              )}
+            </View>
           </View>
         </View>
-      </View>
+      )}
 
       {/* Overall Summary */}
       <View style={styles.overallSummary}>
@@ -126,6 +151,13 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.BODY,
     color: COLORS.black,
     textAlign: 'center',
+  },
+  emptyText: {
+    ...TYPOGRAPHY.BODY,
+    color: COLORS.black,
+    textAlign: 'center',
+    opacity: 0.4,
+    paddingVertical: 8,
   },
   overallSummary: {
     flexDirection: 'row',

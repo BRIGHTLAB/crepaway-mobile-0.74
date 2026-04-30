@@ -11,6 +11,7 @@ interface PointsHistoryTransaction {
     points: number;
     type: string;
     description: string;
+    note?: string;
 }
 
 interface PointsHistoryResponse {
@@ -25,6 +26,7 @@ interface PointsHistoryResponse {
 
 interface GetPointsHistoryParams {
     unitKey?: string;
+    type?: 'add' | 'redeem';
 }
 
 export const loyaltyApi = loyaltyBaseApi.injectEndpoints({
@@ -46,10 +48,13 @@ export const loyaltyApi = loyaltyBaseApi.injectEndpoints({
             keepUnusedDataFor: 0,
         }),
         getPointsHistory: builder.query<PointsHistoryResponse, GetPointsHistoryParams>({
-            query: ({ unitKey }) => ({
+            query: ({ unitKey, type }) => ({
                 url: `/me/points-history`,
                 method: 'GET',
-                params: unitKey ? { unit_key: unitKey } : undefined,
+                params: {
+                    ...(unitKey ? { unit_key: unitKey } : {}),
+                    ...(type ? { type } : {}),
+                },
             }),
             providesTags: ['loyalty'],
             keepUnusedDataFor: 0,

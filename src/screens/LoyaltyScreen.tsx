@@ -5,7 +5,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import { useSelector } from 'react-redux';
-import { useGetPointsHistoryQuery, useGetTierProgressQuery, useGetTiersQuery } from '../api/loyaltyApi';
+import { useGetTierProgressQuery, useGetTiersQuery } from '../api/loyaltyApi';
 import LoyaltyProgressCard from '../components/Loyalty/LoyaltyProgressCard';
 import RewardTierCard from '../components/Loyalty/RewardTierCard';
 import RewardTierPopup from '../components/Loyalty/RewardTierPopup';
@@ -107,31 +107,6 @@ const RewardTiersSkeleton = () => (
   </SkeletonPlaceholder>
 );
 
-// Skeleton for Track Your Points section
-const TrackYourPointsSkeleton = () => (
-  <SkeletonPlaceholder
-    backgroundColor="#5A1A9E"
-    highlightColor="#7B2BC7">
-    <SkeletonPlaceholder.Item paddingHorizontal={SCREEN_PADDING.horizontal} paddingTop={80} gap={22}>
-      {/* Title */}
-      <SkeletonPlaceholder.Item width={180} height={28} borderRadius={8} alignSelf="center" />
-      {/* Segmented control */}
-      <SkeletonPlaceholder.Item
-        width={'100%'}
-        height={44}
-        borderRadius={8}
-      />
-      {/* Two list cards */}
-      <SkeletonPlaceholder.Item flexDirection="row" gap={8}>
-        <SkeletonPlaceholder.Item flex={1} height={200} borderRadius={5} />
-        <SkeletonPlaceholder.Item flex={1} height={200} borderRadius={5} />
-      </SkeletonPlaceholder.Item>
-      {/* Overall summary */}
-      <SkeletonPlaceholder.Item width={'100%'} height={48} borderRadius={5} />
-    </SkeletonPlaceholder.Item>
-  </SkeletonPlaceholder>
-);
-
 const LoyaltyScreen = () => {
   const navigation = useNavigation<any>();
   const { data: rewardTiers = [], isLoading, error } = useGetTiersQuery();
@@ -139,12 +114,6 @@ const LoyaltyScreen = () => {
 
   // Fetch tier progress data for orders
   const { data: tierProgress, isLoading: isTierProgressLoading } = useGetTierProgressQuery({}, { skip: !state.id || !state.isLoggedIn });
-
-  // Fetch points history for track your points section
-  const { data: pointsHistory, isLoading: isPointsHistoryLoading } = useGetPointsHistoryQuery(
-    { unitKey: 'points' },
-    { skip: !state.id || !state.isLoggedIn }
-  );
 
   const [selectedTier, setSelectedTier] = useState<LoyaltyTier | null>(null);
   const [activeTierIndex, setActiveTierIndex] = useState(0);
@@ -338,19 +307,7 @@ const LoyaltyScreen = () => {
         )}
 
         {/*  Track your points  */}
-        {isPointsHistoryLoading ? (
-          <TrackYourPointsSkeleton />
-        ) : (
-          <TrackYourPoints
-            pointsData={pointsHistory?.transactions ?? []}
-            overallPoints={pointsHistory?.overall_balance
-              ? pointsHistory.overall_balance >= 1000
-                ? `${(pointsHistory.overall_balance / 1000).toFixed(1)}k`
-                : `${pointsHistory.overall_balance}`
-              : '0'
-            }
-          />
-        )}
+        <TrackYourPoints />
 
         {/* Redeem your points */}
         {/* <View
