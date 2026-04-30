@@ -51,6 +51,8 @@ export interface Order {
   sub_total: number;
   delivery_charge: number | null;
   points_rewarded: number | null;
+  points_redeemed: number | null;
+  points_discount: number | null;
   total: {
     default_currency: number;
     pos_currency: number;

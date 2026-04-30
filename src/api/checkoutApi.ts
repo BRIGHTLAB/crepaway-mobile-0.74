@@ -79,6 +79,7 @@ export interface OrderFormData {
   coupon_code?: string;
   save_card?: boolean;
   users_payment_methods_id?: number | null;
+  redeem_points?: boolean;
 }
 
 export interface PaymentMethod {

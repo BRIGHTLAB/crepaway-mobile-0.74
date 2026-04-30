@@ -29,6 +29,15 @@ interface GetPointsHistoryParams {
     type?: 'add' | 'redeem';
 }
 
+interface PointsPreviewResponse {
+    status: string;
+    total_amount: number;
+    unit: { id: number; name: string; slug: string };
+    formula: string;
+    formula_source: string;
+    gain: number;
+}
+
 export const loyaltyApi = loyaltyBaseApi.injectEndpoints({
     endpoints: builder => ({
         getTiers: builder.query<LoyaltyTier[], void>({
@@ -59,21 +68,49 @@ export const loyaltyApi = loyaltyBaseApi.injectEndpoints({
             providesTags: ['loyalty'],
             keepUnusedDataFor: 0,
         }),
-        getPointsPreview: builder.query<{ gain: number }, { totalAmount: number }>({
-            query: ({ totalAmount }) => ({
-                url: `/me/points-preview`,
-                method: 'GET',
-                params: {
-                    total_amount: totalAmount,
-                    unit_key: 'points',
-                },
-            }),
+        getPointsPreview: builder.query<PointsPreviewResponse, { totalAmount: number }>({
+            query: ({ totalAmount }) => {
+                console.log('[Grant] GET /me/points-preview called with totalAmount:', totalAmount);
+                return {
+                    url: `/me/points-preview`,
+                    method: 'GET',
+                    params: {
+                        total_amount: totalAmount,
+                        unit_key: 'points',
+                    },
+                };
+            },
+            transformResponse: (response: PointsPreviewResponse) => {
+                console.log('[Grant] GET /me/points-preview response:', JSON.stringify(response));
+                return response;
+            },
+            keepUnusedDataFor: 0,
+        }),
+        getBalance: builder.query<{ balance: number }, void>({
+            query: () => {
+                console.log('[Grant] GET /me/balance called');
+                return {
+                    url: '/me/balance',
+                    method: 'GET',
+                };
+            },
+            transformResponse: (response: { balance: number; unit_id: number; unit_name: string }[]) => {
+                console.log('[Grant] GET /me/balance raw response:', JSON.stringify(response));
+                // Response is an array of unit balances — find the "Points" entry
+                const pointsEntry = response.find(
+                    (entry) => entry.unit_name === 'Points' || entry.unit_id === 1
+                );
+                const balance = pointsEntry?.balance ?? 0;
+                console.log('[Grant] GET /me/balance extracted points balance:', balance);
+                return { balance };
+            },
+            providesTags: ['loyalty'],
             keepUnusedDataFor: 0,
         }),
     }),
     overrideExisting: true,
 });
 
-export const { useGetTiersQuery, useGetTierProgressQuery, useGetPointsHistoryQuery, useGetPointsPreviewQuery } = loyaltyApi;
+export const { useGetTiersQuery, useGetTierProgressQuery, useGetPointsHistoryQuery, useGetPointsPreviewQuery, useGetBalanceQuery } = loyaltyApi;
 
 
