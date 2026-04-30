@@ -48,14 +48,17 @@ type PartialPaymentSheetProps = {
     items: OrderItem[];
     totalPersons: number;
     initialMode?: PaymentMode;
+    hideMyOrder?: boolean;
+    tipsPercent?: number;
     onPay: (amount: number, mode: PaymentMode, selectedItems?: OrderItem[]) => void;
     onCancel: () => void;
 };
 
 const PartialPaymentSheet = forwardRef<BottomSheet, PartialPaymentSheetProps>(
-    ({ total, remainingAmount, currency, currencyCode, myOrderTotal, items, totalPersons, initialMode, onPay, onCancel }, ref) => {
+    ({ total, remainingAmount, currency, currencyCode, myOrderTotal, items, totalPersons, initialMode, hideMyOrder, tipsPercent, onPay, onCancel }, ref) => {
         const { bottom } = useSafeAreaInsets();
-        const [selectedMode, setSelectedMode] = useState<PaymentMode>(initialMode ?? 'myOrder');
+        const resolvedInitialMode: PaymentMode = (initialMode === 'myOrder' && hideMyOrder) ? 'custom' : (initialMode ?? 'myOrder');
+        const [selectedMode, setSelectedMode] = useState<PaymentMode>(resolvedInitialMode);
         const [customAmount, setCustomAmount] = useState('');
         const [isItemListExpanded, setIsItemListExpanded] = useState(false);
 
@@ -82,9 +85,9 @@ const PartialPaymentSheet = forwardRef<BottomSheet, PartialPaymentSheetProps>(
         // Sync selectedMode when initialMode prop changes (e.g. when sheet opens from different buttons)
         useEffect(() => {
             if (initialMode) {
-                setSelectedMode(initialMode);
+                setSelectedMode(initialMode === 'myOrder' && hideMyOrder ? 'custom' : initialMode);
             }
-        }, [initialMode]);
+        }, [initialMode, hideMyOrder]);
 
         // Reinitialize selected items when items prop changes
         useEffect(() => {
@@ -137,11 +140,23 @@ const PartialPaymentSheet = forwardRef<BottomSheet, PartialPaymentSheetProps>(
             });
         }, []);
 
+
+        const minorUnitFactor = 100;
+        const toMinor = (amount: number) => Math.round(amount * minorUnitFactor);
+        const fromMinor = (minor: number) => minor / minorUnitFactor;
+
+        const tipsPercentValue = typeof tipsPercent === 'number' ? tipsPercent : 0;
+        const selectedSubtotalMinor = toMinor(selectedItemsTotal);
+        const selectedTipsMinor = tipsPercentValue > 0
+            ? Math.round((selectedSubtotalMinor * tipsPercentValue) / 100)
+            : 0;
+        const selectedItemsTotalWithTips = fromMinor(selectedSubtotalMinor + selectedTipsMinor);
+
         const handlePay = useCallback(() => {
             switch (selectedMode) {
                 case 'myOrder': {
                     const selected = items.filter((_, i) => selectedItemIndices.has(i));
-                    onPay(selectedItemsTotal, 'myOrder', selected);
+                    onPay(selectedItemsTotalWithTips, 'myOrder', selected);
                     break;
                 }
                 case 'custom': {
@@ -157,7 +172,7 @@ const PartialPaymentSheet = forwardRef<BottomSheet, PartialPaymentSheetProps>(
                     break;
                 }
             }
-        }, [selectedMode, customAmount, selectedItemsTotal, selectedItemIndices, items, total, dividePersons, personsPayingFor, onPay]);
+        }, [selectedMode, customAmount, selectedItemsTotalWithTips, selectedItemIndices, items, total, dividePersons, personsPayingFor, onPay]);
 
         const handleCancel = useCallback(() => {
             onCancel();
@@ -168,7 +183,7 @@ const PartialPaymentSheet = forwardRef<BottomSheet, PartialPaymentSheetProps>(
 
         const isPayDisabled =
             (selectedMode === 'myOrder' && selectedItemsCount === 0) ||
-            (selectedMode === 'myOrder' && selectedItemsTotal > remainingAmount) ||
+            (selectedMode === 'myOrder' && selectedItemsTotalWithTips > remainingAmount) ||
             (selectedMode === 'custom' &&
                 (customAmount === '' ||
                     isNaN(parseFloat(customAmount)) ||
@@ -179,7 +194,7 @@ const PartialPaymentSheet = forwardRef<BottomSheet, PartialPaymentSheetProps>(
         const payAmount = useMemo(() => {
             switch (selectedMode) {
                 case 'myOrder':
-                    return selectedItemsTotal;
+                    return selectedItemsTotalWithTips;
                 case 'custom': {
                     const amt = parseFloat(customAmount);
                     return !isNaN(amt) && amt > 0 ? amt : 0;
@@ -189,7 +204,7 @@ const PartialPaymentSheet = forwardRef<BottomSheet, PartialPaymentSheetProps>(
                 default:
                     return 0;
             }
-        }, [selectedMode, selectedItemsTotal, customAmount, total, dividePersons, personsPayingFor]);
+        }, [selectedMode, selectedItemsTotalWithTips, customAmount, total, dividePersons, personsPayingFor]);
 
         const renderRadio = (mode: PaymentMode) => (
             <View
@@ -217,7 +232,8 @@ const PartialPaymentSheet = forwardRef<BottomSheet, PartialPaymentSheetProps>(
                 style={{ ...styles.footerContainer, paddingBottom: bottom + 16 }}
             >
                 <Button disabled={isPayDisabled} onPress={handlePay}>
-                    Pay {currency}{payAmount.toFixed(2)}
+                    <Text style={{ fontFamily: 'Poppins-Regular' }}>Pay </Text>
+                    <Text style={{ fontFamily: 'Poppins-Bold' }}>{currency}{payAmount.toFixed(2)}</Text>
                 </Button>
                 <Button variant="outline" onPress={handleCancel}>
                     Cancel
@@ -258,7 +274,7 @@ const PartialPaymentSheet = forwardRef<BottomSheet, PartialPaymentSheetProps>(
                     )}
 
                     {/* Option: Pay my order */}
-                    <View style={styles.optionRow}>
+                    {!hideMyOrder && <View style={styles.optionRow}>
                         <TouchableOpacity
                             style={styles.optionHeaderRow}
                             activeOpacity={0.7}
@@ -266,8 +282,11 @@ const PartialPaymentSheet = forwardRef<BottomSheet, PartialPaymentSheetProps>(
                             <Text style={styles.optionTextMedium}>
                                 Pay my order{' '}
                                 <Text style={styles.optionTextBold}>
-                                    {currency}{selectedItemsTotal.toFixed(2)}
+                                    {currency}{selectedItemsTotalWithTips.toFixed(2)}
                                 </Text>
+                                {(tipsPercent ?? 0) > 0 && (
+                                    <Text style={styles.incTipsLabel}>{' '}inc tips</Text>
+                                )}
                             </Text>
                             {renderRadio('myOrder')}
                         </TouchableOpacity>
@@ -339,7 +358,7 @@ const PartialPaymentSheet = forwardRef<BottomSheet, PartialPaymentSheetProps>(
                                 )}
                             </View>
                         )}
-                    </View>
+                    </View>}
 
                     {/* Option: Pay a custom amount */}
                     <TouchableOpacity
@@ -477,6 +496,11 @@ const styles = StyleSheet.create({
         fontFamily: 'Poppins-Bold',
         fontSize: 16,
         color: COLORS.black,
+    },
+    incTipsLabel: {
+        fontFamily: 'Poppins-Regular',
+        fontSize: 12,
+        color: COLORS.foregroundColor,
     },
     radio: {
         width: 22,
