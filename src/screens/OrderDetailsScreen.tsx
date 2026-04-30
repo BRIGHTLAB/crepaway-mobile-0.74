@@ -444,6 +444,15 @@ const OrderDetailsScreen = () => {
           />
         )}
 
+        {/* Coupon Code */}
+        {order.coupon?.code && (
+          <InfoDisplay
+            icon={<Icon_Promo />}
+            title={'Coupon Applied'}
+            description={`${order.coupon.code}${order.coupon.discount ? ` — ${order.currency?.symbol} ${formatNumberWithCommas(Number(order.coupon.discount))} off` : ''}`}
+          />
+        )}
+
         {/* Cutleries - requires backend field */}
         {order.cutleries !== undefined && order.cutleries !== null && (
           <InfoDisplay
@@ -518,7 +527,19 @@ const OrderDetailsScreen = () => {
               ? `${order?.currency?.symbol} ${formatNumberWithCommas(order.points_discount)}`
               : undefined
           }
-          promoCode={order?.promo_code.code || ''}
+          discount={
+            order?.promo_code?.value && order.promo_code.value > 0
+              ? `${order?.currency?.symbol} ${formatNumberWithCommas(Number(order.promo_code.value))}`
+              : undefined
+          }
+          discountLabel={order?.promo_code?.code || undefined}
+          couponDiscount={
+            order?.coupon?.discount && order.coupon.discount > 0
+              ? `${order?.currency?.symbol} ${formatNumberWithCommas(Number(order.coupon.discount))}`
+              : undefined
+          }
+          couponDiscountLabel={order?.coupon?.code || undefined}
+          promoCode={order?.promo_code?.code || ''}
           disabled
         />
         {order?.status?.key !== 'delivered' && (

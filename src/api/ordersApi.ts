@@ -70,6 +70,10 @@ export interface Order {
     name: string | null;
     value: number | null;
   };
+  coupon: {
+    code: string | null;
+    discount: number | null;
+  };
   vat: {
     percentage: number;
     amount: number;

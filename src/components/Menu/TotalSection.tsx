@@ -13,7 +13,9 @@ interface IProps {
   total: string;
   totalUSD?: string;
   discount?: string;
+  discountLabel?: string;
   couponDiscount?: string;
+  couponDiscountLabel?: string;
   pointsDiscount?: string;
   tips?: {
     value: string;
@@ -37,7 +39,9 @@ const TotalSection = ({
   total,
   totalUSD,
   discount,
+  discountLabel,
   couponDiscount,
+  couponDiscountLabel,
   pointsDiscount,
   tips,
   remainingAmount,
@@ -107,7 +111,9 @@ const TotalSection = ({
       {/* Discount */}
       {discount && (
         <View style={styles.subTotalContainer}>
-          <Text style={styles.subTotalTitle}>Discount</Text>
+          <Text style={styles.subTotalTitle}>
+            {discountLabel ? `Promo: ${discountLabel}` : 'Promo Discount'}
+          </Text>
           {isLoading ? (
             renderSkeleton()
           ) : (
@@ -121,7 +127,9 @@ const TotalSection = ({
       {/* Coupon Discount */}
       {couponDiscount && (
         <View style={styles.subTotalContainer}>
-          <Text style={styles.subTotalTitle}>Coupon Discount</Text>
+          <Text style={styles.subTotalTitle}>
+            {couponDiscountLabel ? `Coupon: ${couponDiscountLabel}` : 'Coupon Discount'}
+          </Text>
           <Text style={[styles.subTotalValue, { color: COLORS.secondaryColor }]}>
             - {couponDiscount}
           </Text>
