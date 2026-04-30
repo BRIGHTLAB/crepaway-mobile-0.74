@@ -89,13 +89,17 @@ export const loyaltyApi = loyaltyBaseApi.injectEndpoints({
                     method: 'GET',
                 };
             },
-            transformResponse: (response: { balance: number; unit_id: number; unit_name: string }[]) => {
+            transformResponse: (response: { balance: number; non_expired_balance?: number; available_balance?: number; unit_id: number; unit_name: string; unit_slug?: string }[]) => {
                 console.log('[Grant] GET /me/balance raw response:', JSON.stringify(response));
                 // Response is an array of unit balances — find the "Points" entry
                 const pointsEntry = response.find(
-                    (entry) => entry.unit_name === 'Points' || entry.unit_id === 1
+                    (entry) => entry.unit_name === 'Points' || entry.unit_id === 1 || entry.unit_slug === 'points'
                 );
-                const balance = pointsEntry?.balance ?? 0;
+                // Prefer non_expired_balance/available_balance since 'balance' may include expired points
+                const balance = pointsEntry?.non_expired_balance
+                    ?? pointsEntry?.available_balance
+                    ?? pointsEntry?.balance
+                    ?? 0;
                 console.log('[Grant] GET /me/balance extracted points balance:', balance);
                 return { balance };
             },

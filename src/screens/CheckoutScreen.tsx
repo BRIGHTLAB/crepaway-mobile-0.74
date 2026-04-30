@@ -135,16 +135,11 @@ const CheckoutScreen = () => {
   });
   const userPointsBalance = balanceData?.balance ?? 0;
 
-  console.log('[Checkout] Balance query result:', { balanceData, isBalanceLoading, balanceError, userPointsBalance });
-
   // Calculate points discount when toggle is on
-  const subtotalAfterDiscounts = totalWithoutDelivery != null
-    ? totalWithoutDelivery - (data?.summary?.coupon_discount ?? 0)
-    : 0;
-  const pointsToDeduct = redeemPoints ? Math.min(userPointsBalance, Math.floor(Math.max(subtotalAfterDiscounts, 0))) : 0;
+  // Use final_total (includes delivery charge) so points can cover the entire order
+  const finalTotal = parseFloat(data?.summary?.final_total ?? '0');
+  const pointsToDeduct = redeemPoints ? Math.min(userPointsBalance, Math.max(finalTotal, 0)) : 0;
   const pointsDiscountAmount = pointsToDeduct; // 1:1 ratio
-
-  console.log('[Checkout] Points calculation:', { redeemPoints, subtotalAfterDiscounts, pointsToDeduct, pointsDiscountAmount });
 
   const { data: paymentMethodsData, isLoading: isPaymentMethodsLoading } = useGetPaymentMethodsQuery();
 
