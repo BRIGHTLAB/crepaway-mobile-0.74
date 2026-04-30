@@ -513,6 +513,11 @@ const OrderDetailsScreen = () => {
           total={`${order?.currency?.symbol} ${formatNumberWithCommas(
             Number(order?.total?.default_currency),
           )}`}
+          pointsDiscount={
+            order?.points_discount && order.points_discount > 0
+              ? `${order?.currency?.symbol} ${formatNumberWithCommas(order.points_discount)}`
+              : undefined
+          }
           promoCode={order?.promo_code.code || ''}
           disabled
         />

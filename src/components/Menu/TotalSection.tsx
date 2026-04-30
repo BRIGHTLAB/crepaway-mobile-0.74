@@ -6,7 +6,7 @@ import { COLORS } from '../../theme';
 interface IProps {
   subtotal: string;
   deliveryCharge?: string | null;
-  pointsRewarded: string;
+  pointsRewarded?: string;
   promoApplied?: boolean;
   promoCode?: string;
   onAddPromoCode?: () => void;
@@ -14,6 +14,7 @@ interface IProps {
   totalUSD?: string;
   discount?: string;
   couponDiscount?: string;
+  pointsDiscount?: string;
   tips?: {
     value: string;
     onPress: () => void;
@@ -37,6 +38,7 @@ const TotalSection = ({
   totalUSD,
   discount,
   couponDiscount,
+  pointsDiscount,
   tips,
   remainingAmount,
   isLoading = false,
@@ -87,16 +89,18 @@ const TotalSection = ({
       )}
 
       {/* Points rewarded  */}
-      <View style={styles.subTotalContainer}>
-        <Text style={styles.subTotalTitle}>Points Rewarded</Text>
-        {(isLoadingPoints ?? isLoading) ? (
-          renderSkeleton()
-        ) : (
-          <Text style={[styles.subTotalValue, { color: COLORS.secondaryColor }]}>
-            {pointsRewarded}
-          </Text>
-        )}
-      </View>
+      {pointsRewarded ? (
+        <View style={styles.subTotalContainer}>
+          <Text style={styles.subTotalTitle}>Points Rewarded</Text>
+          {(isLoadingPoints ?? isLoading) ? (
+            renderSkeleton()
+          ) : (
+            <Text style={[styles.subTotalValue, { color: COLORS.secondaryColor }]}>
+              {pointsRewarded}
+            </Text>
+          )}
+        </View>
+      ) : null}
 
 
 
@@ -120,6 +124,16 @@ const TotalSection = ({
           <Text style={styles.subTotalTitle}>Coupon Discount</Text>
           <Text style={[styles.subTotalValue, { color: COLORS.secondaryColor }]}>
             - {couponDiscount}
+          </Text>
+        </View>
+      )}
+
+      {/* Points Discount */}
+      {pointsDiscount && (
+        <View style={styles.subTotalContainer}>
+          <Text style={styles.subTotalTitle}>Points Discount</Text>
+          <Text style={[styles.subTotalValue, { color: COLORS.secondaryColor }]}>
+            - {pointsDiscount}
           </Text>
         </View>
       )}

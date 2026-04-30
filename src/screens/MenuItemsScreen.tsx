@@ -82,11 +82,6 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
               </View>
             )}
             <CartBadge itemId={item.id} style={{ top: -4, right: -4 }} />
-            {/* {isPaused && (
-              <View style={styles.notAvailableBadge}>
-                <Text style={styles.notAvailableText}>N/A</Text>
-              </View>
-            )} */}
             <FastImage
               source={{
                 uri: item?.image_url ?? '',
@@ -97,9 +92,13 @@ const MenuItem: React.FC<MenuItemProps> = React.memo(
                 width: 80,
                 height: 80,
                 borderRadius: 10,
-                opacity: isPaused ? 0.55 : 1,
               }}
             />
+            {isPaused && (
+              <View style={styles.unavailableOverlay}>
+                <Text style={styles.unavailableText}>Not Available</Text>
+              </View>
+            )}
           </View>
           <View style={styles.menuItem}>
             <Text style={styles.itemName}>{item.name}</Text>
@@ -772,20 +771,24 @@ const styles = StyleSheet.create({
   menuContainerDisabled: {
     opacity: 0.65,
   },
-  notAvailableBadge: {
+  unavailableOverlay: {
     position: 'absolute',
-    top: 6,
-    left: 6,
-    zIndex: 2,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 999,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    top: 0,
+    left: 0,
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  notAvailableText: {
-    fontFamily: 'Poppins-Medium',
+  unavailableText: {
+    fontFamily: 'Poppins-SemiBold',
     fontSize: normalizeFont(10),
     color: '#fff',
+    letterSpacing: 0.3,
+    paddingHorizontal: 4,
+    textAlign: 'center',
   },
   menuItem: {
     flex: 1,
