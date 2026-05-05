@@ -360,6 +360,13 @@ const DineInCheckoutScreen = () => {
     }
 
     const socketInstance = SocketService.getInstance();
+    Toast.show({
+      type: 'info',
+      text1: 'Processing payment...',
+      text2: 'Please wait',
+      visibilityTime: 15000,
+      position: 'bottom',
+    });
     const payload = {
       type: 'addPayment',
       data: {
@@ -375,6 +382,7 @@ const DineInCheckoutScreen = () => {
     console.log('addPayment payload:', payload);
     socketInstance.emit('message', payload, (response: any) => {
       console.log('addPayment response:', response);
+      Toast.hide();
       if (response && response.success === false) {
         setPaymentErrorMessage(response.message || 'Payment failed');
         setPaymentId(null);
@@ -707,7 +715,7 @@ const DineInCheckoutScreen = () => {
                   </Animated.View>
                   {!isOrderedItemsExpanded && orderedItemsContentHeight > COLLAPSED_HEIGHT && (
                     <LinearGradient
-                      colors={['transparent', COLORS.card]}
+                      colors={[COLORS.card + '00', COLORS.card]}
                       style={styles.orderedItemsGradient}
                       pointerEvents="none"
                     />

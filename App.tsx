@@ -176,6 +176,40 @@ const toastConfig = {
       </View>
     );
   },
+  info: ({ text1, text2 }: ToastConfigParams<ToastProps>) => {
+    return (
+      <View
+        style={{
+          backgroundColor: COLORS.darkColor,
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          borderRadius: 8,
+          marginHorizontal: 16,
+          marginBottom: 80,
+          shadowColor: '#000',
+          shadowOffset: {
+            width: 0,
+            height: 2,
+          },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+          elevation: 5,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+        }}>
+        <Text
+          style={{
+            color: COLORS.white,
+            fontSize: 12,
+            fontFamily: 'Poppins-Regular',
+            flex: 1,
+          }}>
+          {text1}{text2 ? ` ${text2}` : ''}
+        </Text>
+      </View>
+    );
+  },
 };
 
 const AppContent = () => {

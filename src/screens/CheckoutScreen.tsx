@@ -340,7 +340,17 @@ const CheckoutScreen = () => {
     };
 
     try {
+      Toast.show({
+        type: 'info',
+        text1: 'Processing payment...',
+        text2: 'Please wait',
+        visibilityTime: 10000,
+        position: 'bottom',
+      });
+
       const resp = await placeOrder(formData).unwrap();
+
+      Toast.hide();
 
       // Check if this is a card payment (has payment_url)
       if (resp.payment_url && resp.payment_id) {
