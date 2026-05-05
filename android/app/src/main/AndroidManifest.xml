@@ -57,7 +57,10 @@
             <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="https" android:host="crepaway.com" />
             <data android:scheme="https" android:host="app.crepaway.com" />
+            <data android:scheme="https" android:host="dinein.crepaway.com" android:pathPrefix="/t" />
         </intent-filter>
+
+        
       </activity>
     </application>
 </manifest>
