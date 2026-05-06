@@ -1382,32 +1382,6 @@ const TableScreen = () => {
         );
       })()}
 
-      {/* TODO: REMOVE - Testing only: Submit to kitchen test button */}
-      <TouchableOpacity
-        onPress={() => {
-          socketInstance.emit('message', {
-            type: 'submitToKitchenTest',
-            data: {
-              tableName: userState.branchTable,
-            },
-          }, (response: any) => {
-            console.log('submitToKitchenTest response:', response);
-          });
-        }}
-        style={{
-          position: 'absolute',
-          bottom: 100,
-          right: 20,
-          backgroundColor: 'red',
-          paddingHorizontal: 12,
-          paddingVertical: 8,
-          borderRadius: 8,
-          zIndex: 999,
-        }}
-      >
-        <Text style={{ color: 'white', fontFamily: 'Poppins-Medium', fontSize: 12 }}>Submit Test</Text>
-      </TouchableOpacity>
-
       {/* King Actions Popup */}
       <KingActionsSheet
         user={selectedUserForKingActions}
