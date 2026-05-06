@@ -13,7 +13,7 @@ import {
 import { COLORS } from '../theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FadeInFastImage } from './FadeInFastImage';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 
 const { width: screenWidth } = Dimensions.get('window');
 

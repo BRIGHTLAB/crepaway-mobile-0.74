@@ -3,7 +3,6 @@
 #import <GoogleMaps/GoogleMaps.h>
 #import <RNCPushNotificationIOS.h>
 #import <React/RCTBundleURLProvider.h>
-#import <React/RCTRootView.h>
 
 @implementation AppDelegate
 
@@ -21,21 +20,6 @@
       didFinishLaunchingWithOptions:launchOptions];
 }
 
-- (UIView *)createRootViewWithBridge:(RCTBridge *)bridge
-                          moduleName:(NSString *)moduleName
-                           initProps:(NSDictionary *)initProps {
-  RCTRootView *rootView =
-      (RCTRootView *)[super createRootViewWithBridge:bridge
-                                          moduleName:moduleName
-                                           initProps:initProps];
-
-  rootView.backgroundColor = [UIColor blackColor]; // 👈 Force black background
-  return rootView;
-}
-
-- (NSURL *)sourceURLForBridge:(RCTBridge *)bridge {
-  return [self bundleURL];
-}
 
 - (NSURL *)bundleURL {
 #if DEBUG

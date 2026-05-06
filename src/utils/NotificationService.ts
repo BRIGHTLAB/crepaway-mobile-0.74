@@ -1,4 +1,5 @@
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
+import notifee, { AndroidImportance, AndroidChannel } from '@notifee/react-native';
 import {
   AuthorizationStatus,
   deleteToken,
@@ -12,7 +13,6 @@ import {
 } from '@react-native-firebase/messaging';
 import { NavigationContainerRef } from '@react-navigation/native';
 import { Alert, AppState, Platform } from 'react-native';
-import PushNotification, { Importance } from 'react-native-push-notification';
 import { POST } from '../api';
 import type { NavParams } from './NavigationHelper';
 
@@ -204,47 +204,26 @@ class NotificationService {
       }
     }
 
-    // --- Legacy PushNotification setup (for local notifications & Android channels) ---
+    // --- Notifee setup (for local notifications & Android channels) ---
 
-    PushNotification.configure({
-      // We no longer rely on onRegister for the token — FCM handles that above
-      onRegister: (_tokenData: { token: string }): void => {
-        this.log('Legacy PushNotification onRegister (ignored, using FCM token)');
-      },
+    // Handle notification events (user taps, etc.)
+    notifee.onForegroundEvent(({ type, detail }) => {
+      // EventType.PRESS = 1
+      if (type === 1 && detail.notification) {
+        this.log('User interacted with notification - clearing badge');
+        this.setBadgeCount(0);
+      }
+    });
 
-      onNotification: (notification: any): void => {
-        try {
-          // Clear badge when user taps notification
-          if (notification.userInteraction) {
-            this.log('User interacted with notification - clearing badge');
-            this.setBadgeCount(0);
-          }
-        } catch (e) {
-          this.log('Error handling legacy notification:', e);
-        }
-
-        // Required on iOS
-        if (Platform.OS === 'ios' && notification.finish) {
-          notification.finish(String(PushNotificationIOS.FetchResult.NoData));
-        }
-      },
-
-      onRegistrationError: (err: Error): void => {
-        console.error('[NotificationService] Registration error:', err);
-      },
-
-      permissions: {
-        alert: true,
-        badge: true,
-        sound: true,
-      },
-
-      popInitialNotification: false, // Handled by Firebase getInitialNotification
-      requestPermissions: false, // Handled by Firebase requestPermission
+    notifee.onBackgroundEvent(async ({ type, detail }) => {
+      // EventType.PRESS = 1
+      if (type === 1 && detail.notification) {
+        this.setBadgeCount(0);
+      }
     });
 
     if (Platform.OS === 'android') {
-      this.createNotificationChannels();
+      await this.createNotificationChannels();
     }
 
     this.isInitialized = true;
@@ -293,31 +272,24 @@ class NotificationService {
     return true;
   }
 
-  private createNotificationChannels(): void {
-    PushNotification.createChannel(
-      {
-        channelId: 'default-channel',
-        channelName: 'Default Channel',
-        channelDescription: 'Default notifications with sound',
-        soundName: 'default',
-        importance: Importance.HIGH,
-        vibrate: true,
-      },
-      () => { },
-    );
+  private createNotificationChannels = async (): Promise<void> => {
+    await notifee.createChannel({
+      id: 'default-channel',
+      name: 'Default Channel',
+      description: 'Default notifications with sound',
+      sound: 'default',
+      importance: AndroidImportance.HIGH,
+      vibration: true,
+    });
 
-    PushNotification.createChannel(
-      {
-        channelId: 'silent-channel',
-        channelName: 'Silent Channel',
-        channelDescription: 'Notifications without sound',
-        soundName: undefined,
-        importance: Importance.HIGH,
-        vibrate: false,
-      },
-      () => { },
-    );
-  }
+    await notifee.createChannel({
+      id: 'silent-channel',
+      name: 'Silent Channel',
+      description: 'Notifications without sound',
+      importance: AndroidImportance.HIGH,
+      vibration: false,
+    });
+  };
 
   private handleNotificationAction = (type: string, data: NotificationData): void => {
     switch (type) {
@@ -326,67 +298,75 @@ class NotificationService {
         break;
       case 'update_badge':
         if (Platform.OS === 'ios') {
-          const count = parseInt((data.count as string) || '0') || 0;
-          PushNotificationIOS.setApplicationIconBadgeNumber(count);
+          PushNotificationIOS.setApplicationIconBadgeNumber(
+            parseInt((data.count as string) || '0') || 0
+          );
         }
         break;
     }
   };
 
-  localNotification = (
+  localNotification = async (
     title: string,
     message: string,
     options: NotificationOptions = {},
-  ): void => {
+  ): Promise<void> => {
     try {
       const {
         data = {},
         enableSound = true,
         channelId = enableSound ? 'default-channel' : 'silent-channel',
-        bigText,
-        subText,
       } = options;
 
-      PushNotification.localNotification({
-        channelId,
+      await notifee.displayNotification({
         title,
-        message,
-        playSound: enableSound,
-        soundName: enableSound ? 'default' : undefined,
-        bigText,
-        subText,
-        userInfo: data,
+        body: message,
+        data: data as Record<string, string>,
+        android: {
+          channelId,
+          sound: enableSound ? 'default' : undefined,
+          pressAction: {
+            id: 'default',
+          },
+        },
       });
     } catch (error) {
       this.log('Error showing local notification:', error);
     }
   };
 
-  scheduleNotification = (
+  scheduleNotification = async (
     title: string,
     message: string,
     date: Date,
     options: NotificationOptions = {},
-  ): void => {
+  ): Promise<void> => {
     const {
       data = {},
       enableSound = true,
       channelId = enableSound ? 'default-channel' : 'silent-channel',
-      bigText,
-      subText,
     } = options;
 
-    PushNotification.localNotificationSchedule({
-      channelId,
-      title,
-      message,
-      date,
-      playSound: enableSound,
-      soundName: enableSound ? 'default' : undefined,
-      bigText,
-      subText,
-      userInfo: data,
-    });
+    const trigger = {
+      type: 0, // TriggerType.TIMESTAMP
+      timestamp: date.getTime(),
+    };
+
+    await notifee.createTriggerNotification(
+      {
+        title,
+        body: message,
+        data: data as Record<string, string>,
+        android: {
+          channelId,
+          sound: enableSound ? 'default' : undefined,
+          pressAction: {
+            id: 'default',
+          },
+        },
+      },
+      trigger as any,
+    );
   };
 
   getDeviceToken = (): string | null => {
@@ -411,8 +391,8 @@ class NotificationService {
     }
   }
 
-  clearAllNotifications = (): void => {
-    PushNotification.cancelAllLocalNotifications();
+  clearAllNotifications = async (): Promise<void> => {
+    await notifee.cancelAllNotifications();
     if (Platform.OS === 'ios') {
       PushNotificationIOS.removeAllDeliveredNotifications();
     }
@@ -429,23 +409,20 @@ class NotificationService {
 
     if (Platform.OS === 'ios') {
       PushNotificationIOS.abandonPermissions();
-    } else {
-      PushNotification.abandonPermissions();
-      PushNotification.unregister();
     }
     this.appStateSubscription?.remove();
     this.appStateSubscription = null;
     this.pendingNavigation = null;
     this.token = null;
     this.isInitialized = false;
-    this.clearAllNotifications();
+    await this.clearAllNotifications();
   };
 
   setBadgeCount = (count: number): void => {
     if (Platform.OS === 'ios') {
       PushNotificationIOS.setApplicationIconBadgeNumber(count);
     } else {
-      PushNotification.setApplicationIconBadgeNumber(count);
+      notifee.setBadgeCount(count).catch(() => {});
     }
   };
 }

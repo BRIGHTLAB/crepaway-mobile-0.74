@@ -7,7 +7,7 @@ import Animated, {
   cancelAnimation,
   runOnJS,
 } from "react-native-reanimated"
-import FastImage, { FastImageProps } from "react-native-fast-image"
+import FastImage, { FastImageProps } from "@d11/react-native-fast-image"
 import { View, StyleProp, ViewStyle } from "react-native"
 
 type Props = FastImageProps & {

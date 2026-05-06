@@ -72,7 +72,7 @@ const QrCodeCamera = ({ text, onScan }: Props) => {
   return (
     <View style={styles.container}>
       <Camera
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         codeScanner={codeScanner}
         device={device}
         isActive={true}
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     gap: 20,
     flex: 1,
     top: 70,

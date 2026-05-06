@@ -10,7 +10,7 @@ import {
   View
 } from 'react-native';
 import Icon_Search from '../../assets/SVG/Icon_Search';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import { useSelector } from 'react-redux';
 import Icon_WishList from '../../assets/SVG/Icon_Wishlist';

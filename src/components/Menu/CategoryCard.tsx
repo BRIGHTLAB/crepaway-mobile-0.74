@@ -1,6 +1,6 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React from 'react';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import LinearGradient from 'react-native-linear-gradient';
 import { FadeInFastImage } from '../FadeInFastImage';
 import { normalizeFont } from '../../utils/normalizeFonts';

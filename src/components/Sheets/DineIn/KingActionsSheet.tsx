@@ -2,7 +2,7 @@ import BottomSheet, { BottomSheetFooter, BottomSheetFooterProps, BottomSheetScro
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import React, { forwardRef } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import { TableUser } from '../../../screens/TableScreen';
 import { COLORS, SCREEN_PADDING, TYPOGRAPHY } from '../../../theme';
 import Button from '../../UI/Button';

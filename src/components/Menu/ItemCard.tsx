@@ -7,7 +7,7 @@ import {
   Text,
   View
 } from 'react-native';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import { useSelector } from 'react-redux';
 import Icon_WishList from '../../../assets/SVG/Icon_Wishlist';
 import Icon_Wishlist_Filled from '../../../assets/SVG/Icon_Wishlist_Filled';
