@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react';
 import { TextInput, TouchableOpacity } from 'react-native';
-import DatePicker from 'react-native-date-picker';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import Icon_Calendar from '../../../assets/SVG/Icon_Calendar';
 import Input from './Input';
 
@@ -104,9 +104,8 @@ const DateInput = forwardRef<TextInput, DateInputProps>(
             pointerEvents="none"
           />
         </TouchableOpacity>
-        <DatePicker
-          modal
-          open={isPickerOpen}
+        <DateTimePickerModal
+          isVisible={isPickerOpen}
           date={value || new Date()}
           onConfirm={date => {
             handleDateChange(date);
@@ -119,7 +118,7 @@ const DateInput = forwardRef<TextInput, DateInputProps>(
           minimumDate={minimumDate}
           maximumDate={maximumDate}
           minuteInterval={minuteInterval}
-          is24hourSource="locale"
+          locale="en_US"
         />
       </>
     );

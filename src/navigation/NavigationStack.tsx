@@ -122,6 +122,7 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
         <Stack.Navigator
           screenOptions={{
             headerShadowVisible: false,
+            statusBarStyle: 'dark',
           }}>
           <Stack.Screen
             name="Splash"
@@ -163,6 +164,7 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
           <Stack.Navigator
             screenOptions={{
               headerShadowVisible: false,
+              statusBarStyle: 'dark',
             }}>
             <Stack.Screen
               name="DeliveryTakeaway"
@@ -177,6 +179,7 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
                 headerTransparent: true,
                 headerBackVisible: false,
                 headerLeft: () => <CustomHeader color="white" />,
+                statusBarStyle: 'light',
               }}
             />
             <Stack.Screen
@@ -196,6 +199,7 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
           <Stack.Navigator
             screenOptions={{
               headerShadowVisible: false,
+              statusBarStyle: 'dark',
             }}>
             <Stack.Screen
               name="DineIn"
@@ -210,6 +214,7 @@ const NavigationStack = ({ onSplashFinish }: NavigationStackProps) => {
                 headerTransparent: true,
                 headerBackVisible: false,
                 headerLeft: () => <CustomHeader color="white" />,
+                statusBarStyle: 'light',
               }}
             />
             <Stack.Screen

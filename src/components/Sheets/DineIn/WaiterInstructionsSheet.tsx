@@ -84,7 +84,7 @@ const WaiterInstructionsSheet = forwardRef<BottomSheet, Props>(({
   );
 
   return (
-    <DynamicSheet ref={ref} footerComponent={renderFooter} contentStyle={{ paddingHorizontal: 0 }}>
+    <DynamicSheet ref={ref} footerComponent={renderFooter} contentContainerStyle={{ paddingHorizontal: 0 }}>
       <BottomSheetView
         style={{ gap: 12, paddingBottom: 80 + bottom }}
         onTouchStart={() => Keyboard.dismiss()}

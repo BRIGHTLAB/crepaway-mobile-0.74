@@ -53,6 +53,7 @@ target 'crepaway' do
   # Google Maps (auto-detected by react-native-maps)
   pod 'GoogleMaps', '9.4.0'
   pod 'Google-Maps-iOS-Utils', '6.1.0'
+  pod 'react-native-maps/Google', :path => '../node_modules/react-native-maps'
   
   config = use_native_modules!
 

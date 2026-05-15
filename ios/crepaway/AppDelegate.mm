@@ -3,11 +3,13 @@
 #import <GoogleMaps/GoogleMaps.h>
 #import <RNCPushNotificationIOS.h>
 #import <React/RCTBundleURLProvider.h>
+#import <ReactAppDependencyProvider/RCTAppDependencyProvider.h>
 
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application
     didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+  self.dependencyProvider = [RCTAppDependencyProvider new];
   [FIRApp configure];
   [GMSServices provideAPIKey:@"AIzaSyA0IxviANpXAl-sTNcYjH1zU5cjgXimKuk"];
   UNUserNotificationCenter *center =

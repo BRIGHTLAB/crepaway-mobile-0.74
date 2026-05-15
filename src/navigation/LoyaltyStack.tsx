@@ -11,7 +11,10 @@ const Stack = createNativeStackNavigator();
 
 const LoyaltyStack = () => {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        statusBarStyle: 'light',
+      }}>
       <Stack.Screen
         name="LoyaltyMain"
         component={LoyaltyScreen}

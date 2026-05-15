@@ -77,6 +77,9 @@ class NotificationService {
     let previousAppState = AppState.currentState;
     this.appStateSubscription = AppState.addEventListener('change', (nextAppState) => {
       if (previousAppState.match(/inactive|background/) && nextAppState === 'active') {
+        // Clear the app icon badge when the user opens the app
+        this.setBadgeCount(0);
+
         if (this.pendingNavigation && this.navigationRef?.isReady()) {
           this.processNavigation(this.pendingNavigation);
           this.pendingNavigation = null;
