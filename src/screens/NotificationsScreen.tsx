@@ -4,7 +4,7 @@ import {StyleSheet, Text, View} from 'react-native';
 import {COLORS, SCREEN_PADDING, TYPOGRAPHY} from '../theme';
 import Button from '../components/UI/Button';
 import Icon_Add from '../../assets/SVG/Icon_Add';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import Icon_Logo_Spine from '../../assets/SVG/Icon_Logo_Spine';
 import Icon_Home from '../../assets/SVG/Icon_Home';
 import {useSelector} from 'react-redux';

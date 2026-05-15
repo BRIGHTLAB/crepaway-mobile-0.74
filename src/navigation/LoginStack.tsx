@@ -35,12 +35,14 @@ const LoginStack = () => {
       initialRouteName="Intro"
       screenOptions={{
         headerShadowVisible: false,
+        statusBarStyle: 'dark',
       }}>
       <Stack.Screen
         name="Intro"
         component={IntroScreen}
         options={{
           headerShown: false,
+          statusBarStyle: 'light',
         }}
       />
       <Stack.Screen
@@ -48,6 +50,7 @@ const LoginStack = () => {
         component={LoginScreen}
         options={{
           headerShown: false,
+          statusBarStyle: 'light',
         }}
       />
       <Stack.Screen

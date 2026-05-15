@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   },
   rewardPoints: {
     ...TYPOGRAPHY.BODY,
-    fontWeight: '700',
+    fontFamily: 'Poppins-Bold',
     color: COLORS.white,
     opacity: 0.8,
     marginTop: 4,

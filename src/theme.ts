@@ -1,4 +1,3 @@
-import { TextStyle } from 'react-native';
 import { normalizeFont } from './utils/normalizeFonts';
 
 export const COLORS = {
@@ -47,49 +46,41 @@ export const FACEBOOK_APP_ID = '494126693233412';
 
 export const TYPOGRAPHY = {
   LARGE_TITLE: {
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins-Bold',
     fontSize: normalizeFont(48),
-    fontWeight: '700' as TextStyle['fontWeight'],
     lineHeight: 56,
   },
   MAIN_TITLE: {
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: normalizeFont(32),
-    fontWeight: '500' as TextStyle['fontWeight'],
   },
   TITLE: {
-    fontFamily: 'Poppins-regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: normalizeFont(24),
-    LineHeight: 36,
-    fontWeight: '500' as TextStyle['fontWeight'],
+    lineHeight: 36,
   },
 
   HEADLINE: {
     fontFamily: 'Poppins-Regular',
     fontSize: normalizeFont(20),
-    fontWeight: '400' as TextStyle['fontWeight'],
   },
   SUB_HEADLINE: {
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: normalizeFont(16),
     lineHeight: 24,
-    fontWeight: '500' as TextStyle['fontWeight'],
   },
   BODY: {
     fontFamily: 'Poppins-Regular',
     fontSize: normalizeFont(14),
     lineHeight: 21,
-    fontWeight: '400' as TextStyle['fontWeight'],
   },
   TAGS: {
     fontFamily: 'Poppins-Regular',
     fontSize: normalizeFont(10),
-    fontWeight: '400' as TextStyle['fontWeight'],
   },
   CTA: {
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: normalizeFont(12),
-    fontWeight: '500' as TextStyle['fontWeight'],
   },
 };
 

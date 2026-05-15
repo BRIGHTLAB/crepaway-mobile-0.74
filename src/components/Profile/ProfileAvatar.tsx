@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import { COLORS, TYPOGRAPHY } from '../../theme';
 
 type ProfileAvatarProps = {
@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     },
     initialsSmall: {
         ...TYPOGRAPHY.TAGS,
-        fontWeight: '600',
+        fontFamily: 'Poppins-SemiBold',
         textTransform: 'uppercase',
         color: COLORS.lightColor,
     },

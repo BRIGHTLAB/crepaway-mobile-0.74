@@ -26,7 +26,7 @@ const OtpInputs: React.FC<OtpInputsProps> = ({ control, errors, setValue }) => {
           name={`otp.${index}`}
           render={({ field: { onChange, value } }) => (
             <TextInput
-              ref={ref => (inputRefs.current[index] = ref)}
+              ref={ref => { inputRefs.current[index] = ref; }}
               style={[
                 styles.otpInput,
                 (errors as any).otp?.[index] && styles.otpInputError,

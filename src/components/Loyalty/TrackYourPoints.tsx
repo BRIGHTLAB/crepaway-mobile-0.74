@@ -172,6 +172,5 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.BODY,
     color: COLORS.white,
     fontFamily: 'Poppins-Bold',
-    fontWeight: '700',
   },
 });

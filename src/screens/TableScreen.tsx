@@ -14,7 +14,7 @@ import {
   Text,
   View
 } from 'react-native';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Animated, {
   Easing,
@@ -1585,8 +1585,7 @@ const styles = StyleSheet.create({
   initialsText: {
     color: COLORS.white,
     fontSize: 10,
-    fontWeight: 'bold',
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Poppins-Bold',
   },
   userBubbleName: {
     fontFamily: 'Poppins-Medium',
@@ -1696,8 +1695,7 @@ const styles = StyleSheet.create({
   tableUserInitialsText: {
     color: COLORS.white,
     fontSize: 13,
-    fontWeight: 'bold',
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Poppins-Bold',
   },
   tableUserName: {
     fontFamily: 'Poppins-Medium',
@@ -1715,14 +1713,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   tableUserTotal: {
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Poppins-Bold',
     fontSize: 16,
     color: COLORS.secondaryColor,
   },
   chevron: {
     fontSize: 16,
     color: COLORS.primaryColor,
-    fontWeight: 'bold',
   },
   expandedItemsContainer: {
     paddingLeft: 8,

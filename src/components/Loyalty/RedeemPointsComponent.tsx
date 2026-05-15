@@ -143,7 +143,6 @@ const styles = StyleSheet.create({
   },
   viewAllText: {
     fontFamily: 'Poppins-Medium',
-    fontWeight: '500',
     fontSize: normalizeFont(12),
     color: COLORS.darkColor,
   },
@@ -183,7 +182,7 @@ const styles = StyleSheet.create({
   },
   rewardPoints: {
     ...TYPOGRAPHY.BODY,
-    fontWeight: '700',
+    fontFamily: 'Poppins-Bold',
     color: COLORS.white,
     opacity: 0.8,
     marginTop: 4,

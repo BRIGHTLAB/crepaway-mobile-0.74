@@ -14,7 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import ReactNativeHapticFeedback from "react-native-haptic-feedback";
 
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
@@ -662,14 +662,13 @@ const styles = StyleSheet.create({
 
   },
   description: {
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: normalizeFont(13),
     color: COLORS.foregroundColor,
   },
   price: {
     fontFamily: 'Poppins-Medium',
     fontSize: normalizeFont(22),
-    fontWeight: '500',
     color: COLORS.secondaryColor,
     lineHeight: 32,
   },

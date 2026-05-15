@@ -11,6 +11,7 @@ import {
   View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 import { useSelector } from 'react-redux';
 import { useGetContentQuery } from '../api/dataApi';
 import { useGetHomepageQuery } from '../api/homeApi';
@@ -23,10 +24,9 @@ import OffersList from '../components/Menu/OffersList';
 import InfoPopup from '../components/Popups/InfoPopup';
 import PromoCarousel from '../components/PromoCarousel';
 import { RootStackParamList } from '../navigation/NavigationStack';
-import { setOrderType } from '../store/slices/userSlice';
 import { setPromoCode } from '../store/slices/cartSlice';
+import { setOrderType } from '../store/slices/userSlice';
 import { RootState, useAppDispatch } from '../store/store';
-import Toast from 'react-native-toast-message';
 
 import Animated, {
   Extrapolation,
@@ -173,7 +173,9 @@ const HomeScreen = () => {
   });
 
   function updateHeaderColor(color: string) {
+    // Dynamically switch status bar style based on scroll position
     navigation.setOptions({
+      statusBarStyle: scrollY.value > 100 ? 'dark' : 'light',
       headerTintColor: color,
       headerLeft: () => <CustomHeader color={color} clearOrderType title={state.orderType === 'delivery' ? 'Delivery' : 'Takeaway'} />,
       // headerTitle: () => (<Text style={{backgroundColor: COLORS.primaryColor, borderRadius: 20, paddingVertical: 4 , paddingHorizontal: 8, marginTop:4,  lineHeight: 18, color: COLORS.white, fontSize: 14, fontFamily: 'Poppins-SemiBold', textTransform: 'uppercase', letterSpacing: 1 }}>{state.orderType === 'delivery' ? 'Delivery' : 'Takeaway'}</Text>),
@@ -217,6 +219,8 @@ const HomeScreen = () => {
 
     return {};
   });
+
+  console.log('homeScreenData', data)
 
   return (
     <View style={styles.container}>

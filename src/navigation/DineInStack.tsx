@@ -31,6 +31,7 @@ const DineInStack = () => {
     <Stack.Navigator
       screenOptions={{
         headerShadowVisible: false,
+        statusBarStyle: 'dark',
       }}>
       <Stack.Screen
         name="ScanTable"

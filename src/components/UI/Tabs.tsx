@@ -11,7 +11,7 @@ import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {COLORS} from '../../theme';
 
 type TabItem = {
-  icon: JSX.Element;
+  icon: React.JSX.Element;
   title: string;
 };
 

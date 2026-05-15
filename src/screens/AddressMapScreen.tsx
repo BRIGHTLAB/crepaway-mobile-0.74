@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SCREEN_PADDING.horizontal,
   },
   map: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   searchContainer: {
     position: 'absolute',

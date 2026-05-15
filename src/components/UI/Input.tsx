@@ -1,4 +1,4 @@
-import React, { forwardRef, JSX, useEffect, useState } from 'react';
+import React, { forwardRef, JSX, useEffect, useRef, useState } from 'react';
 import {
   Platform,
   StyleSheet,
@@ -57,6 +57,12 @@ const Input = forwardRef<TextInput, InputProps>(
     // Shared value for placeholder position animation
     const placeholderPosition = useSharedValue(iconLeft ? 38 : 10);
 
+    // Track mounted state to prevent accessing destroyed shared values during unmount
+    const mountedRef = useRef(true);
+    useEffect(() => {
+      return () => { mountedRef.current = false; };
+    }, []);
+
     const animatedStyle = useAnimatedStyle(() => {
       return {
         top: interpolate(animation.value, [0, 1], [-13, INPUT_HEIGHT / 2 - 12]),
@@ -97,23 +103,29 @@ const Input = forwardRef<TextInput, InputProps>(
     const handleFocus = (event: any) => {
       onFocus && onFocus(event);
       setIsFocused(true);
-      animation.value = withTiming(0, { duration: 200 });
-
-      if (iconLeft) {
-        placeholderPosition.value = withTiming(10, { duration: 200 });
-      }
+      // Guard: shared values may be destroyed if component is unmounting
+      if (!mountedRef.current) return;
+      try {
+        animation.value = withTiming(0, { duration: 200 });
+        if (iconLeft) {
+          placeholderPosition.value = withTiming(10, { duration: 200 });
+        }
+      } catch {}
     };
 
     const handleBlur = (event: any) => {
       onBlur && onBlur(event);
       setIsFocused(false);
-
-      if (!rest.value) {
-        animation.value = withTiming(1, { duration: 200 });
-        if (iconLeft) {
-          placeholderPosition.value = withTiming(38, { duration: 200 });
+      // Guard: shared values may be destroyed if component is unmounting
+      if (!mountedRef.current) return;
+      try {
+        if (!rest.value) {
+          animation.value = withTiming(1, { duration: 200 });
+          if (iconLeft) {
+            placeholderPosition.value = withTiming(38, { duration: 200 });
+          }
         }
-      }
+      } catch {}
     };
 
     // Update animation when value changes

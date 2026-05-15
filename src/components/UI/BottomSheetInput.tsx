@@ -1,6 +1,7 @@
 import { useBottomSheetInternal } from '@gorhom/bottom-sheet';
-import React, { forwardRef, JSX, useCallback, useEffect, useState } from 'react';
+import React, { forwardRef, JSX, useCallback, useEffect, useRef, useState } from 'react';
 import {
+    findNodeHandle,
     NativeSyntheticEvent,
     Platform,
     StyleSheet,
@@ -21,6 +22,21 @@ import Icon_Eye from '../../../assets/SVG/Icon_Eye';
 import Icon_Eye_Line from '../../../assets/SVG/Icon_Eye_Line';
 import { COLORS, INPUT_HEIGHT, TYPOGRAPHY } from '../../theme';
 
+import { TextInput as RNTextInput } from 'react-native';
+
+// Safe hook to use BottomSheet internals only when available
+const useSafeBottomSheetInternal = () => {
+    try {
+        return useBottomSheetInternal();
+    } catch (error) {
+        // Return null values when not in BottomSheet context
+        return {
+            animatedKeyboardState: null,
+            textInputNodesRef: null
+        };
+    }
+};
+
 interface InputProps extends TextInputProps {
     iconLeft?: JSX.Element;
     error?: string;
@@ -30,6 +46,8 @@ interface InputProps extends TextInputProps {
     returnKeyType?: 'done' | 'next';
     onSubmitEditing?: () => void;
     secureTextEntry?: boolean;
+    multiline?: boolean;
+    lines?: number;
 }
 
 const Input = forwardRef<TextInput, InputProps>(
@@ -43,78 +61,166 @@ const Input = forwardRef<TextInput, InputProps>(
             onBlur,
             required,
             disabled,
+            multiline,
+            lines,
             secureTextEntry,
             ...rest
         },
         ref,
     ) => {
-        // —— bottom-sheet keyboard hook ——
-        const { shouldHandleKeyboardEvents } = useBottomSheetInternal();
-
         const [isFocused, setIsFocused] = useState(false);
         const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+        const textInputRef = useRef<TextInput>(null);
+
+        // Expose the ref
+        React.useImperativeHandle(ref, () => textInputRef.current as TextInput, []);
+
+        // animation value: 1 means unfocused (or empty), 0 means focused or has a value
         const animation = useSharedValue(rest.value ? 0 : 1);
+
+        // Shared value for placeholder position animation
         const placeholderPosition = useSharedValue(iconLeft ? 38 : 10);
 
-        // reset on unmount
+        // Track mounted state to prevent accessing destroyed shared values during unmount
+        const mountedRef = useRef(true);
         useEffect(() => {
-            return () => {
-                shouldHandleKeyboardEvents.value = false;
-            };
-        }, [shouldHandleKeyboardEvents]);
+            return () => { mountedRef.current = false; };
+        }, []);
 
-        // animate placeholder on value changes
+        const animatedStyle = useAnimatedStyle(() => {
+            return {
+                top: interpolate(animation.value, [0, 1], [-13, INPUT_HEIGHT / 2 - 12]),
+                fontSize: interpolate(animation.value, [0, 1], [12, 16]),
+            };
+        });
+
         useEffect(() => {
             if (rest.value) {
                 animation.value = withTiming(0, { duration: 200 });
-                if (iconLeft) placeholderPosition.value = withTiming(10, { duration: 200 });
+                if (iconLeft) {
+                    placeholderPosition.value = withTiming(10, { duration: 200 });
+                }
+            } else {
+                if (!isFocused) {
+                    animation.value = withTiming(1, { duration: 200 });
+                    if (iconLeft) {
+                        placeholderPosition.value = withTiming(38, { duration: 200 });
+                    }
+                }
             }
-        }, [rest.value, animation, placeholderPosition, iconLeft]);
+        }, [rest.value, animation, placeholderPosition, iconLeft, isFocused]);
 
-        // animated styles…
-        const animatedStyle = useAnimatedStyle(() => ({
-            top: interpolate(animation.value, [0, 1], [-12, INPUT_HEIGHT / 2 - 12]),
-            fontSize: interpolate(animation.value, [0, 1], [12, 16]),
-        }));
-        const leftIconAnimatedStyle = useAnimatedStyle(() => ({
-            opacity: animation.value,
-            width: animation.value * 24,
-            marginRight: animation.value * 8,
-        }));
-        const placeholderPositionStyle = useAnimatedStyle(() => ({
-            left: placeholderPosition.value,
-        }));
+        const leftIconAnimatedStyle = useAnimatedStyle(() => {
+            return {
+                opacity: animation.value,
+                width: animation.value * 24,
+                marginRight: animation.value * 8,
+            };
+        });
 
-        // —— handlers with bottom-sheet integration ——
-        const handleFocus = useCallback(
-            (event: NativeSyntheticEvent<TextInputFocusEventData>) => {
-                // tell bottom-sheet to handle keyboard
-                shouldHandleKeyboardEvents.value = true;
+        const placeholderPositionStyle = useAnimatedStyle(() => {
+            return {
+                left: placeholderPosition.value,
+            };
+        });
 
-                onFocus?.(event);
-                setIsFocused(true);
+        // BottomSheet keyboard handling (v5 API)
+        const { animatedKeyboardState, textInputNodesRef } = useSafeBottomSheetInternal();
+
+        // Register/unregister text input node with bottom sheet
+        useEffect(() => {
+            if (!animatedKeyboardState || !textInputNodesRef) return;
+
+            const componentNode = findNodeHandle(textInputRef.current);
+            if (!componentNode) return;
+
+            if (!textInputNodesRef.current.has(componentNode)) {
+                textInputNodesRef.current.add(componentNode);
+            }
+
+            return () => {
+                const componentNode = findNodeHandle(textInputRef.current);
+                if (!componentNode) return;
+
+                try {
+                    const keyboardState = animatedKeyboardState.get();
+                    if (keyboardState.target === componentNode) {
+                        animatedKeyboardState.set(state => ({
+                            ...state,
+                            target: undefined,
+                        }));
+                    }
+                } catch {}
+
+                if (textInputNodesRef.current.has(componentNode)) {
+                    textInputNodesRef.current.delete(componentNode);
+                }
+            };
+        }, [textInputNodesRef, animatedKeyboardState]);
+
+        const handleFocus = useCallback((event: any) => {
+            // BottomSheet keyboard handling
+            if (animatedKeyboardState) {
+                try {
+                    animatedKeyboardState.set(state => ({
+                        ...state,
+                        target: event.nativeEvent?.target || event.target,
+                    }));
+                } catch {}
+            }
+
+            onFocus && onFocus(event);
+            setIsFocused(true);
+            if (!mountedRef.current) return;
+            try {
                 animation.value = withTiming(0, { duration: 200 });
-                if (iconLeft) placeholderPosition.value = withTiming(10, { duration: 200 });
-            },
-            [onFocus, animation, placeholderPosition, iconLeft, shouldHandleKeyboardEvents],
-        );
+                if (iconLeft) {
+                    placeholderPosition.value = withTiming(10, { duration: 200 });
+                }
+            } catch {}
+        }, [animatedKeyboardState, onFocus, iconLeft, animation, placeholderPosition]);
 
-        const handleBlur = useCallback(
-            (event: NativeSyntheticEvent<TextInputFocusEventData>) => {
-                // stop bottom-sheet handling
-                shouldHandleKeyboardEvents.value = false;
+        const handleBlur = useCallback((event: any) => {
+            // BottomSheet keyboard handling
+            if (animatedKeyboardState && textInputNodesRef) {
+                try {
+                    const keyboardState = animatedKeyboardState.get();
+                    const currentFocusedInput = findNodeHandle(
+                        RNTextInput.State.currentlyFocusedInput() as any
+                    );
 
-                onBlur?.(event);
-                setIsFocused(false);
+                    const shouldRemoveCurrentTarget =
+                        keyboardState.target === (event.nativeEvent?.target || event.target);
+                    const shouldIgnoreBlurEvent =
+                        currentFocusedInput &&
+                        textInputNodesRef.current.has(currentFocusedInput);
+
+                    if (shouldRemoveCurrentTarget && !shouldIgnoreBlurEvent) {
+                        animatedKeyboardState.set(state => ({
+                            ...state,
+                            target: undefined,
+                        }));
+                    }
+                } catch {}
+            }
+
+            onBlur && onBlur(event);
+            setIsFocused(false);
+            if (!mountedRef.current) return;
+            try {
                 if (!rest.value) {
                     animation.value = withTiming(1, { duration: 200 });
-                    if (iconLeft) placeholderPosition.value = withTiming(38, { duration: 200 });
+                    if (iconLeft) {
+                        placeholderPosition.value = withTiming(38, { duration: 200 });
+                    }
                 }
-            },
-            [onBlur, animation, placeholderPosition, iconLeft, rest.value, shouldHandleKeyboardEvents],
-        );
+            } catch {}
+        }, [animatedKeyboardState, textInputNodesRef, onBlur, iconLeft, rest.value, animation, placeholderPosition]);
 
-        const togglePasswordVisibility = () => setIsPasswordVisible(v => !v);
+        const togglePasswordVisibility = () => {
+            setIsPasswordVisible(prev => !prev);
+        };
+
         const showPasswordToggle = secureTextEntry !== undefined;
 
         return (
@@ -122,33 +228,53 @@ const Input = forwardRef<TextInput, InputProps>(
                 <View
                     style={[
                         styles.inputContainer,
-                        { borderColor: error ? COLORS.errorColor : COLORS.borderColor },
+                        {
+                            borderColor: error ? COLORS.errorColor : COLORS.borderColor,
+                        },
                     ]}>
-                    {iconLeft && <Animated.View style={[styles.iconLeft, leftIconAnimatedStyle]}>{iconLeft}</Animated.View>}
+                    {iconLeft && (
+                        <Animated.View style={[styles.iconLeft, leftIconAnimatedStyle]}>
+                            {iconLeft}
+                        </Animated.View>
+                    )}
                     <View style={{ flex: 1 }}>
                         <TextInput
-                            ref={ref}
+                            ref={textInputRef}
                             style={[styles.input, iconLeft && { paddingLeft: 0 }]}
                             onFocus={handleFocus}
                             onBlur={handleBlur}
                             blurOnSubmit={false}
                             editable={!disabled}
                             secureTextEntry={secureTextEntry && !isPasswordVisible}
+                            multiline={multiline}
+                            numberOfLines={lines}
                             {...rest}
                         />
                     </View>
                     {showPasswordToggle && (
-                        <TouchableOpacity style={styles.passwordToggle} onPress={togglePasswordVisibility} activeOpacity={0.7}>
+                        <TouchableOpacity
+                            style={styles.passwordToggle}
+                            onPress={togglePasswordVisibility}
+                            activeOpacity={0.7}>
                             {isPasswordVisible ? <Icon_Eye_Line /> : <Icon_Eye />}
                         </TouchableOpacity>
                     )}
-                    {iconRight && <View style={styles.iconRight}>{iconRight}</View>}
+                    {iconRight && <View style={[styles.iconRight]}>{iconRight}</View>}
                     {placeholder && (
-                        <Animated.View style={[styles.placeholderContainer, placeholderPositionStyle, animatedStyle]}>
+                        <Animated.View
+                            style={[
+                                styles.placeholderContainer,
+                                placeholderPositionStyle,
+                                animatedStyle,
+                            ]}>
+                            {/* New background view covering top half */}
                             <View
                                 style={[
                                     styles.placeholderBackground,
-                                    { backgroundColor: isFocused || rest.value ? 'white' : 'transparent' },
+                                    {
+                                        backgroundColor:
+                                            isFocused || rest.value ? 'white' : 'transparent',
+                                    },
                                 ]}
                             />
                             <Animated.Text
@@ -174,9 +300,21 @@ const Input = forwardRef<TextInput, InputProps>(
 );
 
 const styles = StyleSheet.create({
-    container: { width: '100%', gap: 4 },
-    iconLeft: { marginRight: 8, justifyContent: 'center', height: 24, overflow: 'hidden' },
-    iconRight: { justifyContent: 'center', height: 24, overflow: 'hidden' },
+    container: {
+        width: '100%',
+        gap: 4,
+    },
+    iconLeft: {
+        marginRight: 8,
+        justifyContent: 'center',
+        height: 24,
+        overflow: 'hidden',
+    },
+    iconRight: {
+        justifyContent: 'center',
+        height: 24,
+        overflow: 'hidden',
+    },
     inputContainer: {
         borderWidth: 1,
         borderRadius: 8,
@@ -188,13 +326,42 @@ const styles = StyleSheet.create({
         position: 'relative',
         backgroundColor: COLORS.lightColor,
     },
-    input: { borderWidth: 0, width: '100%', flex: 1, paddingVertical: 6, ...TYPOGRAPHY.BODY },
-    placeholderContainer: { position: 'absolute', pointerEvents: 'none', paddingHorizontal: 5 },
-    placeholderBackground: { position: 'absolute', top: Platform.OS === 'ios' ? 3 : 0, left: 0, right: 0, height: '60%', zIndex: -1 },
-    placeholder: { ...TYPOGRAPHY.BODY },
-    requiredStar: { color: '#DB0032' },
-    error: { ...TYPOGRAPHY.TAGS, color: COLORS.errorColor },
-    passwordToggle: { padding: 8, justifyContent: 'center', alignItems: 'center', marginRight: 4 },
+    input: {
+        borderWidth: 0,
+        width: '100%',
+        flex: 1,
+        paddingVertical: 6,
+        ...TYPOGRAPHY.BODY,
+    },
+    placeholderContainer: {
+        position: 'absolute',
+        pointerEvents: 'none',
+        paddingHorizontal: 5,
+    },
+    placeholderBackground: {
+        position: 'absolute',
+        top: Platform.OS === 'ios' ? 3 : 0,
+        left: 0,
+        right: 0,
+        height: '60%',
+        zIndex: -1,
+    },
+    placeholder: {
+        ...TYPOGRAPHY.BODY,
+    },
+    requiredStar: {
+        color: '#DB0032',
+    },
+    error: {
+        ...TYPOGRAPHY.TAGS,
+        color: COLORS.errorColor,
+    },
+    passwordToggle: {
+        padding: 8,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 4,
+    },
 });
 
 export default Input;

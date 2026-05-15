@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import Animated, {
   Easing,
   cancelAnimation,
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
   },
   pendingUserName: {
     color: COLORS.primaryColor, // Orange text for pending users
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
   },
   crownIcon: {
     position: 'absolute',

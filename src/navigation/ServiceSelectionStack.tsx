@@ -36,12 +36,14 @@ const ServiceSelectionStack = () => {
     <Stack.Navigator
       screenOptions={{
         headerShadowVisible: false,
+        statusBarStyle: 'dark',
       }}>
       <Stack.Screen
         name="ServiceSelection"
         component={ServiceSelectionScreen}
         options={{
           headerShown: false,
+          statusBarStyle: 'light',
         }}
       />
       <Stack.Screen

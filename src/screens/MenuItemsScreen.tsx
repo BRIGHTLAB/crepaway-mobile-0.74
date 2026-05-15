@@ -10,7 +10,7 @@ import {
   View
 } from 'react-native';
 import Icon_Search from '../../assets/SVG/Icon_Search';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import { useSelector } from 'react-redux';
 import Icon_WishList from '../../assets/SVG/Icon_Wishlist';
@@ -715,15 +715,13 @@ const styles = StyleSheet.create({
   },
   categoryTitle: {
     fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    fontWeight: '400',
+    fontFamily: 'Poppins-SemiBold',
     color: COLORS.darkColor,
 
     opacity: 0.45,
   },
   activeCategoryTitle: {
     fontFamily: 'Poppins-SemiBold',
-    fontWeight: '600',
     color: COLORS.darkColor,
     opacity: 1,
   },
@@ -749,14 +747,13 @@ const styles = StyleSheet.create({
   searchBarPlaceholder: {
     flex: 1,
     fontSize: normalizeFont(14),
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins-SemiBold',
     color: COLORS.foregroundColor,
   },
   sectionHeader: {
 
     fontSize: normalizeFont(20),
     fontFamily: 'Poppins-SemiBold',
-    fontWeight: '600',
     color: COLORS.darkColor,
     height: CATEGORY_HEADER_HEIGHT,
   },
@@ -798,7 +795,6 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: normalizeFont(16),
     fontFamily: 'Poppins-Medium',
-    fontWeight: '500',
     color: COLORS.darkColor,
     lineHeight: 18,
     textTransform: 'capitalize',
@@ -806,7 +802,6 @@ const styles = StyleSheet.create({
   itemPrice: {
     fontSize: normalizeFont(16),
     fontFamily: 'Poppins-Medium',
-    fontWeight: '500',
     color: COLORS.secondaryColor,
     lineHeight: 20,
     marginTop: 6,

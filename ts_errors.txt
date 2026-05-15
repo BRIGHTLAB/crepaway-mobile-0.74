@@ -1,0 +1,33 @@
+src/components/Menu/CategoryList.tsx(26,3): error TS2344: Type '"MenuItems"' does not satisfy the constraint 'keyof RootStackParamList'.
+src/components/OTP/OtpInputs.tsx(29,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextInputProps): TextInput', gave the following error.
+    Type '(ref: TextInput | null) => TextInput | null' is not assignable to type 'Ref<TextInput> | undefined'.
+      Type '(ref: TextInput | null) => TextInput | null' is not assignable to type '(instance: TextInput | null) => void | (() => VoidOrUndefinedOnly)'.
+        Type 'TextInput | null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+          Type 'null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+  Overload 2 of 2, '(props: TextInputProps, context: any): TextInput', gave the following error.
+    Type '(ref: TextInput | null) => TextInput | null' is not assignable to type 'Ref<TextInput> | undefined'.
+      Type '(ref: TextInput | null) => TextInput | null' is not assignable to type '(instance: TextInput | null) => void | (() => VoidOrUndefinedOnly)'.
+        Type 'TextInput | null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+          Type 'null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+src/components/UI/Tabs.tsx(14,9): error TS2503: Cannot find namespace 'JSX'.
+src/screens/Authentication/OTPScreen.tsx(190,20): error TS2322: Type 'Control<{ otp: string[]; }, any, { otp: string[]; }>' is not assignable to type 'Control<any>'.
+  The types of '_options.validate' are incompatible between these types.
+    Type 'ValidateForm<{ otp: string[]; }> | undefined' is not assignable to type 'ValidateForm<any> | undefined'.
+      Type 'ValidateForm<{ otp: string[]; }>' is not assignable to type 'ValidateForm<any>'.
+        Types of parameters 'props' and 'props' are incompatible.
+          Type '{ formValues: any; formState: FormState<any>; eventType?: ValidateFormEventType | undefined; name?: string | string[] | undefined; }' is not assignable to type '{ formValues: { otp: string[]; }; formState: FormState<{ otp: string[]; }>; eventType?: ValidateFormEventType | undefined; name?: `otp.${number}` | "otp" | (`otp.${number}` | "otp")[] | undefined; }'.
+            Types of property 'name' are incompatible.
+              Type 'string | string[] | undefined' is not assignable to type '`otp.${number}` | "otp" | (`otp.${number}` | "otp")[] | undefined'.
+                Type 'string' is not assignable to type '`otp.${number}` | "otp" | (`otp.${number}` | "otp")[] | undefined'.
+src/screens/DeleteAccountOTPScreen.tsx(119,20): error TS2322: Type 'Control<{ otp: string[]; }, any, { otp: string[]; }>' is not assignable to type 'Control<any>'.
+  The types of '_options.validate' are incompatible between these types.
+    Type 'ValidateForm<{ otp: string[]; }> | undefined' is not assignable to type 'ValidateForm<any> | undefined'.
+      Type 'ValidateForm<{ otp: string[]; }>' is not assignable to type 'ValidateForm<any>'.
+        Types of parameters 'props' and 'props' are incompatible.
+          Type '{ formValues: any; formState: FormState<any>; eventType?: ValidateFormEventType | undefined; name?: string | string[] | undefined; }' is not assignable to type '{ formValues: { otp: string[]; }; formState: FormState<{ otp: string[]; }>; eventType?: ValidateFormEventType | undefined; name?: `otp.${number}` | "otp" | (`otp.${number}` | "otp")[] | undefined; }'.
+            Types of property 'name' are incompatible.
+              Type 'string | string[] | undefined' is not assignable to type '`otp.${number}` | "otp" | (`otp.${number}` | "otp")[] | undefined'.
+                Type 'string' is not assignable to type '`otp.${number}` | "otp" | (`otp.${number}` | "otp")[] | undefined'.
+src/utils/NavigationHelper.ts(162,36): error TS2345: Argument of type 'null' is not assignable to parameter of type '{ name: string | null; alias: string | null; }'.
+src/utils/NavigationHelper.ts(166,36): error TS2345: Argument of type 'null' is not assignable to parameter of type '{ name: string | null; alias: string | null; }'.

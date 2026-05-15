@@ -126,6 +126,7 @@ const HomeStack = () => {
     <Stack.Navigator
       screenOptions={{
         headerShadowVisible: false,
+        statusBarStyle: 'dark',
       }}
     >
       <Stack.Screen
@@ -135,6 +136,7 @@ const HomeStack = () => {
           headerTransparent: true,
           gestureEnabled: false,
           title: "",
+          statusBarStyle: 'light',
           headerLeft: () => <CustomHeader color={'white'} clearOrderType />,
           headerTitleAlign: 'center',
           headerRight: () => (
@@ -380,6 +382,7 @@ const MenuStack = () => {
     <Stack.Navigator
       screenOptions={{
         headerShadowVisible: false,
+        statusBarStyle: 'dark',
       }}
     >
       <Stack.Screen
@@ -429,6 +432,7 @@ const FavoritesStack = () => {
     <Stack.Navigator
       screenOptions={{
         headerShadowVisible: false,
+        statusBarStyle: 'dark',
       }}
     >
       <Stack.Screen
@@ -467,6 +471,7 @@ const ProfileStack = () => {
     <Stack.Navigator
       screenOptions={{
         headerShadowVisible: false,
+        statusBarStyle: 'dark',
       }}
     >
       <Stack.Screen
@@ -590,6 +595,7 @@ const OrderStack = () => {
     <Stack.Navigator
       screenOptions={{
         headerShadowVisible: false,
+        statusBarStyle: 'dark',
       }}>
       <Stack.Screen
         name="Orders"

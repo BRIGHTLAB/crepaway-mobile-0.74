@@ -246,13 +246,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...TYPOGRAPHY.SUB_HEADLINE,
     color: COLORS.darkColor,
-    fontWeight: '700',
+    fontFamily: 'Poppins-Bold',
     fontSize: 20,
   },
   countText: {
     ...TYPOGRAPHY.BODY,
     color: COLORS.primaryColor,
-    fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
   },
   listContent: {
     paddingBottom: 20,
@@ -291,11 +291,11 @@ const styles = StyleSheet.create({
     color: COLORS.darkColor,
     fontSize: 15,
     flex: 1,
-    fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
   },
   allergenNameSelected: {
     color: COLORS.primaryColor,
-    fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
   },
   emptyState: {
     flex: 1,

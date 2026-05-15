@@ -5,7 +5,7 @@ import React, {forwardRef} from 'react';
 import BottomSheet from '@gorhom/bottom-sheet';
 import DynamicSheet from '../DynamicSheet';
 import {COLORS, TYPOGRAPHY} from '../../../theme';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import {FlatList} from 'react-native-gesture-handler';
 
 type Props = {};
