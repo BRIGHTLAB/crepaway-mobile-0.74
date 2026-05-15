@@ -146,7 +146,6 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Poppins-Bold',
     fontSize: 28,
-    fontWeight: 'bold',
     color: 'white',
     padding: 16,
     zIndex: 2,

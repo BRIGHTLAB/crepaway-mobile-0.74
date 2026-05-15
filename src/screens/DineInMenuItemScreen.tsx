@@ -594,14 +594,13 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   description: {
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: normalizeFont(13),
     color: COLORS.foregroundColor,
   },
   price: {
     fontFamily: 'Poppins-Medium',
     fontSize: normalizeFont(22),
-    fontWeight: '500',
     color: COLORS.secondaryColor,
     lineHeight: 32,
   },

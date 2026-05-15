@@ -148,7 +148,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontFamily: 'Poppins-Medium',
-    fontWeight: '500',
     marginTop: 16,
     textTransform: 'uppercase',
     color: COLORS.darkColor,

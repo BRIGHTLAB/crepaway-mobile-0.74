@@ -106,7 +106,6 @@ const styles = StyleSheet.create({
   tierName: {
     ...TYPOGRAPHY.LARGE_TITLE,
     fontFamily: 'Poppins-Bold',
-    fontWeight: '700',
   },
   closeButton: {
     width: 32,
@@ -120,7 +119,6 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: normalizeFont(16),
     fontFamily: 'Poppins-Bold',
-    fontWeight: '700',
     lineHeight: 18,
   },
   content: {

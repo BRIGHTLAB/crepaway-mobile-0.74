@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.SUB_HEADLINE,
     color: COLORS.black,
     flex: 1,
-    fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
   },
   itemNameSelected: {
     color: COLORS.primaryColor,

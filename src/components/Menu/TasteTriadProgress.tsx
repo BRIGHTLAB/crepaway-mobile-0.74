@@ -33,14 +33,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins-SemiBold',
     fontSize: 10,
     color: COLORS.darkColor,
   },
   percentage: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    fontWeight: '600',
     color: COLORS.darkColor,
   },
 });

@@ -168,8 +168,7 @@ const styles = StyleSheet.create({
     },
     pointsCountText: {
         ...TYPOGRAPHY.HEADLINE,
-        fontFamily: 'Poppins-Regular',
-        fontWeight: 'bold',
+        fontFamily: 'Poppins-Bold',
         paddingBottom: 3,
         color: COLORS.white,
     },

@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     },
     description: {
         color: COLORS.lightColor,
-        fontFamily: 'Poppins-Normal',
+        fontFamily: 'Poppins-Regular',
         fontSize: 20,
         lineHeight: 28,
         opacity: 0.8,

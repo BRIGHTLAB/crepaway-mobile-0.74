@@ -126,12 +126,10 @@ const styles = StyleSheet.create({
   userSheetInitialsText: {
     color: COLORS.white,
     fontSize: 20,
-    fontWeight: 'bold',
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Poppins-Bold',
   },
   userSheetName: {
     ...TYPOGRAPHY.BODY,
-    fontWeight: 'bold',
   },
   actionsContainer: {
     paddingTop: 18,

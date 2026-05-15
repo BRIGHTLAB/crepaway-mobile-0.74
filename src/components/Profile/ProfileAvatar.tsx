@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     },
     initialsSmall: {
         ...TYPOGRAPHY.TAGS,
-        fontWeight: '600',
+        fontFamily: 'Poppins-SemiBold',
         textTransform: 'uppercase',
         color: COLORS.lightColor,
     },

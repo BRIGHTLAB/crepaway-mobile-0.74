@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   description: {
-    fontFamily: 'Poppins-Normal',
+    fontFamily: 'Poppins-Regular',
     fontSize: normalizeFont(12),
   },
   price: {

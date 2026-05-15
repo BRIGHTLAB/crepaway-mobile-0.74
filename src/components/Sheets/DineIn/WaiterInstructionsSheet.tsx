@@ -202,10 +202,9 @@ const styles = StyleSheet.create({
   chipCheckmark: {
     color: COLORS.white,
     fontSize: 11,
-    fontWeight: 'bold',
   },
   chipText: {
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins-Bold',
     fontSize: 14,
     lineHeight: 16,
     marginTop: 2,

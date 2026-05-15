@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
   },
   pendingUserName: {
     color: COLORS.primaryColor, // Orange text for pending users
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
   },
   crownIcon: {
     position: 'absolute',

@@ -37,8 +37,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontFamily: 'Poppins-Regular',
-    fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
     fontSize: 20,
     color: COLORS.darkColor,
   },
@@ -48,8 +47,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   view: {
-    fontFamily: 'Poppins-Regular',
-    fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
     fontSize: 14,
     color: COLORS.darkColor,
   },

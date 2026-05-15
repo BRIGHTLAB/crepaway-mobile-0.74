@@ -14,7 +14,7 @@ export const TYPOGRAPHY = {
         fontSize: normalizeFont(24),
     },
     HEADLINE: {
-        fontFamily: 'Poppins-Normal',
+        fontFamily: 'Poppins-Regular',
         fontSize: normalizeFont(20),
     },
     SUB_HEADLINE: {

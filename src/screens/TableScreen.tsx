@@ -1611,8 +1611,7 @@ const styles = StyleSheet.create({
   initialsText: {
     color: COLORS.white,
     fontSize: 10,
-    fontWeight: 'bold',
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Poppins-Bold',
   },
   userBubbleName: {
     fontFamily: 'Poppins-Medium',
@@ -1722,8 +1721,7 @@ const styles = StyleSheet.create({
   tableUserInitialsText: {
     color: COLORS.white,
     fontSize: 13,
-    fontWeight: 'bold',
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Poppins-Bold',
   },
   tableUserName: {
     fontFamily: 'Poppins-Medium',
@@ -1741,14 +1739,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   tableUserTotal: {
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Poppins-Bold',
     fontSize: 16,
     color: COLORS.secondaryColor,
   },
   chevron: {
     fontSize: 16,
     color: COLORS.primaryColor,
-    fontWeight: 'bold',
   },
   expandedItemsContainer: {
     paddingLeft: 8,

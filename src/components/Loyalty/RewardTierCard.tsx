@@ -110,7 +110,6 @@ const styles = StyleSheet.create({
     tierName: {
         ...TYPOGRAPHY.LARGE_TITLE,
         fontFamily: 'Poppins-Bold',
-        fontWeight: '700',
     },
     labelValueContainer: {
         flexDirection: 'row',

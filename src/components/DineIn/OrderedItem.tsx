@@ -50,8 +50,7 @@ const initialsStyles = StyleSheet.create({
   },
   text: {
     color: COLORS.white,
-    fontWeight: 'bold',
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Poppins-Bold',
   },
 });
 
