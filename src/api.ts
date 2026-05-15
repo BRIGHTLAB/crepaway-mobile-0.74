@@ -6,6 +6,7 @@ type APIResponse<T> = {
   data: T | null;
   message: string | null;
   status: number;
+  errorCode?: string | null;
 };
 
 // Cache for axios instances to avoid recreating them
@@ -102,6 +103,7 @@ export const GET = async <T>({
       data: response?.data,
       message: response?.data?.message,
       status: response?.status,
+      errorCode: response?.data?.code ?? response?.data?.error_code ?? null,
     };
   } catch (error) {
     const axiosError = isAxiosError(error);
@@ -110,6 +112,9 @@ export const GET = async <T>({
       data: axiosError ? error?.response?.data?.errors : null,
       message: axiosError ? error?.response?.data?.message : null,
       status: axiosError ? error?.response?.status || 500 : 500,
+      errorCode: axiosError
+        ? error?.response?.data?.code ?? error?.response?.data?.error_code ?? null
+        : null,
     };
   }
 };
@@ -140,6 +145,7 @@ export const POST = async <T>({
       data: response?.data,
       message: response?.data?.message,
       status: response?.status,
+      errorCode: response?.data?.code ?? response?.data?.error_code ?? null,
     };
   } catch (error) {
     const axiosError = isAxiosError(error);
@@ -148,6 +154,9 @@ export const POST = async <T>({
       data: axiosError ? error.response?.data?.errors : null,
       message: axiosError ? error.response?.data?.message : null,
       status: axiosError ? error.response?.status || 500 : 500,
+      errorCode: axiosError
+        ? error.response?.data?.code ?? error.response?.data?.error_code ?? null
+        : null,
     };
   }
 };

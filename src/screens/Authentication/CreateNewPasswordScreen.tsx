@@ -25,6 +25,10 @@ type LoginStackParamList = {
     phone_number: string;
     otp: string;
   };
+  OTP: {
+    phone_number: string;
+    from: 'reset-password' | 'registration';
+  };
   Login: undefined;
 };
 
@@ -43,6 +47,7 @@ const newPasswordSchema = z
   });
 
 type NewPasswordForm = z.infer<typeof newPasswordSchema>;
+const INVALID_OR_EXPIRED_OTP_ERROR_CODE = 'INVALID_OR_EXPIRED_OTP';
 
 const CreateNewPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
   const { phone_number, otp } = route.params;
@@ -77,12 +82,33 @@ const CreateNewPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
         position: 'bottom',
       });
     } else {
-      Toast.show({
-        type: 'error',
-        text1: response?.message || 'An error occurred while resetting password. Please try again.',
-        visibilityTime: 2000,
-        position: 'bottom',
-      });
+      const message = response?.message || 'An error occurred while resetting password. Please try again.';
+      const isInvalidOtp =
+        response?.errorCode === INVALID_OR_EXPIRED_OTP_ERROR_CODE;
+
+      if (isInvalidOtp) {
+        Toast.show({
+          type: 'error',
+          text1: 'Your OTP has expired or is invalid. Please try again.',
+          visibilityTime: 2500,
+          position: 'bottom',
+        });
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        } else {
+          navigation.navigate('OTP', {
+            phone_number,
+            from: 'reset-password',
+          });
+        }
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: message,
+          visibilityTime: 2000,
+          position: 'bottom',
+        });
+      }
     }
     setIsLoading(false);
   };
