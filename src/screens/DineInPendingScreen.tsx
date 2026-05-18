@@ -86,7 +86,8 @@ export type OrderedItem = {
 export type OrderedItems = Record<string, OrderedItem>;
 
 export type TableUser = {
-    id: number;
+    key: string;
+    accountId?: string | number | null;
     name: string;
     image_url: string | null;
     isOnline: boolean;
@@ -167,18 +168,17 @@ const DineInPendingScreen = () => {
                 data: {
                     tableName: userState.branchTable,
                     user: {
-                        id: userState.id,
                         name: userState.name,
-                        image_url: userState.image_url,
+                        imageUrl: userState.image_url,
                     },
-                    session_table: userState.tableSessionId,
+                    sessionTable: userState.tableSessionId,
                 },
             },
             response => {
                 console.log('join table response ', response);
 
                 if (response.success) {
-                    dispatch(setSessionTableId(response.session_table));
+                    dispatch(setSessionTableId(response.sessionTable));
                 } else {
                     console.log('before branch_table', store.getState().user.branchTable);
                     dispatch(setSessionTableId(null));
@@ -198,7 +198,7 @@ const DineInPendingScreen = () => {
             console.log('join request approval message', message)
             if (message.approved) {
                 console.log('join request approved', message);
-                dispatch(setSessionTableId(message.session_table));
+                dispatch(setSessionTableId(message.sessionTable));
                 navigation.navigate('Table', { socketUrl: route.params.socketUrl })
             } else {
                 dispatch(setSessionTableId(null));
@@ -257,19 +257,8 @@ const DineInPendingScreen = () => {
                 type: 'UserLeaveTable',
                 data: {
                     tableName: userState.branchTable,
-                    user: {
-                        id: userState.id,
-                    },
                 },
             },
-            // response => {
-            //   console.log('Left table response:', response);
-
-            //   if (response.success) {
-            //     // Reset session ID and order type in Redux store
-
-            //   }
-            // },
         );
 
         dispatch(setSessionTableId(null));

@@ -9,6 +9,7 @@ interface LoginResponse {
   phone_number: string;
   image_url: string | null;
   name: string;
+  uuid?: string | null;
 }
 
 interface LoginCredentials {
@@ -19,6 +20,7 @@ interface LoginCredentials {
 interface IUser {
   phoneNumber: string;
   id: number | null;
+  key: string | null;
   email: string;
   token: string | null;
   jwt: string | null;
@@ -42,6 +44,7 @@ interface IUser {
 const initialState: IUser = {
   phoneNumber: '',
   id: null,
+  key: 'mock-100',
   email: '',
   token: null,
   jwt: null,
@@ -153,6 +156,9 @@ const userSlice = createSlice({
         branchTable: action.payload,
       };
     },
+    setUserKey: (state, action: PayloadAction<string | null>) => {
+      state.key = action.payload;
+    },
     logoutUser: state => {
       NotificationService.getInstance().deregister();
       return { ...initialState };
@@ -161,6 +167,7 @@ const userSlice = createSlice({
       return {
         ...state,
         id: action.payload.id,
+        key: action.payload.uuid ?? null,
         token: action.payload.token,
         jwt: action.payload.jwt,
         name: action.payload.name,
@@ -182,6 +189,7 @@ const userSlice = createSlice({
         state.id = action.payload.id;
         state.name = action.payload.name;
         state.image_url = action.payload.image_url;
+        // state.key = action.payload.uuid ?? null;
         // state.email = action.payload.user.email;
         state.isLoggedIn = true;
         state.error = null;

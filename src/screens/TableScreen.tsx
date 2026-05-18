@@ -73,7 +73,8 @@ export type OrderedItem = {
   symbol: string;
   special_instruction?: string | null;
   added_by: {
-    id: number;
+    key: string;
+    accountId?: number | null;
     name: string;
     image_url: string;
     type: 'waiter' | 'user';
@@ -81,7 +82,7 @@ export type OrderedItem = {
   epoch: number;
   deleted: number;
   is_disabled: boolean;
-  status: 'pending' | 'in-kitchen';
+  status: 'pending' | 'in-kitchen' | 'voided';
   isHiddenFromUser?: boolean | null;
   order: number;
   orderMode: 'quick' | 'standard';
@@ -114,7 +115,8 @@ export type OrderedItem = {
 export type OrderedItems = Record<string, OrderedItem>;
 
 export type TableUser = {
-  id: number;
+  key: string;
+  accountId?: string | number | null;
   name: string;
   image_url: string | null;
   isOnline: boolean;
@@ -141,7 +143,7 @@ export type TableWaiter = {
 
 export type TableWaiters = Record<string, TableWaiter>;
 
-export type TableBannedUsers = Record<string, Pick<TableUser, 'id' | 'name' | 'image_url'>>;
+export type TableBannedUsers = Record<string, Pick<TableUser, 'key' | 'name' | 'image_url'>>;
 
 export type { TableBill, TableBillPayment } from '../store/slices/dineInSlice';
 
@@ -196,6 +198,8 @@ const TableScreen = () => {
   const [showQuickOrderConfirm, setShowQuickOrderConfirm] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [selectedPendingUser, setSelectedPendingUser] = useState<TableUser | null>(null);
+  // TO DELETE
+  const [isSubmittingToKitchenTest, setIsSubmittingToKitchenTest] = useState(false);
 
   // Expanded state for table items groups (collapsed by default)
   const [expandedUsers, setExpandedUsers] = useState<Record<string, boolean>>({});
@@ -212,10 +216,10 @@ const TableScreen = () => {
   const socketInstance = SocketService.getInstance();
   const { top, bottom } = useSafeAreaInsets();
 
-  const isCurrentUserKing = tableUsers?.[currentUser.id ?? '']?.isKing;
-  const isReady = tableUsers?.[currentUser.id ?? '']?.isReady ?? false;
-  const canOrderReady = tableUsers?.[currentUser.id ?? '']?.canOrderReady ?? false;
-  const canQuickOrder = tableUsers?.[currentUser.id ?? '']?.canQuickOrder ?? false;
+  const isCurrentUserKing = tableUsers?.[currentUser.key ?? '']?.isKing;
+  const isReady = tableUsers?.[currentUser.key ?? '']?.isReady ?? false;
+  const canOrderReady = tableUsers?.[currentUser.key ?? '']?.canOrderReady ?? false;
+  const canQuickOrder = tableUsers?.[currentUser.key ?? '']?.canQuickOrder ?? false;
 
   // Empty state crown animations
   const outerRotation = useSharedValue(0);
@@ -277,14 +281,10 @@ const TableScreen = () => {
     socketInstance.emit(
       'message',
       {
-        type: 'sendTableNotification',
-        data: {
-          tableName: userState.branchTable,
-          user: {
-            id: userState.id,
-            name: userState.name
-          },
-          notification: {
+      type: 'sendTableNotification',
+      data: {
+        tableName: userState.branchTable,
+        notification: {
             id: instruction.id,
             type: 'order',
             message: instruction.description
@@ -330,9 +330,6 @@ const TableScreen = () => {
         type: 'UserLeaveTable',
         data: {
           tableName: userState.branchTable,
-          user: {
-            id: userState.id,
-          },
         },
       },
     );
@@ -367,29 +364,12 @@ const TableScreen = () => {
     socketInstance.on('tableUpdate', (message: TableUpdateMessage) => {
       console.log('tableUpdate ', message);
 
-      if (message.users && currentUser?.id) {
-        const currentUserData = message.users[currentUser.id];
-        const currentIsKing = currentUserData?.isKing || false;
-        const previousIsKing = previousIsKingRef.current;
-
-        if (previousIsKing !== null && !previousIsKing && currentIsKing) {
-          Toast.show({
-            type: 'success',
-            text1: 'You are now the king! 👑',
-            visibilityTime: 4000,
-            position: 'bottom',
-          });
-        }
-
-        previousIsKingRef.current = currentIsKing;
-      }
-
       if (message.users) {
         setTableUsers(message.users);
 
         // Dispatch current user's canPayBill to Redux for checkout screen
-        if (currentUser?.id) {
-          const currentUserData = message.users[currentUser.id];
+        if (currentUser?.key) {
+          const currentUserData = message.users[currentUser.key];
           dispatch(setCanPayBill(currentUserData?.canPayBill ?? false));
         }
       }
@@ -454,15 +434,14 @@ const TableScreen = () => {
           data: {
             tableName: latestUserState.branchTable,
             user: {
-              id: latestUserState.id,
               name: latestUserState.name,
-              image_url: latestUserState.image_url,
+              imageUrl: latestUserState.image_url,
             },
           },
         },
         (response: any) => {
           if (response?.success) {
-            dispatch(setSessionTableId(response.session_table));
+            dispatch(setSessionTableId(response.sessionTable));
           }
         },
       );
@@ -475,6 +454,26 @@ const TableScreen = () => {
       rawSocket?.io.off('reconnect', handleReconnect);
     };
   }, []);
+
+  useEffect(() => {
+    if (isCurrentUserKing === undefined) return;
+
+    if (previousIsKingRef.current === null) {
+      previousIsKingRef.current = isCurrentUserKing;
+      return;
+    }
+
+    if (!previousIsKingRef.current && isCurrentUserKing) {
+      Toast.show({
+        type: 'success',
+        text1: 'You are now the king! 👑',
+        visibilityTime: 4000,
+        position: 'bottom',
+      });
+    }
+
+    previousIsKingRef.current = isCurrentUserKing;
+  }, [isCurrentUserKing]);
 
   useEffect(() => {
     if (previousTableLockRef.current === null) {
@@ -523,7 +522,7 @@ const TableScreen = () => {
 
   const handleUserPress = (user: TableUser) => {
     if (!isCurrentUserKing) return;
-    if (String(user.id) === String(currentUser.id)) return;
+    if (user.key === currentUser.key) return;
     setSelectedUserForKingActions(user);
     kingActionsSheetRef.current?.expand();
   };
@@ -534,7 +533,7 @@ const TableScreen = () => {
     const socketInstance = SocketService.getInstance();
     switch (action.key) {
       case 'remove-from-table':
-        console.log('kicking user', selectedUserForKingActions.id)
+        console.log('kicking user', selectedUserForKingActions.key)
         socketInstance.emit(
           'message',
           {
@@ -542,7 +541,7 @@ const TableScreen = () => {
             data: {
               tableName: userState.branchTable,
               userToKick: {
-                id: selectedUserForKingActions.id,
+                key: selectedUserForKingActions.key,
               },
             },
           },)
@@ -554,7 +553,7 @@ const TableScreen = () => {
             type: 'promoteUserToKing',
             data: {
               tableName: userState.branchTable,
-              user_id: selectedUserForKingActions.id,
+              userId: selectedUserForKingActions.key,
             },
           },)
         break;
@@ -565,18 +564,20 @@ const TableScreen = () => {
     kingActionsSheetRef.current?.close();
   };
 
-  // filter out the deleted = 1
+  // filter out deleted and voided items
   const filteredOrderedItems = Object.fromEntries(
-    Object.entries(orderedItems).filter(([_, item]) => item.deleted === 0),
+    Object.entries(orderedItems).filter(
+      ([_, item]) => item.deleted === 0 && item.status !== 'voided',
+    ),
   );
 
   // Split items into My Items and Table Items
   const myItems = useMemo(() => {
     return Object.entries(filteredOrderedItems)
-      .filter(([_, item]) => !item.isHiddenFromUser && item.added_by.type === 'user' && String(item.added_by.id) === String(currentUser.id))
+      .filter(([_, item]) => !item.isHiddenFromUser && item.added_by.type === 'user' && item.added_by.key === currentUser.key)
       .map(([key, item]) => ({ ...item, uuid: key }))
       .sort((a, b) => (a.order || 0) - (b.order || 0));
-  }, [filteredOrderedItems, currentUser.id]);
+  }, [filteredOrderedItems, currentUser.key]);
 
   // Split my items into kitchen items and new (pending) items
   const myKitchenItems = useMemo(() => myItems.filter(item => item.status === 'in-kitchen' || item.orderMode === 'quick'), [myItems]);
@@ -600,18 +601,18 @@ const TableScreen = () => {
   // Group table items by user
   const tableItemsByUser = useMemo(() => {
     const otherItems = Object.entries(filteredOrderedItems)
-      .filter(([_, item]) => !item.isHiddenFromUser && !(item.added_by.type === 'user' && String(item.added_by.id) === String(currentUser.id)))
+      .filter(([_, item]) => !item.isHiddenFromUser && !(item.added_by.type === 'user' && item.added_by.key === currentUser.key))
       .map(([key, item]) => ({ ...item, uuid: key }))
       .sort((a, b) => (a.order || 0) - (b.order || 0));
 
     const grouped: Record<string, {
-      user: { id: number; name: string; image_url: string; type: 'waiter' | 'user' };
+      user: { key: string; name: string; image_url: string; type: 'waiter' | 'user' };
       items: (OrderedItem & { uuid: string })[];
       totalPrice: number;
     }> = {};
 
     otherItems.forEach(item => {
-      const key = `${item.added_by.type}_${item.added_by.id}`;
+      const key = `${item.added_by.type}_${item.added_by.key}`;
       if (!grouped[key]) {
         grouped[key] = {
           user: item.added_by,
@@ -634,14 +635,14 @@ const TableScreen = () => {
     });
 
     return grouped;
-  }, [filteredOrderedItems, currentUser.id]);
+  }, [filteredOrderedItems, currentUser.key]);
 
   const tableItemsCount = useMemo(() => {
     return Object.values(tableItemsByUser).reduce((acc, group) => acc + group.items.length, 0);
   }, [tableItemsByUser]);
 
   const handleDecreaseQuantity = (itemUuid: string, item: OrderedItem) => {
-    const isOwnItem = item.added_by.type === 'user' && String(item.added_by.id) === String(currentUser.id);
+    const isOwnItem = item.added_by.type === 'user' && item.added_by.key === currentUser.key;
     if (isOwnItem) {
       ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
     }
@@ -670,7 +671,7 @@ const TableScreen = () => {
   };
 
   const handleIncreaseQuantity = (itemUuid: string, item: OrderedItem) => {
-    const isOwnItem = item.added_by.type === 'user' && String(item.added_by.id) === String(currentUser.id);
+    const isOwnItem = item.added_by.type === 'user' && item.added_by.key === currentUser.key;
     if (isOwnItem) {
       ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
     }
@@ -714,7 +715,7 @@ const TableScreen = () => {
         type: 'approveJoinRequest',
         data: {
           tableName: userState.branchTable,
-          user_id: user.id,
+          userId: user.key,
           approved: true
         },
       },)
@@ -727,7 +728,7 @@ const TableScreen = () => {
         type: 'approveJoinRequest',
         data: {
           tableName: userState.branchTable,
-          user_id: user.id,
+          userId: user.key,
           approved: false
         },
       },)
@@ -738,7 +739,7 @@ const TableScreen = () => {
     setSelectedPendingUser(user);
   };
 
-  const handleUnkickUser = (user: Pick<TableUser, 'id' | 'name' | 'image_url'>) => {
+  const handleUnkickUser = (user: Pick<TableUser, 'key' | 'name' | 'image_url'>) => {
     console.log('unKicking user', user);
     socketInstance.emit(
       'message',
@@ -747,7 +748,7 @@ const TableScreen = () => {
         data: {
           tableName: userState.branchTable,
           userToUnKick: {
-            id: user.id
+            key: user.key
           }
         },
       },)
@@ -776,6 +777,31 @@ const TableScreen = () => {
     );
   };
 
+  // TO DELETE
+  const handleSubmitToKitchenTest = () => {
+    if (!userState.branchTable || isSubmittingToKitchenTest) return;
+
+    setIsSubmittingToKitchenTest(true);
+    socketInstance.emit(
+      'message',
+      {
+        type: 'submitToKitchenTest',
+        data: {
+          tableName: userState.branchTable,
+        },
+      },
+      (response: { success?: boolean; message?: string }) => {
+        setIsSubmittingToKitchenTest(false);
+        Toast.show({
+          type: response?.success ? 'success' : 'error',
+          text1: response?.message || (response?.success ? 'Submitted to kitchen' : 'Failed to submit to kitchen'),
+          position: 'bottom',
+          visibilityTime: 4000,
+        });
+      },
+    );
+  };
+
   const toggleUserExpanded = (key: string) => {
     setExpandedUsers(prev => ({ ...prev, [key]: !prev[key] }));
   };
@@ -795,7 +821,7 @@ const TableScreen = () => {
 
     return (
       <TouchableOpacity
-        key={user.id}
+        key={user.key}
         onPress={() => handleUserPress(user)}
         disabled={isMe}
         style={[styles.userBubble, isMe && styles.userBubbleMe]}
@@ -882,18 +908,18 @@ const TableScreen = () => {
           contentContainerStyle={styles.usersScrollContent}
         >
           {/* Current user first */}
-          {currentUser.id && tableUsers[currentUser.id] &&
-            renderUserBubble(tableUsers[currentUser.id], true)
+          {currentUser.key && tableUsers[currentUser.key] &&
+            renderUserBubble(tableUsers[currentUser.key], true)
           }
           {/* Other users */}
           {Object.values(tableUsers)
-            .filter(u => String(u.id) !== String(currentUser.id))
+            .filter(u => u.key !== currentUser.key)
             .map(user => renderUserBubble(user, false))
           }
           {/* Pending users */}
           {Object.values(pendingJoinRequests).map(request => (
             <TouchableOpacity
-              key={`pending-${request.user.id}`}
+              key={`pending-${request.user.key}`}
               onPress={() => handlePendingUserPress(request.user)}
               style={[styles.userBubble, { opacity: 0.7 }]}
               activeOpacity={0.8}
@@ -1058,7 +1084,7 @@ const TableScreen = () => {
                         {/* Pending items - original OrderedItemCmp */}
                         {myNewItems.map((item, index) => {
                           const isWaiterItem = item.added_by.type === 'waiter';
-                          const isOwnItem = item.added_by.type === 'user' && String(item.added_by.id) === String(currentUser.id);
+                          const isOwnItem = item.added_by.type === 'user' && item.added_by.key === currentUser.key;
                           const canKingEdit = isCurrentUserKing && !isWaiterItem;
                           const canUserEdit = isOwnItem;
                           const isItemDisabled = isTableLocked || item.is_disabled || isWaiterItem || (!canKingEdit && !canUserEdit);
@@ -1068,7 +1094,7 @@ const TableScreen = () => {
                               <OrderedItemCmp
                                 item={item}
                                 isDisabled={isItemDisabled}
-                                currentUserId={currentUser.id}
+                                currentUserKey={currentUser.key}
                                 isTableLocked={isTableLocked}
                                 isCurrentUserKing={isCurrentUserKing}
                                 isLastItem={index === myNewItems.length - 1}
@@ -1113,7 +1139,7 @@ const TableScreen = () => {
                 Object.entries(tableItemsByUser).map(([groupKey, group]) => {
                   const isExpanded = expandedUsers[groupKey] || false;
                   const tableUser = group.user.type === 'user'
-                    ? tableUsers[String(group.user.id)]
+                    ? tableUsers[String(group.user.key)]
                     : undefined;
 
                   return (
@@ -1368,6 +1394,21 @@ const TableScreen = () => {
           </View>
         </View>
       </View>
+
+{/* TO DELETE */}
+      <TouchableOpacity
+        onPress={handleSubmitToKitchenTest}
+        disabled={isSubmittingToKitchenTest || !userState.branchTable}
+        activeOpacity={0.8}
+        style={[
+          styles.submitToKitchenTestCta,
+          { bottom: bottom + 150, opacity: isSubmittingToKitchenTest ? 0.6 : 1 },
+        ]}
+      >
+        <Text style={styles.submitToKitchenTestCtaText}>
+          {isSubmittingToKitchenTest ? 'Submitting…' : 'TEST Submit Kitchen'}
+        </Text>
+      </TouchableOpacity>
 
       {/* Waiter Instructions Sheet */}
       {(() => {
@@ -1938,5 +1979,25 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.primaryColor,
     fontFamily: 'Poppins-SemiBold',
+  },
+  // TO DELETE
+  submitToKitchenTestCta: {
+    position: 'absolute',
+    right: SCREEN_PADDING.horizontal,
+    zIndex: 100,
+    backgroundColor: '#E85D04',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  submitToKitchenTestCtaText: {
+    fontFamily: 'Poppins-Bold',
+    fontSize: 11,
+    color: COLORS.white,
   },
 });

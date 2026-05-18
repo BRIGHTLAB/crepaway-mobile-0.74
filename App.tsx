@@ -7,7 +7,8 @@ import 'react-native-get-random-values';
 // import { SafeAreaProvider } from 'react-native-safe-area-context';
 import type { ToastConfigParams } from 'react-native-toast-message';
 import Toast from 'react-native-toast-message';
-import { Provider } from 'react-redux';
+import { Provider, useSelector } from 'react-redux';
+import { RootState } from './src/store/store';
 import DeleteAnimation from './assets/lotties/Delete.json';
 import i18n from './src/i18n';
 import NavigationStack from './src/navigation/NavigationStack';
@@ -75,7 +76,6 @@ const toastConfig = {
           paddingVertical: 12,
           borderRadius: 8,
           marginHorizontal: 16,
-          marginBottom: 80,
           shadowColor: '#000',
           shadowOffset: {
             width: 0,
@@ -151,7 +151,6 @@ const toastConfig = {
           paddingVertical: 12,
           borderRadius: 8,
           marginHorizontal: 16,
-          marginBottom: 80,
           shadowColor: '#000',
           shadowOffset: {
             width: 0,
@@ -185,7 +184,6 @@ const toastConfig = {
           paddingVertical: 12,
           borderRadius: 8,
           marginHorizontal: 16,
-          marginBottom: 80,
           shadowColor: '#000',
           shadowOffset: {
             width: 0,
@@ -212,8 +210,14 @@ const toastConfig = {
   },
 };
 
+const BOTTOM_TAB_HEIGHT = 100;
+
 const AppContent = () => {
   const [popupDetails, setPopupDetails] = useState(initialPopupDetails);
+  const { isLoggedIn, orderType } = useSelector((state: RootState) => state.user);
+
+  const hasBottomTabBar = isLoggedIn && (orderType === 'delivery' || orderType === 'takeaway');
+  const toastBottomOffset = hasBottomTabBar ? BOTTOM_TAB_HEIGHT + 10 : 20;
 
   return (
     <>
@@ -226,7 +230,7 @@ const AppContent = () => {
         onConfirm={() => setPopupDetails(initialPopupDetails)}
         message={popupDetails.message}
       />
-      <Toast config={toastConfig} />
+      <Toast config={toastConfig} bottomOffset={toastBottomOffset} />
     </>
   );
 };

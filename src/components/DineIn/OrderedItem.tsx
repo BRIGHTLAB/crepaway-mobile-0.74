@@ -62,7 +62,7 @@ const OrderedItemCmp = ({
   onQuantityDecrease,
   onItemImageClick,
   isDisabled,
-  currentUserId,
+  currentUserKey,
   isTableLocked,
   isCurrentUserKing,
   isLastItem,
@@ -74,13 +74,13 @@ const OrderedItemCmp = ({
   onQuantityDecrease?: () => void;
   onItemImageClick?: () => void;
   isDisabled: boolean;
-  currentUserId?: number | null;
+  currentUserKey?: string | null;
   isTableLocked?: boolean;
   isCurrentUserKing?: boolean;
   isLastItem?: boolean;
 }) => {
 
-  const isOrderedByCurrentUser = currentUserId != null && String(item.added_by.id) === String(currentUserId);
+  const isOrderedByCurrentUser = currentUserKey != null && item.added_by.key === currentUserKey;
   const isWaiterItem = item.added_by.type === 'waiter';
   // King can edit other users' items (not waiter items), normal users can only edit their own
   const canEditItem = isCurrentUserKing ? !isWaiterItem : isOrderedByCurrentUser;

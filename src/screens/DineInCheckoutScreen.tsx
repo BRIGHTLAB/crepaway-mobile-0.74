@@ -150,6 +150,12 @@ const DineInCheckoutScreen = () => {
     isCustom: false,
   });
 
+  // Suppress duplicate refetch when WE changed tips (we already call refetch() in postTips).
+  const suppressNextTipsRefetchRef = useRef(false);
+  // Tracks the last tableBill.tips value seen in the sync effect, so we can detect
+  // genuine external tips changes without misfiring on promo/voucher socket echoes.
+  const prevBillTipsRef = useRef<number | null>(null);
+
   const setTipsSelection = (selection: TipsSelection) => {
     setSelectedTip(selection.presetPercent);
     setCustomTip(selection.customPercentText);
@@ -172,6 +178,10 @@ const DineInCheckoutScreen = () => {
       const result = await applyTips({ orderId, tips }).unwrap();
       console.log('[postTips] result:', JSON.stringify(result));
       committedTipsSelectionRef.current = selectionFromPercent(tips);
+      // Refetch immediately so totals update right away, and suppress the duplicate
+      // refetch that the socket round-trip would otherwise trigger via the useEffect.
+      suppressNextTipsRefetchRef.current = true;
+      refetch();
     } catch (err: any) {
       console.log('[postTips] catch error:', JSON.stringify(err));
       setTipsSelection(committedTipsSelectionRef.current);
@@ -274,33 +284,55 @@ const DineInCheckoutScreen = () => {
     const billVoucher = tableBill?.voucherCode ?? '';
     const billTips = tableBill?.tips ?? null;
 
+    // Promo/voucher: "external" means the value differs from what we already set locally.
+    // When WE apply a code, we optimistically set promoCode/couponCode before the socket
+    // echo arrives, so the echo will find them equal and correctly signal no external change.
+    let hasExternalChange = false;
+
     if (billPromo !== promoCode) {
       setPromoCode(billPromo);
       setSheetPromoCode(billPromo);
       if (!billPromo) setPromoError(null);
+      hasExternalChange = true;
     }
 
     if (billVoucher !== couponCode) {
       setCouponCode(billVoucher);
       setSheetCouponCode(billVoucher);
       if (!billVoucher) setCouponError(null);
+      hasExternalChange = true;
     }
 
-// read
+    // Tips: compare to the previous value we saw so we know if tips genuinely changed
+    // in this effect run (vs. the effect firing due to a promo/voucher dep change).
+    const tipsActuallyChanged = billTips !== prevBillTipsRef.current;
+    prevBillTipsRef.current = billTips;
+
     const tipsPercent = billTips != null ? Number(billTips) : null;
     const committedSelection = selectionFromPercent(
       Number.isFinite(tipsPercent as number) ? (tipsPercent as number) : null
     );
     committedTipsSelectionRef.current = committedSelection;
     setTipsSelection(committedSelection);
-// finish read
+
     if (isInitialBillSync.current) {
       isInitialBillSync.current = false;
       return;
     }
 
     if (isUninitialized) return;
-    refetch();
+
+    if (suppressNextTipsRefetchRef.current) {
+      // WE changed tips and already called refetch() in postTips — consume the flag.
+      // Still refetch if promo/voucher also changed externally at the same time.
+      suppressNextTipsRefetchRef.current = false;
+      if (hasExternalChange) refetch();
+      return;
+    }
+
+    if (hasExternalChange || tipsActuallyChanged) {
+      refetch();
+    }
   }, [
     tableBill?.promoCode,
     tableBill?.voucherCode,
@@ -419,6 +451,7 @@ const DineInCheckoutScreen = () => {
       }
       setPromoCode(trimmedCode);
       promoCodeSheetRef.current?.close();
+      refetch();
       SocketService.getInstance().emit('message', {
         type: 'setBillCode',
         data: { tableName: user.branchTable, codeType: 'promo', code: trimmedCode },
@@ -448,6 +481,7 @@ const DineInCheckoutScreen = () => {
       }
       setCouponCode(trimmedCode);
       couponCodeSheetRef.current?.close();
+      refetch();
       SocketService.getInstance().emit('message', {
         type: 'setBillCode',
         data: { tableName: user.branchTable, codeType: 'voucher', code: trimmedCode },
@@ -749,6 +783,7 @@ const DineInCheckoutScreen = () => {
                       setPromoError(null);
                       try {
                         await applyPromoCode({ orderId, code: '' }).unwrap();
+                        refetch();
                       } catch {}
                       SocketService.getInstance().emit('message', {
                         type: 'setBillCode',
@@ -827,6 +862,7 @@ const DineInCheckoutScreen = () => {
                       setCouponError(null);
                       try {
                         await applyCouponCode({ orderId, coupon_code: '' }).unwrap();
+                        refetch();
                       } catch {}
                       SocketService.getInstance().emit('message', {
                         type: 'setBillCode',

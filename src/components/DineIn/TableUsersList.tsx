@@ -52,7 +52,7 @@ type Props = {
   onUserPress?: (user: TableUser) => void;
   onApproveUser?: (user: TableUser) => void;
   onRejectUser?: (user: TableUser) => void;
-  onUnkickUser?: (user: Pick<TableUser, 'id' | 'name' | 'image_url'>) => void;
+  onUnkickUser?: (user: Pick<TableUser, 'key' | 'name' | 'image_url'>) => void;
 };
 
 const TableUsersList = ({
@@ -68,11 +68,11 @@ const TableUsersList = ({
   const isCurrentUserKing = currentUser?.isKing;
   const [selectedPendingUser, setSelectedPendingUser] = useState<TableUser | null>(null);
   const [showApprovalPopup, setShowApprovalPopup] = useState(false);
-  const [selectedBannedUser, setSelectedBannedUser] = useState<Pick<TableUser, 'id' | 'name' | 'image_url'> | null>(null);
+  const [selectedBannedUser, setSelectedBannedUser] = useState<Pick<TableUser, 'key' | 'name' | 'image_url'> | null>(null);
   const [showUnkickPopup, setShowUnkickPopup] = useState(false);
 
   const handleUserPress = (user: TableUser) => {
-    if (pendingUsers?.[user.id]) {
+    if (pendingUsers?.[user.key]) {
       setSelectedPendingUser(user);
       setShowApprovalPopup(true);
     } else if (isCurrentUserKing && !user.isKing && onUserPress) {
@@ -80,7 +80,7 @@ const TableUsersList = ({
     }
   };
 
-  const handleBannedUserPress = (bannedUser: Pick<TableUser, 'id' | 'name' | 'image_url'>) => {
+  const handleBannedUserPress = (bannedUser: Pick<TableUser, 'key' | 'name' | 'image_url'>) => {
     if (isCurrentUserKing && onUnkickUser) {
       setSelectedBannedUser(bannedUser);
       setShowUnkickPopup(true);
@@ -284,7 +284,7 @@ const UserItem = ({ isUserPending, user, isCurrentUserKing, onPress }: {
 
 // Banned user item component with X overlay
 const BannedUserItem = ({ user, isCurrentUserKing, onPress }: {
-  user: Pick<TableUser, 'id' | 'name' | 'image_url'>;
+  user: Pick<TableUser, 'key' | 'name' | 'image_url'>;
   isCurrentUserKing?: boolean;
   onPress: () => void;
 }) => {

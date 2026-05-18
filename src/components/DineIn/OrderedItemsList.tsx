@@ -31,8 +31,7 @@ const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Prop
   const userState = useSelector((state: RootState) => state.user);
   const isTableLocked = useSelector((state: RootState) => state.dineIn.isTableLocked);
 
-  // TODO ask chris if we can rely on the key of users (eza kenit hiye zeta l user id li ana 3ende yeha bel userState)
-  const isCurrentUserKing = users?.[userState.id ?? '']?.isKing
+  const isCurrentUserKing = users?.[userState.key ?? '']?.isKing
 
   const handleItemClick = (itemUuid: string, item: OrderedItem) => {
     navigation.navigate('OrderStack', {
@@ -46,7 +45,7 @@ const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Prop
   };
 
   const handleDecreaseQuantity = (itemUuid: string, item: OrderedItem) => {
-    const isOwnItem = item.added_by.type === 'user' && String(item.added_by.id) === String(userState.id);
+    const isOwnItem = item.added_by.type === 'user' && item.added_by.key === userState.key;
     if (isOwnItem) {
       ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
     }
@@ -76,7 +75,7 @@ const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Prop
   };
 
   const handleIncreaseQuantity = (itemUuid: string, item: OrderedItem) => {
-    const isOwnItem = item.added_by.type === 'user' && String(item.added_by.id) === String(userState.id);
+    const isOwnItem = item.added_by.type === 'user' && item.added_by.key === userState.key;
     if (isOwnItem) {
       ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
     }
@@ -120,14 +119,10 @@ const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Prop
         keyExtractor={item => item.uuid.toString()}
         renderItem={({ item }) => {
           const orderedByUser = item.added_by.type === 'user'
-            ? (users[String(item.added_by.id)] || Object.values(users).find(
-              user => String(user.id) === String(item.added_by.id),
-            ))
+            ? users[item.added_by.key]
             : undefined;
           const orderedByWaiter = item.added_by.type === 'waiter'
-            ? (waiters[String(item.added_by.id)] || Object.values(waiters).find(
-              waiter => String(waiter.id) === String(item.added_by.id),
-            ))
+            ? waiters[item.added_by.key]
             : undefined;
           // Disable logic:
           // - Always disabled if table is locked or item.is_disabled is true
@@ -135,8 +130,7 @@ const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Prop
           // - King can edit all user items (not waiter items)
           // - Normal user can only edit their own items
           const isWaiterItem = item.added_by.type === 'waiter';
-          // Compare directly with item.added_by.id since orderedByUser might be undefined
-          const isOwnItem = item.added_by.type === 'user' && String(item.added_by.id) === String(userState.id);
+          const isOwnItem = item.added_by.type === 'user' && item.added_by.key === userState.key;
           const canKingEdit = isCurrentUserKing && !isWaiterItem;
           const canUserEdit = isOwnItem;
           const isItemDisabled = isTableLocked || item.is_disabled || isWaiterItem || (!canKingEdit && !canUserEdit);
@@ -147,7 +141,7 @@ const OrderedItemsList = ({ items, users, waiters, contentContainerStyle }: Prop
               orderedByUser={orderedByUser}
               orderedByWaiter={orderedByWaiter}
               isDisabled={isItemDisabled}
-              currentUserId={userState.id}
+              currentUserKey={userState.key}
               isTableLocked={isTableLocked}
               isCurrentUserKing={isCurrentUserKing}
               onQuantityDecrease={

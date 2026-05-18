@@ -233,7 +233,8 @@ const DineInMenuItemScreen = ({ }: IProps) => {
       status: 'pending',
       deleted: 0,
       added_by: {
-        id: userState.id,
+        key: userState.key,
+        accountId: userState.id,
         name: userState.name,
         image_url: userState.image_url,
         type: 'user',
