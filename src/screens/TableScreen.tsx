@@ -116,7 +116,7 @@ export type OrderedItems = Record<string, OrderedItem>;
 
 export type TableUser = {
   key: string;
-  accountId?: string | number | null;
+  accountId?:  number | null;
   name: string;
   image_url: string | null;
   isOnline: boolean;
